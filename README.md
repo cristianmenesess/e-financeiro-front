@@ -1,6 +1,8 @@
 # e-financeiro-front
+Acesse o site: https://e-financeiro.vercel.app/
+(Nota: Hospedado no Render no plano gratuito. A primeira requisição pode levar até 60 segundos para "acordar" o servidor).
 
-Front-end web de um sistema de controle financeiro pessoal (entradas, saídas e cartões, com contas separadas por CPF/PJ). Consome a API REST do [e-financeiro](../e-financeiro) (Spring Boot + JWT + PostgreSQL).
+Front-end web de um sistema de controle financeiro pessoal (entradas, saídas e cartões, com contas separadas por CPF/PJ). Consome a API REST do [e-financeiro](https://github.com/cristianmenesess/e-financeiro) (Spring Boot + JWT + PostgreSQL).
 
 Projeto de portfólio — HTML, CSS e jQuery puros, **sem build step, sem framework, sem bundler**. Escolha deliberada: manter o front simples e legível de ponta a ponta.
 
@@ -27,7 +29,7 @@ Cada tela HTML tem seu **próprio script isolado** (`login.js`, `cadastro.js`, `
 
 ## Rodando localmente
 
-Este front depende do [backend e-financeiro](../e-financeiro) rodando (local em `http://localhost:8080` por padrão — a URL está hardcoded no topo de cada arquivo `.js` em `assets/js/`, ajuste ali se for apontar para outro ambiente).
+Este front depende do [backend e-financeiro](https://github.com/cristianmenesess/e-financeiro) rodando (local em `http://localhost:8080` por padrão — a URL está hardcoded no topo de cada arquivo `.js` em `assets/js/`, ajuste ali se for apontar para outro ambiente).
 
 1. Suba o backend primeiro (veja o README dele).
 2. Sirva esta pasta com qualquer servidor estático, por exemplo:
