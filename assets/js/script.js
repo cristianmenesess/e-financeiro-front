@@ -628,15 +628,11 @@ function Dashboard() {
 
     self.resetTransactionModal = function () {
         self.state.currentType = 'in';
-        self.state.currentCategoria = null;
         $('#inputDescription').val('');
         $('#inputValue').val('');
         $('#inputCard').val('');
         $('#inputAccount').val('cpf');
-        $('#btnTypeIn').addClass('active-in').removeClass('active-out');
-        $('#btnTypeOut').removeClass('active-in active-out');
-        $('#cardRow').removeClass('visible');
-        $('.categoria-chip').removeClass('active');
+        self.applyTypeStyle('in');
         self.populateCardSelect();
     };
 
@@ -646,6 +642,14 @@ function Dashboard() {
         $('#btnTypeIn').toggleClass('active-in', isIn).removeClass('active-out');
         $('#btnTypeOut').toggleClass('active-out', !isIn).removeClass('active-in');
         $('#cardRow').toggleClass('visible', !isIn);
+
+        // Categorias só fazem sentido pra saída: na entrada os chips somem e a
+        // categoria vai como RENDA automaticamente; na saída o chip "Renda"
+        // fica de fora
+        $('.categoria-chip').removeClass('active');
+        self.state.currentCategoria = isIn ? 'RENDA' : null;
+        $('#categoriaRow').css('display', isIn ? 'none' : 'flex');
+        $('.categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
     };
 
     self.validateTransaction = function (description, value) {
