@@ -22,12 +22,25 @@ function Dashboard() {
         { bg: '#FFF3CD', color: '#856404' }
     ];
 
+    self.categoriasDisponiveis = [
+        { valor: 'RENDA', nome: 'Renda' },
+        { valor: 'DESPESA', nome: 'Despesa' },
+        { valor: 'ALIMENTACAO', nome: 'Alimentação' },
+        { valor: 'MORADIA', nome: 'Moradia' },
+        { valor: 'OUTRO', nome: 'Outro' }
+    ];
+
     self.state = {
         currentPage: 'dashboard',
         currentView: 'all',
         currentType: 'in',
         currentCategoria: null,
         selectedColor: self.cardColors[0],
+
+        // Filtros do dashboard: mês/ano exibido e categorias marcadas
+        // (lista vazia = todas as categorias)
+        periodo: { mes: new Date().getMonth(), ano: new Date().getFullYear() },
+        categoriasFiltradas: [],
 
         cards: [],
         transactions: []
@@ -64,10 +77,58 @@ function Dashboard() {
         var nome = self.obterNome() || '';
         var iniciais = nome.split(' ').map(function (parte) { return parte.charAt(0); }).slice(0, 2).join('').toUpperCase();
 
-        $('#sidebarUserName').text(nome);
-        $('#sidebarUserEmail').text(self.obterEmail() || '');
+        $('#sidebarUserName').text(nome).attr('title', nome);
+        $('#sidebarUserEmail').text(self.obterEmail() || '').attr('title', self.obterEmail() || '');
         $('#sidebarAvatar').text(iniciais);
         $('#mobileAvatar').text(iniciais);
+    };
+
+    /**
+     * Exibe a saudação do dashboard conforme a hora do dia (bom dia até 12h,
+     * boa tarde até 18h, boa noite no restante), com o primeiro nome do usuário.
+     *
+     * @returns
+     */
+    self.exibirSaudacao = function () {
+        var hora = new Date().getHours();
+        var saudacao;
+
+        if (hora >= 5 && hora < 12) {
+            saudacao = 'Bom dia';
+        } else if (hora >= 12 && hora < 18) {
+            saudacao = 'Boa tarde';
+        } else {
+            saudacao = 'Boa noite';
+        }
+
+        var primeiroNome = (self.obterNome() || '').split(' ')[0];
+
+        $('#dashboardGreeting').text(primeiroNome ? saudacao + ', ' + primeiroNome : saudacao);
+    };
+
+    /**
+     * Exibe o mês e ano selecionados no seletor de período do dashboard.
+     *
+     * @returns
+     */
+    self.renderizarPeriodo = function () {
+        var meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        $('#balancePeriod').text(meses[self.state.periodo.mes] + ' ' + self.state.periodo.ano);
+    };
+
+    /**
+     * Avança ou retrocede o mês exibido e reaplica os filtros.
+     *
+     * @param {number} delta -1 pro mês anterior, +1 pro próximo
+     * @returns
+     */
+    self.mudarPeriodo = function (delta) {
+        var novaData = new Date(self.state.periodo.ano, self.state.periodo.mes + delta, 1);
+
+        self.state.periodo = { mes: novaData.getMonth(), ano: novaData.getFullYear() };
+        self.renderizarPeriodo();
+        self.aplicarFiltros();
     };
 
     self.mostrarCarregando = function () {
@@ -241,21 +302,120 @@ function Dashboard() {
         );
     };
 
+    /**
+     * O resumo da API cobre o histórico todo; aqui só o saldo interessa —
+     * entradas/saídas na tela respeitam o período/categorias filtrados e são
+     * recalculadas em atualizarFluxoLocal.
+     *
+     * @param {object} resumo resposta de /api/transacoes/resumo
+     * @returns
+     */
     self.updateSummary = function (resumo) {
         self.updateBalanceDisplay(resumo.saldo);
-        $('#totalIncome').text(self.formatCurrency(resumo.totalEntradas));
-        $('#totalExpense').text(self.formatCurrency(resumo.totalSaidas));
     };
 
-    self.renderTransactions = function () {
+    /**
+     * Recalcula entradas, saídas e as barras de proporção a partir das
+     * transações filtradas (período + categorias).
+     *
+     * @param {Array} transacoes transações já filtradas
+     * @returns
+     */
+    self.atualizarFluxoLocal = function (transacoes) {
+        var entradas = 0;
+        var saidas = 0;
+
+        transacoes.forEach(function (tx) {
+            if (tx.tipo === 'ENTRADA') {
+                entradas += tx.valor;
+            } else {
+                saidas += tx.valor;
+            }
+        });
+
+        $('#totalIncome').text(self.formatCurrency(entradas));
+        $('#totalExpense').text(self.formatCurrency(saidas));
+
+        var totalMovimentado = entradas + saidas;
+        var percentualEntradas = totalMovimentado > 0 ? (entradas / totalMovimentado) * 100 : 0;
+        var percentualSaidas = totalMovimentado > 0 ? 100 - percentualEntradas : 0;
+
+        $('#barIncome').css('width', percentualEntradas + '%');
+        $('#barExpense').css('width', percentualSaidas + '%');
+    };
+
+    /**
+     * Aplica os filtros de período e categoria sobre as transações carregadas.
+     * Quando a API passar a aceitar ?de=&ate=&categorias=, esse filtro migra
+     * pro servidor.
+     *
+     * @returns {Array} transações do mês/ano e categorias selecionados
+     */
+    self.obterTransacoesFiltradas = function () {
+        return self.state.transactions.filter(function (tx) {
+            var partes = tx.dataTransacao.split('-');
+            var noPeriodo = parseInt(partes[0], 10) === self.state.periodo.ano &&
+                parseInt(partes[1], 10) - 1 === self.state.periodo.mes;
+            var naCategoria = self.state.categoriasFiltradas.length === 0 ||
+                self.state.categoriasFiltradas.indexOf(tx.categoria) !== -1;
+
+            return noPeriodo && naCategoria;
+        });
+    };
+
+    /**
+     * Reaplica os filtros atuais: renderiza a lista filtrada e recalcula
+     * entradas/saídas do que está visível.
+     *
+     * @returns
+     */
+    self.aplicarFiltros = function () {
+        var filtradas = self.obterTransacoesFiltradas();
+
+        self.renderTransactions(filtradas);
+        self.atualizarFluxoLocal(filtradas);
+    };
+
+    /**
+     * Monta a fileira de chips de filtro por categoria. Os chips são
+     * combináveis (várias categorias ao mesmo tempo); "Todas" limpa a seleção.
+     *
+     * @returns
+     */
+    self.buildFilterRow = function () {
+        var $row = $('#filterRow').empty();
+
+        var $todas = $('<button>', { class: 'filter-chip', text: 'Todas' }).attr('data-categoria', '');
+
+        if (self.state.categoriasFiltradas.length === 0) {
+            $todas.addClass('active');
+        }
+
+        $row.append($todas);
+
+        self.categoriasDisponiveis.forEach(function (categoria) {
+            var icone = self.resolveIconeCategoria(categoria.valor);
+            var $chip = $('<button>', { class: 'filter-chip' })
+                .attr('data-categoria', categoria.valor)
+                .append($('<i>', { class: 'fa-solid ' + icone.icone }), ' ' + categoria.nome);
+
+            if (self.state.categoriasFiltradas.indexOf(categoria.valor) !== -1) {
+                $chip.addClass('active');
+            }
+
+            $row.append($chip);
+        });
+    };
+
+    self.renderTransactions = function (transacoes) {
         var $list = $('#transactionsList').empty();
 
-        if (self.state.transactions.length === 0) {
+        if (transacoes.length === 0) {
             $list.append(
-                $('<li>', { class: 'tx-empty', text: 'Nenhuma movimentação ainda.' })
+                $('<li>', { class: 'tx-empty', text: 'Nenhuma movimentação nesse período.' })
             );
         } else {
-            self.state.transactions.forEach(function (tx) {
+            transacoes.forEach(function (tx) {
                 $list.append(self.buildTransactionItem(tx));
             });
         }
@@ -278,7 +438,7 @@ function Dashboard() {
             },
             success: function (respostaLista) {
                 self.state.transactions = respostaLista;
-                self.renderTransactions();
+                self.aplicarFiltros();
 
                 // Busca o resumo só depois da lista, pra manter o padrão success/error/complete
                 $.ajax({
@@ -317,29 +477,25 @@ function Dashboard() {
     };
 
     /**
-     * Monta o elemento de um cartão na grade, com o gasto do mês já calculado
-     * pela API.
+     * Monta o elemento de um cartão na grade com aparência de cartão físico:
+     * a cor escolhida vira o fundo, com chip decorativo e o gasto do mês
+     * (já calculado pela API) na base.
      *
      * @param {object} card cartão retornado pela API
      * @returns {jQuery} elemento pronto pra inserir na grade de cartões
      */
     self.buildCardItem = function (card) {
-        var $icon = $('<div>', { class: 'card-item-icon' }).css({ background: card.corFundo, color: card.corTexto }).append($('<i>', { class: 'fa-solid fa-credit-card' }));
-
         var $delete = $('<button>', { class: 'item-delete-btn', title: 'Excluir' }).append($('<i>', { class: 'fa-solid fa-trash' })).on('click', function () {
                 self.excluirCartao(card.id);
             });
 
-        return $('<div>', { class: 'card-item' }).append(
-            $('<div>', { class: 'card-item-header' }).append(
-                $icon,
-                $('<div>').append(
-                    $('<p>', { class: 'card-item-name', text: card.nome }),
-                    $('<p>', { class: 'card-item-meta', text: 'Cartão cadastrado' })
-                ),
+        return $('<div>', { class: 'card-item' }).css({ background: card.corFundo, color: card.corTexto }).append(
+            $('<div>', { class: 'card-item-top' }).append(
+                $('<div>', { class: 'card-chip' }),
                 $delete
             ),
             $('<div>').append(
+                $('<p>', { class: 'card-item-name', text: card.nome }),
                 $('<p>', { class: 'card-item-total', text: 'Gasto no mês' }),
                 $('<p>', { class: 'card-item-amount', text: self.formatCurrency(card.gastoNoMes) })
             )
@@ -393,7 +549,7 @@ function Dashboard() {
                 self.populateCardSelect();
 
                 if (self.state.transactions.length > 0) {
-                    self.renderTransactions();
+                    self.aplicarFiltros();
                 }
             },
             error: function (jqXHR) {
@@ -619,7 +775,7 @@ function Dashboard() {
                 window.location.href = 'login.html';
             });
 
-            $(document).on('click', '.nav-item, .bottom-nav-item, .topbar-icon-btn', function () {
+            $(document).on('click', '.nav-item, .bottom-nav-item, .topbar-icon-btn[data-page]', function () {
                 self.navigateTo($(this).data('page'));
             });
 
@@ -649,6 +805,33 @@ function Dashboard() {
                 self.state.currentCategoria = $(this).data('categoria');
                 $('.categoria-chip').removeClass('active');
                 $(this).addClass('active');
+            });
+
+            $('#btnPrevMonth').on('click', function () {
+                self.mudarPeriodo(-1);
+            });
+
+            $('#btnNextMonth').on('click', function () {
+                self.mudarPeriodo(1);
+            });
+
+            $(document).on('click', '.filter-chip', function () {
+                var categoria = $(this).attr('data-categoria');
+
+                if (!categoria) {
+                    self.state.categoriasFiltradas = [];
+                } else {
+                    var indice = self.state.categoriasFiltradas.indexOf(categoria);
+
+                    if (indice === -1) {
+                        self.state.categoriasFiltradas.push(categoria);
+                    } else {
+                        self.state.categoriasFiltradas.splice(indice, 1);
+                    }
+                }
+
+                self.buildFilterRow();
+                self.aplicarFiltros();
             });
 
             $('#btnTypeIn, #btnTypeOut').on('click', function () {
@@ -702,6 +885,9 @@ function Dashboard() {
             });
 
             self.exibirDadosUsuario();
+            self.exibirSaudacao();
+            self.renderizarPeriodo();
+            self.buildFilterRow();
             self.buildColorPicker();
             self.carregarCartoes();
             self.carregarTransacoes();

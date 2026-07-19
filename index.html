@@ -13,6 +13,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="assets/js/theme.js"></script>
 </head>
 
 <body>
@@ -24,8 +25,13 @@
     <aside class="sidebar">
 
         <div class="sidebar-logo">
-            <i class="fa-solid fa-chart-line"></i>
-            <span>Finança</span>
+            <div class="sidebar-logo-brand">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Finança</span>
+            </div>
+            <button class="theme-toggle" title="Alternar tema">
+                <i class="fa-solid fa-moon"></i>
+            </button>
         </div>
 
         <nav class="sidebar-nav">
@@ -63,6 +69,9 @@
                 <i class="fa-solid fa-chevron-down chevron-icon"></i>
             </div>
             <div class="topbar-right">
+                <button class="topbar-icon-btn theme-toggle" title="Alternar tema">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
                 <button class="topbar-icon-btn" data-page="cards">
                     <i class="fa-solid fa-credit-card"></i>
                 </button>
@@ -78,8 +87,16 @@
 
             <div class="page-header">
                 <div class="page-header-text">
-                    <h1 class="page-title">Dashboard</h1>
-                    <p class="page-subtitle" id="balancePeriod">Maio 2026</p>
+                    <h1 class="page-title" id="dashboardGreeting">Dashboard</h1>
+                    <div class="period-selector">
+                        <button class="period-arrow" id="btnPrevMonth" title="Mês anterior">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <p class="page-subtitle" id="balancePeriod"></p>
+                        <button class="period-arrow" id="btnNextMonth" title="Próximo mês">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
                 <nav class="account-tabs" id="tabsDesktop">
                     <button class="acc-tab active" data-view="all">Tudo</button>
@@ -107,17 +124,26 @@
 
                 <div class="summary-card summary-card--flow">
                     <div class="flow-block">
-                        <p class="flow-label">
-                            <span class="flow-dot flow-dot--in"></span>Entradas
-                        </p>
-                        <span class="flow-value flow-value--in" id="totalIncome">R$ 7.500</span>
+                        <div class="flow-top">
+                            <p class="flow-label">
+                                <span class="flow-dot flow-dot--in"></span>Entradas
+                            </p>
+                            <span class="flow-value flow-value--in" id="totalIncome">R$ 7.500</span>
+                        </div>
+                        <div class="flow-track">
+                            <div class="flow-bar flow-bar--in" id="barIncome"></div>
+                        </div>
                     </div>
-                    <div class="flow-divider"></div>
                     <div class="flow-block">
-                        <p class="flow-label">
-                            <span class="flow-dot flow-dot--out"></span>Saídas
-                        </p>
-                        <span class="flow-value flow-value--out" id="totalExpense">R$ 2.679</span>
+                        <div class="flow-top">
+                            <p class="flow-label">
+                                <span class="flow-dot flow-dot--out"></span>Saídas
+                            </p>
+                            <span class="flow-value flow-value--out" id="totalExpense">R$ 2.679</span>
+                        </div>
+                        <div class="flow-track">
+                            <div class="flow-bar flow-bar--out" id="barExpense"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -132,6 +158,7 @@
                         <span>Nova movimentação</span>
                     </button>
                 </div>
+                <div class="filter-row" id="filterRow"></div>
                 <ul class="transactions-list" id="transactionsList"></ul>
             </div>
         </div>

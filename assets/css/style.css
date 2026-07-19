@@ -1,6 +1,4 @@
-/* ============================================================
-   VARIÁVEIS GLOBAIS
-   ============================================================ */
+/* VARIÁVEIS GLOBAIS */
 :root {
     --color-bg: #F7F6F3;
     --color-surface: #FFFFFF;
@@ -23,6 +21,30 @@
     --color-cpf-dot: #1D9E75;
     --color-pj-dot: #378ADD;
 
+    /* Verde-cédula: identidade da marca (sidebar, card de saldo, botões) */
+    --color-brand: #04342C;
+    --color-brand-strong: #0A5240;
+    --color-brand-soft: #5DCAA5;
+    --color-brand-text: #F0FAF5;
+
+    /* Botões e elementos "ativos" (invertem no tema escuro) */
+    --color-action-bg: #04342C;
+    --color-action-text: #E9F7F1;
+
+    --shadow-card: 0 1px 2px rgba(26, 25, 23, 0.04), 0 6px 16px rgba(26, 25, 23, 0.06);
+
+    --color-hover-strong: #E8E6E0;
+    --color-avatar-bg: #E6F1FB;
+    --color-avatar-text: #185FA5;
+    --color-food-bg: #FAEEDA;
+    --color-food-text: #854F0B;
+    --color-home-bg: #EEEDFE;
+    --color-home-text: #534AB7;
+    --color-tab-bg: rgba(255, 255, 255, 0.5);
+    --color-tab-bg-hover: rgba(255, 255, 255, 0.8);
+
+    color-scheme: light;
+
     --sidebar-width: 220px;
     --topbar-h-mobile: 60px;
     --bottom-nav-h: 64px;
@@ -39,10 +61,44 @@
     --transition: 0.18s ease;
 }
 
+/* TEMA ESCURO — ativado via data-theme="dark" */
+[data-theme="dark"] {
+    --color-bg: #131210;
+    --color-surface: #1D1C1A;
+    --color-surface-alt: #292824;
+    --color-border: rgba(255, 255, 255, 0.08);
+    --color-border-md: rgba(255, 255, 255, 0.15);
 
-/* ============================================================
-   RESET & BASE
-   ============================================================ */
+    --color-text-primary: #ECEAE5;
+    --color-text-secondary: #A5A29A;
+    --color-text-muted: #73706A;
+
+    --color-income: #5DCAA5;
+    --color-income-bg: rgba(29, 158, 117, 0.16);
+
+    --color-expense: #F09595;
+    --color-expense-bg: rgba(226, 75, 74, 0.16);
+
+    --color-action-bg: #D7EFE5;
+    --color-action-text: #04342C;
+
+    --shadow-card: none;
+
+    --color-hover-strong: #33322D;
+    --color-avatar-bg: #14395C;
+    --color-avatar-text: #85B7EB;
+    --color-food-bg: rgba(239, 159, 39, 0.16);
+    --color-food-text: #FAC775;
+    --color-home-bg: rgba(127, 119, 221, 0.16);
+    --color-home-text: #AFA9EC;
+    --color-tab-bg: rgba(255, 255, 255, 0.04);
+    --color-tab-bg-hover: rgba(255, 255, 255, 0.09);
+
+    color-scheme: dark;
+}
+
+
+/* RESET & BASE */
 *,
 *::before,
 *::after {
@@ -58,6 +114,7 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.25s ease, color 0.25s ease;
 }
 
 ul {
@@ -75,11 +132,6 @@ input,
 select {
     font-family: var(--font-main);
 }
-
-
-/* ============================================================
-   LAYOUT PRINCIPAL — desktop usa sidebar, mobile usa bottom nav
-   ============================================================ */
 
 /* Por padrão (desktop): esconde elementos exclusivos do mobile */
 .topbar-mobile {
@@ -104,8 +156,7 @@ select {
     left: 0;
     width: var(--sidebar-width);
     height: 100vh;
-    background: var(--color-surface);
-    border-right: 0.5px solid var(--color-border-md);
+    background: var(--color-brand);
     display: flex;
     flex-direction: column;
     padding: 28px 16px;
@@ -161,23 +212,27 @@ select {
 }
 
 
-/* ============================================================
-   SIDEBAR
-   ============================================================ */
+/* SIDEBAR */
 .sidebar-logo {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
     font-size: 17px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--color-brand-text);
     margin-bottom: 36px;
     padding-left: 4px;
 }
 
-.sidebar-logo i {
+.sidebar-logo-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar-logo-brand i {
     font-size: 18px;
-    color: var(--color-income);
+    color: var(--color-brand-soft);
 }
 
 .sidebar-nav {
@@ -195,7 +250,7 @@ select {
     border-radius: var(--radius-sm);
     font-size: 14px;
     font-weight: 400;
-    color: var(--color-text-secondary);
+    color: var(--color-brand-soft);
     transition: background var(--transition), color var(--transition);
     text-align: left;
     width: 100%;
@@ -208,13 +263,13 @@ select {
 }
 
 .nav-item:hover {
-    background: var(--color-surface-alt);
-    color: var(--color-text-primary);
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--color-brand-text);
 }
 
 .nav-item.active {
-    background: var(--color-surface-alt);
-    color: var(--color-text-primary);
+    background: var(--color-brand-strong);
+    color: var(--color-brand-text);
     font-weight: 500;
 }
 
@@ -224,7 +279,7 @@ select {
     gap: 10px;
     padding: 12px;
     border-radius: var(--radius-sm);
-    border: 0.5px solid var(--color-border);
+    border: 0.5px solid rgba(255, 255, 255, 0.14);
     margin-top: auto;
 }
 
@@ -232,32 +287,58 @@ select {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #E6F1FB;
+    background: var(--color-avatar-bg);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
     font-weight: 500;
-    color: #185FA5;
+    color: var(--color-avatar-text);
     flex-shrink: 0;
+}
+
+/* min-width: 0 deixa o bloco de texto encolher dentro do flex; sem isso,
+   um e-mail longo empurra o botão de sair e estoura o card */
+.sidebar-user-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .sidebar-user-name {
     font-size: 13px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--color-brand-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sidebar-user-sub {
     font-size: 11px;
-    color: var(--color-text-muted);
+    color: var(--color-brand-soft);
     margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Na sidebar verde, o avatar e os botões usam a paleta da marca */
+.sidebar .user-avatar-lg {
+    background: var(--color-brand-soft);
+    color: var(--color-brand);
+}
+
+.sidebar .logout-btn {
+    color: var(--color-brand-soft);
+}
+
+.sidebar .logout-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #F09595;
 }
 
 
-/* ============================================================
-   TOPBAR MOBILE
-   ============================================================ */
+/* TOPBAR MOBILE */
 .topbar-mobile {
     position: fixed;
     top: 0;
@@ -266,7 +347,6 @@ select {
     height: var(--topbar-h-mobile);
     background: var(--color-surface);
     border-bottom: 0.5px solid var(--color-border);
-    /* display: flex;  <-- REMOVA ESTA LINHA */
     align-items: center;
     justify-content: space-between;
     padding: 0 16px;
@@ -288,7 +368,7 @@ select {
 }
 
 .account-selector:hover {
-    background: #E8E6E0;
+    background: var(--color-hover-strong);
 }
 
 .account-dot {
@@ -330,28 +410,26 @@ select {
 }
 
 .topbar-icon-btn:hover {
-    background: #E8E6E0;
+    background: var(--color-hover-strong);
 }
 
 .user-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #E6F1FB;
+    background: var(--color-avatar-bg);
     border: 0.5px solid var(--color-border);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
     font-weight: 500;
-    color: #185FA5;
+    color: var(--color-avatar-text);
     flex-shrink: 0;
 }
 
 
-/* ============================================================
-   BOTTOM NAV
-   ============================================================ */
+/* BOTTOM NAV  */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -360,7 +438,6 @@ select {
     height: var(--bottom-nav-h);
     background: var(--color-surface);
     border-top: 0.5px solid var(--color-border);
-    /* display: flex;  <-- REMOVA ESTA LINHA */
     z-index: 40;
 }
 
@@ -386,9 +463,7 @@ select {
 }
 
 
-/* ============================================================
-   FAB MOBILE (botão flutuante)
-   ============================================================ */
+/* FAB MOBILE (botão flutuante)  */
 .fab-mobile {
     position: fixed;
     bottom: calc(var(--bottom-nav-h) + 16px);
@@ -396,10 +471,9 @@ select {
     width: 52px;
     height: 52px;
     border-radius: 50%;
-    background: var(--color-text-primary);
-    color: var(--color-surface);
+    background: var(--color-action-bg);
+    color: var(--color-action-text);
     font-size: 20px;
-    /* display: flex;  <-- REMOVA ESTA LINHA */
     align-items: center;
     justify-content: center;
     z-index: 41;
@@ -416,9 +490,7 @@ select {
 }
 
 
-/* ============================================================
-   PÁGINAS
-   ============================================================ */
+/* PÁGINAS  */
 .page {
     display: none;
 }
@@ -428,9 +500,7 @@ select {
 }
 
 
-/* ============================================================
-   PAGE HEADER
-   ============================================================ */
+/* PAGE HEADER */
 .page-header {
     display: flex;
     align-items: center;
@@ -453,10 +523,40 @@ select {
     margin-top: 2px;
 }
 
+/* Seletor de mês no cabeçalho do dashboard (‹ Julho 2026 ›) */
+.period-selector {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 2px;
+    margin-left: -6px;
+}
 
-/* ============================================================
-   ABAS DE CONTA
-   ============================================================ */
+.period-selector .page-subtitle {
+    margin-top: 0;
+    min-width: 100px;
+    text-align: center;
+}
+
+.period-arrow {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    transition: background var(--transition), color var(--transition);
+}
+
+.period-arrow:hover {
+    background: var(--color-surface-alt);
+    color: var(--color-text-primary);
+}
+
+
+/* ABAS DE CONTA */
 .account-tabs {
     display: flex;
     gap: 6px;
@@ -466,31 +566,49 @@ select {
     margin-top: 16px;
 }
 
+/* No desktop, as abas do card de saldo ficam escondidas (a regra .account-tabs
+   acima venceria o display:none do topo do arquivo, por vir depois) */
+@media (min-width: 769px) {
+    .account-tabs--mobile {
+        display: none;
+    }
+}
+
 .acc-tab {
     padding: 6px 16px;
     border-radius: var(--radius-pill);
     font-size: 12px;
     font-weight: 500;
     border: 0.5px solid var(--color-border);
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--color-tab-bg);
     color: var(--color-text-secondary);
     transition: background var(--transition), color var(--transition);
 }
 
 .acc-tab:hover {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--color-tab-bg-hover);
 }
 
 .acc-tab.active {
-    background: var(--color-text-primary);
-    color: var(--color-surface);
+    background: var(--color-action-bg);
+    color: var(--color-action-text);
     border-color: transparent;
 }
 
+/* Dentro do card de saldo (verde), a aba ativa vira uma pílula clara */
+.summary-card--balance .acc-tab.active {
+    background: var(--color-brand-text);
+    color: var(--color-brand);
+}
 
-/* ============================================================
-   SUMMARY GRID
-   ============================================================ */
+.summary-card--balance .acc-tab {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--color-brand-soft);
+}
+
+
+/* SUMMARY GRID */
 .summary-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -508,31 +626,35 @@ select {
     border-radius: var(--radius-lg);
     padding: 24px;
     border: 0.5px solid var(--color-border-md);
+    box-shadow: var(--shadow-card);
 }
 
+/* Card de saldo: verde-cédula com arcos concêntricos ao fundo (padrão de nota) */
 .summary-card--balance {
-    background: var(--color-text-primary);
-    color: var(--color-surface);
+    background: var(--color-brand) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='220' viewBox='0 0 420 220'%3E%3Cg fill='none' stroke='%235DCAA5' stroke-opacity='0.14'%3E%3Ccircle cx='420' cy='0' r='40'/%3E%3Ccircle cx='420' cy='0' r='80'/%3E%3Ccircle cx='420' cy='0' r='120'/%3E%3Ccircle cx='420' cy='0' r='160'/%3E%3Ccircle cx='420' cy='0' r='200'/%3E%3Ccircle cx='420' cy='0' r='240'/%3E%3C/g%3E%3C/svg%3E") no-repeat right top;
+    color: var(--color-brand-text);
+    border-color: transparent;
 }
 
 .summary-card--flow {
     background: var(--color-surface);
     display: flex;
-    align-items: center;
-    gap: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
 }
 
 .summary-label {
     font-size: 11px;
     letter-spacing: 0.09em;
     text-transform: uppercase;
-    opacity: 0.6;
+    color: var(--color-brand-soft);
     margin-bottom: 10px;
 }
 
 .balance-value {
     font-size: 36px;
-    font-weight: 300;
+    font-weight: 500;
     letter-spacing: -0.03em;
     font-family: var(--font-mono);
     line-height: 1;
@@ -550,15 +672,37 @@ select {
 }
 
 .flow-block {
-    flex: 1;
-    padding: 8px 20px;
+    width: 100%;
 }
 
-.flow-divider {
-    width: 0.5px;
-    align-self: stretch;
-    background: var(--color-border-md);
-    margin: 8px 0;
+.flow-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.flow-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--color-surface-alt);
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.flow-bar {
+    height: 100%;
+    border-radius: 3px;
+    width: 0;
+    transition: width 0.45s ease;
+}
+
+.flow-bar--in {
+    background: var(--color-income-dot);
+}
+
+.flow-bar--out {
+    background: var(--color-expense-dot);
 }
 
 .flow-label {
@@ -569,7 +713,6 @@ select {
     color: var(--color-text-muted);
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    margin-bottom: 8px;
 }
 
 .flow-dot {
@@ -603,14 +746,13 @@ select {
 }
 
 
-/* ============================================================
-   TRANSACTIONS PANEL
-   ============================================================ */
+/* TRANSACTIONS PANEL */
 .transactions-panel {
     background: var(--color-surface);
     border-radius: var(--radius-lg);
     border: 0.5px solid var(--color-border-md);
     overflow: hidden;
+    box-shadow: var(--shadow-card);
 }
 
 .transactions-header {
@@ -635,8 +777,8 @@ select {
     gap: 8px;
     padding: 8px 18px;
     border-radius: var(--radius-pill);
-    background: var(--color-text-primary);
-    color: var(--color-surface);
+    background: var(--color-action-bg);
+    color: var(--color-action-text);
     font-size: 13px;
     font-weight: 500;
     transition: opacity var(--transition), transform var(--transition);
@@ -667,6 +809,49 @@ select {
     .page-header .fab-button {
         padding: 9px 14px;
         border-radius: var(--radius-md);
+    }
+}
+
+/* Chips de filtro por categoria (combináveis) acima da lista de movimentações */
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 24px;
+    border-bottom: 0.5px solid var(--color-border);
+}
+
+.filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    border: 0.5px solid var(--color-border);
+    background: var(--color-surface-alt);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.filter-chip:hover {
+    background: var(--color-hover-strong);
+}
+
+.filter-chip.active {
+    background: var(--color-action-bg);
+    color: var(--color-action-text);
+    border-color: transparent;
+}
+
+@media (max-width: 768px) {
+    .filter-row {
+        padding: 12px 16px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
@@ -728,13 +913,13 @@ select {
 }
 
 .tx-icon--food {
-    background: #FAEEDA;
-    color: #854F0B;
+    background: var(--color-food-bg);
+    color: var(--color-food-text);
 }
 
 .tx-icon--home {
-    background: #EEEDFE;
-    color: #534AB7;
+    background: var(--color-home-bg);
+    color: var(--color-home-text);
 }
 
 .tx-info {
@@ -773,67 +958,84 @@ select {
 }
 
 
-/* ============================================================
-   TELA DE CARTÕES
-   ============================================================ */
+/* TELA DE CARTÕES */
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 16px;
 }
 
+/* Cada cartão cadastrado vira um "cartão físico": a cor escolhida é o fundo,
+   com chip decorativo e o gasto do mês em fonte mono */
 .card-item {
-    background: var(--color-surface);
     border-radius: var(--radius-lg);
-    border: 0.5px solid var(--color-border-md);
     padding: 20px;
+    aspect-ratio: 8 / 5;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    justify-content: space-between;
     animation: fadeSlideIn 0.22s ease both;
+    box-shadow: var(--shadow-card);
+    transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.card-item-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.card-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(26, 25, 23, 0.06), 0 12px 24px rgba(26, 25, 23, 0.10);
 }
 
-.card-item-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-sm);
+.card-item-top {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.card-chip {
+    width: 36px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1.5px solid currentColor;
+    opacity: 0.5;
+    position: relative;
+}
+
+.card-chip::after {
+    content: '';
+    position: absolute;
+    inset: 6px 4px;
+    border-radius: 3px;
+    border: 1px solid currentColor;
 }
 
 .card-item-name {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
-    color: var(--color-text-primary);
-}
-
-.card-item-meta {
-    font-size: 12px;
-    color: var(--color-text-muted);
 }
 
 .card-item-total {
-    font-size: 11px;
-    color: var(--color-text-muted);
-    letter-spacing: 0.06em;
+    font-size: 10px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    opacity: 0.65;
+    margin-top: 6px;
 }
 
 .card-item-amount {
     font-size: 20px;
     font-weight: 500;
     font-family: var(--font-mono);
-    color: var(--color-expense);
     margin-top: 2px;
+}
+
+.card-item .item-delete-btn {
+    color: currentColor;
+    opacity: 0.5;
+}
+
+.card-item .item-delete-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: currentColor;
+    opacity: 1;
 }
 
 .card-empty {
@@ -852,9 +1054,7 @@ select {
 }
 
 
-/* ============================================================
-   MODAIS
-   ============================================================ */
+/* MODAIS */
 .modal-backdrop {
     display: none;
     position: fixed;
@@ -1000,8 +1200,8 @@ select {
     width: 100%;
     height: 50px;
     border-radius: var(--radius-sm);
-    background: var(--color-text-primary);
-    color: var(--color-surface);
+    background: var(--color-action-bg);
+    color: var(--color-action-text);
     font-size: 14px;
     font-weight: 500;
     margin-top: 4px;
@@ -1017,9 +1217,7 @@ select {
 }
 
 
-/* ============================================================
-   COLOR PICKER
-   ============================================================ */
+/* COLOR PICKER */
 .color-picker-label {
     font-size: 12px;
     color: var(--color-text-muted);
@@ -1055,9 +1253,7 @@ select {
 }
 
 
-/* ============================================================
-   LOADING OVERLAY
-   ============================================================ */
+/* LOADING OVERLAY */
 .loading-overlay {
     display: none;
     position: fixed;
@@ -1088,9 +1284,7 @@ select {
 }
 
 
-/* ============================================================
-   TELAS DE AUTENTICAÇÃO (login/cadastro)
-   ============================================================ */
+/* TELAS DE AUTENTICAÇÃO (login/cadastro) */
 .auth-page {
     min-height: 100vh;
     display: flex;
@@ -1138,9 +1332,7 @@ select {
 }
 
 
-/* ============================================================
-   SELETOR DE CATEGORIA (chips)
-   ============================================================ */
+/* SELETOR DE CATEGORIA (chips) */
 .categoria-row {
     display: flex;
     flex-wrap: wrap;
@@ -1163,15 +1355,13 @@ select {
 }
 
 .categoria-chip.active {
-    background: var(--color-text-primary);
-    color: var(--color-surface);
+    background: var(--color-action-bg);
+    color: var(--color-action-text);
     border-color: transparent;
 }
 
 
-/* ============================================================
-   BOTÃO DE LOGOUT
-   ============================================================ */
+/* BOTÃO DE LOGOUT */
 .logout-btn {
     width: 32px;
     height: 32px;
@@ -1189,10 +1379,50 @@ select {
     color: var(--color-expense);
 }
 
+/* Na sidebar (desktop): ícone discreto ao lado do logo */
+.sidebar .theme-toggle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-brand-soft);
+    font-size: 14px;
+    transition: background var(--transition), color var(--transition);
+}
 
-/* ============================================================
-   BOTÃO DE EXCLUIR (cartões e transações)
-   ============================================================ */
+.sidebar .theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-brand-text);
+}
+
+/* No login/cadastro: botão flutuante no canto superior direito */
+.theme-toggle--auth {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    border: 0.5px solid var(--color-border-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    font-size: 15px;
+    z-index: 60;
+    transition: background var(--transition), color var(--transition);
+}
+
+.theme-toggle--auth:hover {
+    background: var(--color-surface-alt);
+    color: var(--color-text-primary);
+}
+
+
+/* BOTÃO DE EXCLUIR (cartões e transações) */
 .item-delete-btn {
     width: 28px;
     height: 28px;
@@ -1211,14 +1441,8 @@ select {
     color: var(--color-expense);
 }
 
-.card-item-header .item-delete-btn {
-    margin-left: auto;
-}
 
-
-/* ============================================================
-   ÍCONE "OUTRO" (categoria sem classe específica) E LISTA VAZIA
-   ============================================================ */
+/* ICONE "OUTRO" (categoria sem classe específica) E LISTA VAZIA */
 .tx-icon--outro {
     background: var(--color-surface-alt);
     color: var(--color-text-muted);
