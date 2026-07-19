@@ -7,7 +7,7 @@ var telaCadastro = new TelaCadastro();
 function TelaCadastro() {
     var self = this;
 
-    self.apiBaseUrl = 'http://localhost:8080';
+    self.apiBaseUrl = 'https://e-financeiro.onrender.com';
 
     self.obterToken = function () {
         return localStorage.getItem('token');

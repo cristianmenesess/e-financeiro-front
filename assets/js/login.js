@@ -7,7 +7,7 @@ var telaLogin = new TelaLogin();
 function TelaLogin() {
     var self = this;
 
-    self.apiBaseUrl = 'http://localhost:8080';
+    self.apiBaseUrl = 'https://e-financeiro.onrender.com';
 
     self.obterToken = function () {
         return localStorage.getItem('token');

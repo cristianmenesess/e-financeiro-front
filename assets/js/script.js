@@ -7,7 +7,7 @@ var dashboard = new Dashboard();
 function Dashboard() {
     var self = this;
 
-    self.apiBaseUrl = 'http://localhost:8080';
+    self.apiBaseUrl = 'https://e-financeiro.onrender.com';
 
     self.cardColors = [
         { bg: '#E1F5EE', color: '#0F6E56' },
