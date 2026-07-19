@@ -1,4 +1,4 @@
-# e-financeiro-front
+# E-Financeiro Front-End
 
 **Acesse o site:** https://e-financeiro.vercel.app/ <br>
 *(Nota: Hospedado no Render no plano gratuito. A primeira requisição pode levar até 60 segundos para "acordar" o servidor).*
