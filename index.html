@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador Financeiro</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <aside class="sidebar">
+
+        <div class="sidebar-logo">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Finança</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <button class="nav-item active" data-page="dashboard">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-item" data-page="cards">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>Cartões</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-avatar-lg" id="sidebarAvatar">--</div>
+            <div class="sidebar-user-info">
+                <p class="sidebar-user-name" id="sidebarUserName">Carregando...</p>
+                <p class="sidebar-user-sub" id="sidebarUserEmail"></p>
+            </div>
+            <button class="logout-btn" id="btnLogoutDesktop" title="Sair">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+        </div>
+
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="main-content">
+
+        <!-- TOPBAR — visível apenas no mobile -->
+        <header class="topbar-mobile">
+            <div class="account-selector" id="btnAccountSelector">
+                <span class="account-dot" id="accountDot"></span>
+                <span class="account-label" id="accountLabel">Pessoal (CPF)</span>
+                <i class="fa-solid fa-chevron-down chevron-icon"></i>
+            </div>
+            <div class="topbar-right">
+                <button class="topbar-icon-btn" data-page="cards">
+                    <i class="fa-solid fa-credit-card"></i>
+                </button>
+                <div class="user-avatar" id="mobileAvatar">--</div>
+                <button class="logout-btn" id="btnLogoutMobile" title="Sair">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD -->
+        <div class="page active" id="pageDashboard">
+
+            <div class="page-header">
+                <div class="page-header-text">
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle" id="balancePeriod">Maio 2026</p>
+                </div>
+                <nav class="account-tabs" id="tabsDesktop">
+                    <button class="acc-tab active" data-view="all">Tudo</button>
+                    <button class="acc-tab" data-view="cpf">CPF</button>
+                    <button class="acc-tab" data-view="pj">PJ</button>
+                </nav>
+            </div>
+
+            <!-- Resumo: saldo + entradas/saídas -->
+            <div class="summary-grid">
+
+                <div class="summary-card summary-card--balance">
+                    <p class="summary-label">Saldo disponível</p>
+                    <h2 class="balance-value">
+                        R$ <span id="balanceInteger">4.820</span><span class="balance-cents"
+                            id="balanceCents">,37</span>
+                    </h2>
+                    <!-- abas no mobile ficam dentro do card de saldo -->
+                    <nav class="account-tabs account-tabs--mobile" id="tabsMobile">
+                        <button class="acc-tab active" data-view="all">Tudo</button>
+                        <button class="acc-tab" data-view="cpf">CPF</button>
+                        <button class="acc-tab" data-view="pj">PJ</button>
+                    </nav>
+                </div>
+
+                <div class="summary-card summary-card--flow">
+                    <div class="flow-block">
+                        <p class="flow-label">
+                            <span class="flow-dot flow-dot--in"></span>Entradas
+                        </p>
+                        <span class="flow-value flow-value--in" id="totalIncome">R$ 7.500</span>
+                    </div>
+                    <div class="flow-divider"></div>
+                    <div class="flow-block">
+                        <p class="flow-label">
+                            <span class="flow-dot flow-dot--out"></span>Saídas
+                        </p>
+                        <span class="flow-value flow-value--out" id="totalExpense">R$ 2.679</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Movimentações -->
+            <div class="transactions-panel">
+                <div class="transactions-header">
+                    <p class="section-title">Últimas movimentações</p>
+                    <button class="fab-button" id="btnNewTransaction">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nova movimentação</span>
+                    </button>
+                </div>
+                <ul class="transactions-list" id="transactionsList"></ul>
+            </div>
+        </div>
+
+        <!-- CARTÕES -->
+        <div class="page" id="pageCards">
+
+            <div class="page-header">
+                <div class="page-header-text">
+                    <h1 class="page-title">Cartões</h1>
+                    <p class="page-subtitle">Gerencie seus cartões cadastrados</p>
+                </div>
+                <button class="fab-button" id="btnNewCard">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Novo cartão</span>
+                </button>
+            </div>
+
+            <div class="cards-grid" id="cardsGrid"></div>
+        </div>
+
+        <button class="fab-mobile" id="btnFabMobile">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="bottom-nav-item active" data-page="dashboard">
+            <i class="fa-solid fa-house"></i>
+            <span>Início</span>
+        </button>
+        <button class="bottom-nav-item" data-page="cards">
+            <i class="fa-solid fa-credit-card"></i>
+            <span>Cartões</span>
+        </button>
+    </nav>
+
+    <!-- MODAL: NOVA MOVIMENTAÇÃO -->
+    <div class="modal-backdrop" id="modalTransaction">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Nova movimentação</h2>
+
+            <div class="type-row">
+                <button class="type-btn active-in" id="btnTypeIn" data-type="in">
+                    <i class="fa-solid fa-arrow-down-left"></i> Entrada
+                </button>
+                <button class="type-btn" id="btnTypeOut" data-type="out">
+                    <i class="fa-solid fa-arrow-up-right"></i> Saída
+                </button>
+            </div>
+
+            <input class="modal-input" type="text" id="inputDescription" placeholder="Descrição (ex: Aluguel)">
+            <input class="modal-input" type="text" id="inputValue" placeholder="Valor (R$)" inputmode="decimal">
+            <select class="modal-input" id="inputAccount">
+                <option value="cpf">CPF — Pessoal</option>
+                <option value="pj">PJ — Empresa</option>
+            </select>
+
+            <div class="categoria-row" id="categoriaRow">
+                <button class="categoria-chip" data-categoria="RENDA" type="button">
+                    <i class="fa-solid fa-arrow-down-left"></i> Renda
+                </button>
+                <button class="categoria-chip" data-categoria="DESPESA" type="button">
+                    <i class="fa-solid fa-arrow-up-right"></i> Despesa
+                </button>
+                <button class="categoria-chip" data-categoria="ALIMENTACAO" type="button">
+                    <i class="fa-solid fa-bag-shopping"></i> Alimentação
+                </button>
+                <button class="categoria-chip" data-categoria="MORADIA" type="button">
+                    <i class="fa-solid fa-house"></i> Moradia
+                </button>
+                <button class="categoria-chip" data-categoria="OUTRO" type="button">
+                    <i class="fa-solid fa-ellipsis"></i> Outro
+                </button>
+            </div>
+
+            <div class="card-row" id="cardRow">
+                <select class="modal-input" id="inputCard">
+                    <option value="">Sem cartão (débito / dinheiro)</option>
+                </select>
+            </div>
+
+            <button class="modal-confirm" id="btnConfirmTransaction">Adicionar</button>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVO CARTÃO -->
+    <div class="modal-backdrop" id="modalCard">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Novo cartão</h2>
+
+            <input class="modal-input" type="text" id="inputCardName"
+                placeholder="Nome do cartão (ex: Nubank, Itaú...)">
+
+            <p class="color-picker-label">Cor do ícone</p>
+            <div class="color-picker" id="colorPicker"></div>
+
+            <button class="modal-confirm" id="btnConfirmCard">Salvar cartão</button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="assets/js/script.js"></script>
+
+</body>
+
+</html>
