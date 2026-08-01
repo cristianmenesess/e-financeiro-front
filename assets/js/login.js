@@ -37,6 +37,8 @@ function TelaLogin() {
     self.exibirErroAjax = function (jqXHR) {
         if (!jqXHR.responseJSON) {
             alert('Não foi possível conectar ao servidor. Tente novamente.');
+        } else if (jqXHR.responseJSON.mensagem) {
+            alert(jqXHR.responseJSON.mensagem);
         } else if (jqXHR.status === 400) {
             var campos = Object.keys(jqXHR.responseJSON);
 
@@ -46,7 +48,53 @@ function TelaLogin() {
                 alert('Erro de validação. Tente novamente.');
             }
         } else {
-            alert(jqXHR.responseJSON.mensagem || 'Ocorreu um erro. Tente novamente.');
+            alert('Ocorreu um erro. Tente novamente.');
+        }
+    };
+
+    self.abrirModalEsqueciSenha = function () {
+        $('#inputEmailReset').val('');
+        $('#formEsqueciSenha').show();
+        $('#successEsqueciSenha').hide();
+        $('#modalEsqueciSenha').addClass('open');
+    };
+
+    self.fecharModalEsqueciSenha = function () {
+        $('#modalEsqueciSenha').removeClass('open');
+    };
+
+    /**
+     * Solicita o link de redefinição de senha via API. A API sempre responde 200
+     * (nunca revela se o e-mail existe), então o sucesso troca o formulário por
+     * uma mensagem fixa, sem fechar o modal.
+     *
+     * @returns
+     */
+    self.enviarEmailReset = function () {
+        var email = $.trim($('#inputEmailReset').val());
+
+        if (email) {
+            $.ajax({
+                url: self.apiBaseUrl + '/api/autenticacao/esqueci-senha',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ email: email }),
+                beforeSend: function () {
+                    self.mostrarCarregando();
+                },
+                success: function () {
+                    $('#formEsqueciSenha').hide();
+                    $('#successEsqueciSenha').show();
+                },
+                error: function (jqXHR) {
+                    self.exibirErroAjax(jqXHR);
+                },
+                complete: function () {
+                    self.esconderCarregando();
+                }
+            });
+        } else {
+            alert('Informe seu e-mail.');
         }
     };
 
@@ -100,6 +148,25 @@ function TelaLogin() {
             $('#inputEmail, #inputSenha').on('keydown', function (e) {
                 if (e.key === 'Enter') {
                     self.efetuarLogin();
+                }
+            });
+
+            $('#linkEsqueciSenha').on('click', function (e) {
+                e.preventDefault();
+                self.abrirModalEsqueciSenha();
+            });
+
+            $('#modalEsqueciSenha').on('click', function (e) {
+                if ($(e.target).is('#modalEsqueciSenha')) {
+                    self.fecharModalEsqueciSenha();
+                }
+            });
+
+            $('#btnEnviarReset').on('click', self.enviarEmailReset);
+
+            $('#inputEmailReset').on('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    self.enviarEmailReset();
                 }
             });
         }

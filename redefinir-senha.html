@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro — E-Financeiro</title>
+    <title>Redefinir senha — E-Financeiro</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,18 +31,26 @@
                 <span>E-Financeiro</span>
             </div>
 
-            <input class="modal-input" type="text" id="inputNome" placeholder="Nome completo">
-            <input class="modal-input" type="email" id="inputEmail" placeholder="E-mail">
-            <input class="modal-input" type="password" id="inputSenha" placeholder="Senha (mínimo 8 caracteres)">
+            <div id="formRedefinirSenha">
+                <p class="auth-help-text">Escolha uma nova senha para acessar sua conta.</p>
+                <input class="modal-input" type="password" id="inputNovaSenha" placeholder="Nova senha (mínimo 8 caracteres)">
+                <input class="modal-input" type="password" id="inputConfirmarSenha" placeholder="Confirmar nova senha">
 
-            <button class="modal-confirm" id="btnCadastrar">Criar conta</button>
+                <button class="modal-confirm" id="btnRedefinir">Redefinir senha</button>
+            </div>
 
-            <p class="auth-link">Já tem conta? <a href="login.html">Entrar</a></p>
+            <div class="auth-feedback auth-feedback--error" id="erroToken">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <p>Link inválido ou expirado. Solicite um novo link na tela de login.</p>
+                <a href="login.html">Voltar para o login</a>
+            </div>
+
+            <p class="auth-link">Lembrou a senha? <a href="login.html">Entrar</a></p>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="assets/js/cadastro.js"></script>
+    <script src="assets/js/redefinir-senha.js"></script>
 
 </body>
 

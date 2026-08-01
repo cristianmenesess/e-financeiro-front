@@ -150,6 +150,8 @@ function Dashboard() {
     self.exibirErroAjax = function (jqXHR) {
         if (!jqXHR.responseJSON) {
             alert('Não foi possível conectar ao servidor. Tente novamente.');
+        } else if (jqXHR.responseJSON.mensagem) {
+            alert(jqXHR.responseJSON.mensagem);
         } else if (jqXHR.status === 400) {
             var campos = Object.keys(jqXHR.responseJSON);
 
@@ -159,7 +161,7 @@ function Dashboard() {
                 alert('Erro de validação. Tente novamente.');
             }
         } else {
-            alert(jqXHR.responseJSON.mensagem || 'Ocorreu um erro. Tente novamente.');
+            alert('Ocorreu um erro. Tente novamente.');
         }
     };
 

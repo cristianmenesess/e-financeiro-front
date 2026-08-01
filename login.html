@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — Finança</title>
+    <title>Login — E-Financeiro</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,15 +30,35 @@
         <div class="auth-card">
             <div class="auth-logo">
                 <i class="fa-solid fa-chart-line"></i>
-                <span>Finança</span>
+                <span>E-Financeiro</span>
             </div>
 
             <input class="modal-input" type="email" id="inputEmail" placeholder="E-mail">
             <input class="modal-input" type="password" id="inputSenha" placeholder="Senha">
+            <a class="forgot-password-link" href="#" id="linkEsqueciSenha">Esqueceu a senha?</a>
 
             <button class="modal-confirm" id="btnLogin">Entrar</button>
 
             <p class="auth-link">Não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+        </div>
+    </div>
+
+    <!-- MODAL: ESQUECI A SENHA -->
+    <div class="modal-backdrop" id="modalEsqueciSenha">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Esqueceu a senha?</h2>
+
+            <div id="formEsqueciSenha">
+                <p class="auth-help-text">Informe seu e-mail cadastrado e enviaremos um link para redefinir sua senha.</p>
+                <input class="modal-input" type="email" id="inputEmailReset" placeholder="E-mail">
+                <button class="modal-confirm" id="btnEnviarReset">Enviar link</button>
+            </div>
+
+            <div class="auth-feedback auth-feedback--success" id="successEsqueciSenha">
+                <i class="fa-solid fa-envelope-circle-check"></i>
+                <p>Se esse e-mail estiver cadastrado, você vai receber um link para redefinir sua senha em instantes.</p>
+            </div>
         </div>
     </div>
 
