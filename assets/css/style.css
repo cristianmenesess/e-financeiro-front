@@ -18,8 +18,7 @@
     --color-expense-bg: #FCEBEB;
     --color-expense-dot: #E24B4A;
 
-    --color-cpf-dot: #1D9E75;
-    --color-pj-dot: #378ADD;
+    --color-account-dot: #1D9E75;
 
     /* Verde-cédula: identidade da marca (sidebar, card de saldo, botões) */
     --color-brand: #04342C;
@@ -375,13 +374,9 @@ select {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--color-cpf-dot);
+    background: var(--color-account-dot);
     flex-shrink: 0;
     transition: background var(--transition);
-}
-
-.account-dot.pj {
-    background: var(--color-pj-dot);
 }
 
 .chevron-icon {
@@ -1038,6 +1033,22 @@ select {
     opacity: 1;
 }
 
+.card-item-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.card-item .item-edit-btn {
+    color: currentColor;
+    opacity: 0.5;
+}
+
+.card-item .item-edit-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: currentColor;
+    opacity: 1;
+}
+
 .card-empty {
     grid-column: 1 / -1;
     text-align: center;
@@ -1214,6 +1225,14 @@ select {
 
 .modal-confirm:active {
     transform: scale(0.98);
+}
+
+.modal-warning {
+    font-size: 13px;
+    color: var(--color-expense);
+    text-align: center;
+    line-height: 1.5;
+    margin-bottom: 16px;
 }
 
 
@@ -1493,6 +1512,24 @@ select {
 .item-delete-btn:hover {
     background: var(--color-expense-bg);
     color: var(--color-expense);
+}
+
+.item-edit-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: background var(--transition), color var(--transition);
+}
+
+.item-edit-btn:hover {
+    background: var(--color-hover-strong);
+    color: var(--color-text-primary);
 }
 
 

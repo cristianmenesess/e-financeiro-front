@@ -36,6 +36,9 @@ function Dashboard() {
         currentType: 'in',
         currentCategoria: null,
         selectedColor: self.cardColors[0],
+        selectedContaColor: self.cardColors[0],
+        editingContaId: null,
+        excludingContaId: null,
 
         // Filtros do dashboard: mês/ano exibido e categorias marcadas
         // (lista vazia = todas as categorias)
@@ -43,6 +46,7 @@ function Dashboard() {
         categoriasFiltradas: [],
 
         cards: [],
+        contas: [],
         transactions: []
     };
 
@@ -173,7 +177,7 @@ function Dashboard() {
      * @returns
      */
     self.tratarErroRequisicao = function (jqXHR) {
-        if (jqXHR.status === 401) {
+        if (jqXHR.status === 401 && !(jqXHR.responseJSON && jqXHR.responseJSON.mensagem)) {
             self.limparSessao();
             window.location.href = 'login.html';
         } else {
@@ -215,13 +219,13 @@ function Dashboard() {
     };
 
     self.updateAccountSelector = function (view) {
-        var labels = { all: 'Todas as contas', cpf: 'Pessoal (CPF)', pj: 'Empresa (PJ)' };
-        $('#accountLabel').text(labels[view]);
-
-        if (view === 'pj') {
-            $('#accountDot').addClass('pj');
+        if (view === 'all') {
+            $('#accountLabel').text('Todas as contas');
+            $('#accountDot').css('background', '');
         } else {
-            $('#accountDot').removeClass('pj');
+            var conta = self.getContaById(view);
+            $('#accountLabel').text(conta ? conta.nome : '');
+            $('#accountDot').css('background', conta ? conta.corTexto : '');
         }
     };
 
@@ -275,7 +279,7 @@ function Dashboard() {
         var amountClass = tx.tipo === 'ENTRADA' ? 'tx-amount--in' : 'tx-amount--out';
         var prefix = tx.tipo === 'ENTRADA' ? '+' : '-';
         var metaCard = card ? ' · ' + card.nome : '';
-        var metaText = self.formatarData(tx.dataTransacao) + ' · ' + tx.conta + metaCard;
+        var metaText = self.formatarData(tx.dataTransacao) + ' · ' + tx.nomeConta + metaCard;
 
         var $icon;
 
@@ -430,10 +434,10 @@ function Dashboard() {
      * @returns
      */
     self.carregarTransacoes = function () {
-        var conta = self.state.currentView === 'all' ? 'todas' : self.state.currentView;
+        var sufixo = self.state.currentView === 'all' ? '' : '?contaId=' + self.state.currentView;
 
         $.ajax({
-            url: self.apiBaseUrl + '/api/transacoes?conta=' + conta,
+            url: self.apiBaseUrl + '/api/transacoes' + sufixo,
             headers: self.cabecalhoAuth(),
             beforeSend: function () {
                 self.mostrarCarregando();
@@ -444,7 +448,7 @@ function Dashboard() {
 
                 // Busca o resumo só depois da lista, pra manter o padrão success/error/complete
                 $.ajax({
-                    url: self.apiBaseUrl + '/api/transacoes/resumo?conta=' + conta,
+                    url: self.apiBaseUrl + '/api/transacoes/resumo' + sufixo,
                     headers: self.cabecalhoAuth(),
                     success: function (respostaResumo) {
                         self.updateSummary(respostaResumo);
@@ -476,6 +480,54 @@ function Dashboard() {
         }
 
         return found;
+    };
+
+    self.getContaById = function (id) {
+        var found = null;
+
+        self.state.contas.forEach(function (c) {
+            if (c.id === id) {
+                found = c;
+            }
+        });
+
+        return found;
+    };
+
+    /**
+     * Monta as abas de conta (desktop e mobile): "Tudo" fixo + uma por conta do usuário.
+     *
+     * @returns
+     */
+    self.buildAccountTabs = function () {
+        var $todas = $('<button>', { class: 'acc-tab', text: 'Tudo' }).attr('data-view', 'all');
+
+        if (self.state.currentView === 'all') {
+            $todas.addClass('active');
+        }
+
+        var $wrapper = $('<div>').append($todas);
+
+        self.state.contas.forEach(function (conta) {
+            var $tab = $('<button>', { class: 'acc-tab', text: conta.nome }).attr('data-view', conta.id);
+
+            if (self.state.currentView === conta.id) {
+                $tab.addClass('active');
+            }
+
+            $wrapper.append($tab);
+        });
+
+        $('#tabsDesktop').html($wrapper.html());
+        $('#tabsMobile').html($wrapper.html());
+    };
+
+    self.populateAccountSelect = function () {
+        var $select = $('#inputAccount').empty();
+
+        self.state.contas.forEach(function (conta) {
+            $select.append($('<option>', { value: conta.id, text: conta.nome }));
+        });
     };
 
     /**
@@ -527,6 +579,222 @@ function Dashboard() {
 
         self.state.cards.forEach(function (card) {
             $select.append($('<option>', { value: card.id, text: card.nome }));
+        });
+    };
+
+    /**
+     * Busca as contas do usuário e atualiza a tela: grade de contas, abas do
+     * seletor e select do modal de nova movimentação.
+     *
+     * @returns
+     */
+    self.carregarContas = function () {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/contas',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (resposta) {
+                self.state.contas = resposta;
+                self.renderContas();
+                self.buildAccountTabs();
+                self.populateAccountSelect();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    self.buildContaItem = function (conta) {
+        var $editar = $('<button>', { class: 'item-edit-btn', title: 'Editar' })
+            .append($('<i>', { class: 'fa-solid fa-pen' }))
+            .on('click', function () {
+                self.abrirEdicaoConta(conta);
+            });
+
+        var $excluir = $('<button>', { class: 'item-delete-btn', title: 'Excluir' })
+            .append($('<i>', { class: 'fa-solid fa-trash' }))
+            .on('click', function () {
+                self.abrirModalExclusaoConta(conta.id);
+            });
+
+        return $('<div>', { class: 'card-item' }).css({ background: conta.corFundo, color: conta.corTexto }).append(
+            $('<div>', { class: 'card-item-top' }).append(
+                $('<div>', { class: 'card-chip' }),
+                $('<div>', { class: 'card-item-actions' }).append($editar, $excluir)
+            ),
+            $('<p>', { class: 'card-item-name', text: conta.nome })
+        );
+    };
+
+    self.renderContas = function () {
+        var $grid = $('#contasGrid').empty();
+
+        if (self.state.contas.length === 0) {
+            $grid.append(
+                $('<div>', { class: 'card-empty' }).append(
+                    $('<i>', { class: 'fa-solid fa-wallet' }),
+                    $('<p>', { text: 'Nenhuma conta cadastrada ainda.' })
+                )
+            );
+        } else {
+            self.state.contas.forEach(function (conta) {
+                $grid.append(self.buildContaItem(conta));
+            });
+        }
+    };
+
+    self.buildContaColorPicker = function () {
+        var $picker = $('#colorPickerConta').empty();
+
+        self.cardColors.forEach(function (colorObj, index) {
+            var $swatch = $('<div>', { class: 'color-swatch' })
+                .css('background', colorObj.color)
+                .data('index', index);
+
+            if (colorObj === self.state.selectedContaColor) {
+                $swatch.addClass('selected');
+            }
+
+            $picker.append($swatch);
+        });
+    };
+
+    self.abrirModalConta = function () {
+        self.state.editingContaId = null;
+        $('#inputContaName').val('');
+        self.state.selectedContaColor = self.cardColors[0];
+        $('#modalConta .modal-title').text('Nova conta');
+        self.buildContaColorPicker();
+        self.openModal('#modalConta');
+    };
+
+    self.abrirEdicaoConta = function (conta) {
+        var corAtual = self.cardColors.filter(function (c) { return c.color === conta.corTexto; })[0];
+
+        self.state.editingContaId = conta.id;
+        $('#inputContaName').val(conta.nome);
+        self.state.selectedContaColor = corAtual || { bg: conta.corFundo, color: conta.corTexto };
+        $('#modalConta .modal-title').text('Editar conta');
+        self.buildContaColorPicker();
+        self.openModal('#modalConta');
+    };
+
+    /**
+     * Cria uma nova conta via API e atualiza a lista.
+     *
+     * @param {string} nome nome da conta
+     * @param {object} colorObj cor escolhida ({ bg, color })
+     * @returns
+     */
+    self.criarConta = function (nome, colorObj) {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/contas',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify({ nome: nome, corFundo: colorObj.bg, corTexto: colorObj.color }),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.closeModal('#modalConta');
+                self.carregarContas();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Atualiza nome e cor de uma conta existente via API.
+     *
+     * @param {number} id id da conta
+     * @param {string} nome novo nome
+     * @param {object} colorObj nova cor ({ bg, color })
+     * @returns
+     */
+    self.atualizarConta = function (id, nome, colorObj) {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/contas/' + id,
+            method: 'PUT',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify({ nome: nome, corFundo: colorObj.bg, corTexto: colorObj.color }),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.closeModal('#modalConta');
+                self.carregarContas();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    self.abrirModalExclusaoConta = function (contaId) {
+        self.state.excludingContaId = contaId;
+        $('#inputSenhaExclusaoConta').val('');
+        self.openModal('#modalDeleteConta');
+    };
+
+    /**
+     * Exclui a conta selecionada (self.state.excludingContaId) mediante senha.
+     * Se a conta excluída era a que estava filtrando o dashboard, volta o filtro
+     * pra "Tudo".
+     *
+     * @returns
+     */
+    self.excluirConta = function () {
+        var senha = $('#inputSenhaExclusaoConta').val();
+
+        if (!senha) {
+            alert('Informe sua senha pra confirmar.');
+            return;
+        }
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/contas/' + self.state.excludingContaId,
+            method: 'DELETE',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify({ senha: senha }),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                $('#inputSenhaExclusaoConta').val('');
+                self.closeModal('#modalDeleteConta');
+
+                if (self.state.currentView === self.state.excludingContaId) {
+                    self.state.currentView = 'all';
+                    self.updateAccountSelector('all');
+                }
+
+                self.carregarContas();
+                self.carregarTransacoes();
+            },
+            error: function (jqXHR) {
+                $('#inputSenhaExclusaoConta').val('');
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
         });
     };
 
@@ -633,9 +901,13 @@ function Dashboard() {
         $('#inputDescription').val('');
         $('#inputValue').val('');
         $('#inputCard').val('');
-        $('#inputAccount').val('cpf');
-        self.applyTypeStyle('in');
         self.populateCardSelect();
+        self.populateAccountSelect();
+
+        var contaPadrao = self.state.currentView !== 'all' ? self.state.currentView : (self.state.contas[0] ? self.state.contas[0].id : '');
+        $('#inputAccount').val(contaPadrao);
+
+        self.applyTypeStyle('in');
     };
 
     self.applyTypeStyle = function (type) {
@@ -674,11 +946,11 @@ function Dashboard() {
      *
      * @param {string} description descrição da transação
      * @param {number} value valor (já convertido pra número)
-     * @param {string} account conta ("cpf" ou "pj")
+     * @param {number} contaId id da conta
      * @param {number} cardId id do cartão vinculado, ou null
      * @returns
      */
-    self.criarTransacao = function (description, value, account, cardId) {
+    self.criarTransacao = function (description, value, contaId, cardId) {
         $.ajax({
             url: self.apiBaseUrl + '/api/transacoes',
             method: 'POST',
@@ -688,7 +960,7 @@ function Dashboard() {
                 descricao: description,
                 valor: value,
                 tipo: self.state.currentType === 'in' ? 'ENTRADA' : 'SAIDA',
-                conta: account.toUpperCase(),
+                contaId: contaId,
                 categoria: self.state.currentCategoria,
                 cartaoId: cardId
             }),
@@ -849,12 +1121,14 @@ function Dashboard() {
                 var description = $.trim($('#inputDescription').val());
                 var rawValue = $('#inputValue').val().replace(',', '.');
                 var value = parseFloat(rawValue);
-                var account = $('#inputAccount').val();
+                var contaId = parseInt($('#inputAccount').val());
                 var cardId = parseInt($('#inputCard').val()) || null;
 
-                if (self.validateTransaction(description, value)) {
+                if (!contaId) {
+                    alert('Crie uma conta antes de lançar uma movimentação.');
+                } else if (self.validateTransaction(description, value)) {
                     if (self.state.currentCategoria) {
-                        self.criarTransacao(description, value, account, cardId);
+                        self.criarTransacao(description, value, contaId, cardId);
                     } else {
                         alert('Escolha uma categoria.');
                     }
@@ -872,11 +1146,19 @@ function Dashboard() {
                 }
             });
 
-            $(document).on('click', '.color-swatch', function () {
+            $(document).on('click', '#colorPicker .color-swatch', function () {
                 var index = $(this).data('index');
                 self.state.selectedColor = self.cardColors[index];
 
-                $('.color-swatch').removeClass('selected');
+                $('#colorPicker .color-swatch').removeClass('selected');
+                $(this).addClass('selected');
+            });
+
+            $(document).on('click', '#colorPickerConta .color-swatch', function () {
+                var index = $(this).data('index');
+                self.state.selectedContaColor = self.cardColors[index];
+
+                $('#colorPickerConta .color-swatch').removeClass('selected');
                 $(this).addClass('selected');
             });
 
@@ -890,11 +1172,45 @@ function Dashboard() {
                 }
             });
 
+            $('#btnNewConta').on('click', function () {
+                self.abrirModalConta();
+            });
+
+            $('#modalConta').on('click', function (e) {
+                if ($(e.target).is('#modalConta')) {
+                    self.closeModal('#modalConta');
+                }
+            });
+
+            $('#btnConfirmConta').on('click', function () {
+                var nome = $.trim($('#inputContaName').val());
+
+                if (nome) {
+                    if (self.state.editingContaId) {
+                        self.atualizarConta(self.state.editingContaId, nome, self.state.selectedContaColor);
+                    } else {
+                        self.criarConta(nome, self.state.selectedContaColor);
+                    }
+                } else {
+                    alert('Informe o nome da conta.');
+                }
+            });
+
+            $('#modalDeleteConta').on('click', function (e) {
+                if ($(e.target).is('#modalDeleteConta')) {
+                    self.closeModal('#modalDeleteConta');
+                }
+            });
+
+            $('#btnConfirmDeleteConta').on('click', self.excluirConta);
+
             self.exibirDadosUsuario();
             self.exibirSaudacao();
             self.renderizarPeriodo();
             self.buildFilterRow();
             self.buildColorPicker();
+            self.updateAccountSelector('all');
+            self.carregarContas();
             self.carregarCartoes();
             self.carregarTransacoes();
         } else {

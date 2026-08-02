@@ -43,6 +43,10 @@
                 <i class="fa-solid fa-credit-card"></i>
                 <span>Cartões</span>
             </button>
+            <button class="nav-item" data-page="contas">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Contas</span>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -65,7 +69,7 @@
         <header class="topbar-mobile">
             <div class="account-selector" id="btnAccountSelector">
                 <span class="account-dot" id="accountDot"></span>
-                <span class="account-label" id="accountLabel">Pessoal (CPF)</span>
+                <span class="account-label" id="accountLabel">Todas as contas</span>
                 <i class="fa-solid fa-chevron-down chevron-icon"></i>
             </div>
             <div class="topbar-right">
@@ -98,11 +102,7 @@
                         </button>
                     </div>
                 </div>
-                <nav class="account-tabs" id="tabsDesktop">
-                    <button class="acc-tab active" data-view="all">Tudo</button>
-                    <button class="acc-tab" data-view="cpf">CPF</button>
-                    <button class="acc-tab" data-view="pj">PJ</button>
-                </nav>
+                <nav class="account-tabs" id="tabsDesktop"></nav>
             </div>
 
             <!-- Resumo: saldo + entradas/saídas -->
@@ -115,11 +115,7 @@
                             id="balanceCents"></span>
                     </h2>
                     <!-- abas no mobile ficam dentro do card de saldo -->
-                    <nav class="account-tabs account-tabs--mobile" id="tabsMobile">
-                        <button class="acc-tab active" data-view="all">Tudo</button>
-                        <button class="acc-tab" data-view="cpf">CPF</button>
-                        <button class="acc-tab" data-view="pj">PJ</button>
-                    </nav>
+                    <nav class="account-tabs account-tabs--mobile" id="tabsMobile"></nav>
                 </div>
 
                 <div class="summary-card summary-card--flow">
@@ -180,6 +176,23 @@
             <div class="cards-grid" id="cardsGrid"></div>
         </div>
 
+        <!-- CONTAS -->
+        <div class="page" id="pageContas">
+
+            <div class="page-header">
+                <div class="page-header-text">
+                    <h1 class="page-title">Contas</h1>
+                    <p class="page-subtitle">Gerencie suas contas cadastradas</p>
+                </div>
+                <button class="fab-button" id="btnNewConta">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nova conta</span>
+                </button>
+            </div>
+
+            <div class="cards-grid" id="contasGrid"></div>
+        </div>
+
         <button class="fab-mobile" id="btnFabMobile">
             <i class="fa-solid fa-plus"></i>
         </button>
@@ -194,6 +207,10 @@
         <button class="bottom-nav-item" data-page="cards">
             <i class="fa-solid fa-credit-card"></i>
             <span>Cartões</span>
+        </button>
+        <button class="bottom-nav-item" data-page="contas">
+            <i class="fa-solid fa-wallet"></i>
+            <span>Contas</span>
         </button>
     </nav>
 
@@ -214,10 +231,7 @@
 
             <input class="modal-input" type="text" id="inputDescription" placeholder="Descrição (ex: Aluguel)">
             <input class="modal-input" type="text" id="inputValue" placeholder="Valor (R$)" inputmode="decimal">
-            <select class="modal-input" id="inputAccount">
-                <option value="cpf">CPF — Pessoal</option>
-                <option value="pj">PJ — Empresa</option>
-            </select>
+            <select class="modal-input" id="inputAccount"></select>
 
             <div class="categoria-row" id="categoriaRow">
                 <button class="categoria-chip" data-categoria="RENDA" type="button">
@@ -260,6 +274,36 @@
             <div class="color-picker" id="colorPicker"></div>
 
             <button class="modal-confirm" id="btnConfirmCard">Salvar cartão</button>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVA/EDITAR CONTA -->
+    <div class="modal-backdrop" id="modalConta">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Nova conta</h2>
+
+            <input class="modal-input" type="text" id="inputContaName"
+                placeholder="Nome da conta (ex: Nubank, Carteira...)">
+
+            <p class="color-picker-label">Cor</p>
+            <div class="color-picker" id="colorPickerConta"></div>
+
+            <button class="modal-confirm" id="btnConfirmConta">Salvar conta</button>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFIRMAR EXCLUSÃO DE CONTA -->
+    <div class="modal-backdrop" id="modalDeleteConta">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Excluir conta</h2>
+
+            <p class="modal-warning">Isso vai excluir a conta e todas as transações vinculadas a ela, permanentemente. Digite sua senha pra confirmar.</p>
+
+            <input class="modal-input" type="password" id="inputSenhaExclusaoConta" placeholder="Sua senha">
+
+            <button class="modal-confirm" id="btnConfirmDeleteConta">Excluir conta e transações</button>
         </div>
     </div>
 
