@@ -47,6 +47,10 @@
                 <i class="fa-solid fa-wallet"></i>
                 <span>Contas</span>
             </button>
+            <button class="nav-item" data-page="recorrencias">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Recorrências</span>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -193,6 +197,23 @@
             <div class="cards-grid" id="contasGrid"></div>
         </div>
 
+        <!-- RECORRÊNCIAS -->
+        <div class="page" id="pageRecorrencias">
+
+            <div class="page-header">
+                <div class="page-header-text">
+                    <h1 class="page-title">Recorrências</h1>
+                    <p class="page-subtitle">Parcelas e gastos ou entradas fixas</p>
+                </div>
+                <button class="fab-button" id="btnNewRecorrencia">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nova recorrência</span>
+                </button>
+            </div>
+
+            <ul class="transactions-list" id="recorrenciasLista"></ul>
+        </div>
+
         <button class="fab-mobile" id="btnFabMobile">
             <i class="fa-solid fa-plus"></i>
         </button>
@@ -211,6 +232,10 @@
         <button class="bottom-nav-item" data-page="contas">
             <i class="fa-solid fa-wallet"></i>
             <span>Contas</span>
+        </button>
+        <button class="bottom-nav-item" data-page="recorrencias">
+            <i class="fa-solid fa-rotate"></i>
+            <span>Recorrências</span>
         </button>
     </nav>
 
@@ -299,11 +324,75 @@
             <div class="modal-handle"></div>
             <h2 class="modal-title">Excluir conta</h2>
 
-            <p class="modal-warning">Isso vai excluir a conta e todas as transações vinculadas a ela, permanentemente. Digite sua senha pra confirmar.</p>
+            <p class="modal-warning">Isso vai excluir a conta e todas as transações e recorrências vinculadas a ela, permanentemente. Digite sua senha pra confirmar.</p>
 
             <input class="modal-input" type="password" id="inputSenhaExclusaoConta" placeholder="Sua senha">
 
             <button class="modal-confirm" id="btnConfirmDeleteConta">Excluir conta e transações</button>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVA RECORRÊNCIA -->
+    <div class="modal-backdrop" id="modalRecorrencia">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Nova recorrência</h2>
+
+            <div class="type-row">
+                <button class="type-btn active-in" id="btnRecorrenciaTypeIn" data-type="in">
+                    <i class="fa-solid fa-arrow-down-left"></i> Entrada
+                </button>
+                <button class="type-btn" id="btnRecorrenciaTypeOut" data-type="out">
+                    <i class="fa-solid fa-arrow-up-right"></i> Saída
+                </button>
+            </div>
+
+            <input class="modal-input" type="text" id="inputRecorrenciaDescription" placeholder="Descrição (ex: Aluguel, Geladeira 10x)">
+            <input class="modal-input" type="text" id="inputRecorrenciaValue" placeholder="Valor por parcela (R$)" inputmode="decimal">
+            <select class="modal-input" id="inputRecorrenciaAccount"></select>
+
+            <div class="categoria-row" id="categoriaRowRecorrencia">
+                <button class="categoria-chip" data-categoria="RENDA" type="button">
+                    <i class="fa-solid fa-arrow-down-left"></i> Renda
+                </button>
+                <button class="categoria-chip" data-categoria="DESPESA" type="button">
+                    <i class="fa-solid fa-arrow-up-right"></i> Despesa
+                </button>
+                <button class="categoria-chip" data-categoria="ALIMENTACAO" type="button">
+                    <i class="fa-solid fa-bag-shopping"></i> Alimentação
+                </button>
+                <button class="categoria-chip" data-categoria="MORADIA" type="button">
+                    <i class="fa-solid fa-house"></i> Moradia
+                </button>
+                <button class="categoria-chip" data-categoria="OUTRO" type="button">
+                    <i class="fa-solid fa-ellipsis"></i> Outro
+                </button>
+            </div>
+
+            <div class="card-row" id="cardRowRecorrencia">
+                <select class="modal-input" id="inputRecorrenciaCard">
+                    <option value="">Sem cartão (débito / dinheiro)</option>
+                </select>
+            </div>
+
+            <input class="modal-input" type="number" id="inputRecorrenciaParcelas" placeholder="Quantidade de parcelas" min="1">
+            <input class="modal-input" type="date" id="inputRecorrenciaDataInicio" placeholder="Data de início">
+
+            <button class="modal-confirm" id="btnConfirmRecorrencia">Salvar recorrência</button>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR VALOR DA RECORRÊNCIA -->
+    <div class="modal-backdrop" id="modalEditRecorrenciaValue">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Editar valor</h2>
+
+            <p class="auth-help-text">As parcelas passadas não mudam — só as futuras recebem o novo valor.</p>
+
+            <input class="modal-input" type="text" id="inputRecorrenciaNewValue" placeholder="Novo valor (R$)" inputmode="decimal">
+
+            <button class="modal-confirm" id="btnConfirmEditRecorrenciaValue">Salvar novo valor</button>
         </div>
     </div>
 

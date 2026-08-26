@@ -39,6 +39,9 @@ function Dashboard() {
         selectedContaColor: self.cardColors[0],
         editingContaId: null,
         excludingContaId: null,
+        currentTypeRecorrencia: 'in',
+        currentCategoriaRecorrencia: null,
+        editingValorRecorrenciaId: null,
 
         // Filtros do dashboard: mês/ano exibido e categorias marcadas
         // (lista vazia = todas as categorias)
@@ -47,7 +50,8 @@ function Dashboard() {
 
         cards: [],
         contas: [],
-        transactions: []
+        transactions: [],
+        recorrencias: []
     };
 
     self.obterToken = function () {
@@ -799,6 +803,259 @@ function Dashboard() {
     };
 
     /**
+     * Busca as recorrências do usuário e atualiza a lista da página Recorrências.
+     *
+     * @returns
+     */
+    self.carregarRecorrencias = function () {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/recorrencias',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (resposta) {
+                self.state.recorrencias = resposta;
+                self.renderRecorrencias();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    self.buildRecorrenciaItem = function (recorrencia) {
+        var icone = self.resolveIconeCategoria(recorrencia.categoria);
+        var $icon = $('<div>', { class: 'tx-icon ' + icone.classe }).append($('<i>', { class: 'fa-solid ' + icone.icone }));
+
+        var decorridas = recorrencia.totalParcelas - recorrencia.parcelasRestantes;
+        var metaCartao = recorrencia.nomeCartao ? ' · ' + recorrencia.nomeCartao : '';
+        var metaText = decorridas + ' de ' + recorrencia.totalParcelas + ' · ' + recorrencia.nomeConta + metaCartao;
+
+        var amountClass = recorrencia.tipo === 'ENTRADA' ? 'tx-amount--in' : 'tx-amount--out';
+        var prefix = recorrencia.tipo === 'ENTRADA' ? '+' : '-';
+
+        var $editar = $('<button>', { class: 'item-edit-btn', title: 'Editar valor' })
+            .append($('<i>', { class: 'fa-solid fa-pen' }))
+            .on('click', function () {
+                self.abrirModalEditarValorRecorrencia(recorrencia);
+            });
+
+        var $cancelar = $('<button>', { class: 'item-delete-btn', title: 'Cancelar parcelas futuras' })
+            .append($('<i>', { class: 'fa-solid fa-trash' }))
+            .on('click', function () {
+                self.cancelarRecorrenciaFuturas(recorrencia.id);
+            });
+
+        return $('<li>', { class: 'tx-item' }).append(
+            $icon,
+            $('<div>', { class: 'tx-info' }).append(
+                $('<p>', { class: 'tx-name', text: recorrencia.descricao }),
+                $('<p>', { class: 'tx-meta', text: metaText })
+            ),
+            $('<span>', { class: 'tx-amount ' + amountClass, text: prefix + self.formatCurrency(recorrencia.valor) }),
+            $('<div>', { class: 'card-item-actions' }).append($editar, $cancelar)
+        );
+    };
+
+    self.renderRecorrencias = function () {
+        var $lista = $('#recorrenciasLista').empty();
+
+        if (self.state.recorrencias.length === 0) {
+            $lista.append(
+                $('<li>', { class: 'tx-empty', text: 'Nenhuma recorrência cadastrada ainda.' })
+            );
+        } else {
+            self.state.recorrencias.forEach(function (recorrencia) {
+                $lista.append(self.buildRecorrenciaItem(recorrencia));
+            });
+        }
+    };
+
+    self.populateRecorrenciaAccountSelect = function () {
+        var $select = $('#inputRecorrenciaAccount').empty();
+
+        self.state.contas.forEach(function (conta) {
+            $select.append($('<option>', { value: conta.id, text: conta.nome }));
+        });
+    };
+
+    self.populateRecorrenciaCardSelect = function () {
+        var $select = $('#inputRecorrenciaCard').empty();
+        $select.append($('<option>', { value: '', text: 'Sem cartão (débito / dinheiro)' }));
+
+        self.state.cards.forEach(function (card) {
+            $select.append($('<option>', { value: card.id, text: card.nome }));
+        });
+    };
+
+    self.applyRecorrenciaTypeStyle = function (type) {
+        var isIn = type === 'in';
+
+        $('#btnRecorrenciaTypeIn').toggleClass('active-in', isIn).removeClass('active-out');
+        $('#btnRecorrenciaTypeOut').toggleClass('active-out', !isIn).removeClass('active-in');
+        $('#cardRowRecorrencia').toggleClass('visible', !isIn);
+
+        $('#categoriaRowRecorrencia .categoria-chip').removeClass('active');
+        self.state.currentCategoriaRecorrencia = isIn ? 'RENDA' : null;
+        $('#categoriaRowRecorrencia').css('display', isIn ? 'none' : 'flex');
+        $('#categoriaRowRecorrencia .categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
+    };
+
+    self.resetRecorrenciaModal = function () {
+        self.state.currentTypeRecorrencia = 'in';
+        $('#inputRecorrenciaDescription').val('');
+        $('#inputRecorrenciaValue').val('');
+        $('#inputRecorrenciaParcelas').val('');
+        $('#inputRecorrenciaDataInicio').val('');
+        $('#inputRecorrenciaCard').val('');
+        self.populateRecorrenciaAccountSelect();
+        self.populateRecorrenciaCardSelect();
+
+        var contaPadrao = self.state.currentView !== 'all' ? self.state.currentView : (self.state.contas[0] ? self.state.contas[0].id : '');
+        $('#inputRecorrenciaAccount').val(contaPadrao);
+
+        self.applyRecorrenciaTypeStyle('in');
+    };
+
+    self.validateRecorrencia = function (description, value, totalParcelas) {
+        var valido = true;
+
+        if (!description) {
+            alert('Informe uma descrição.');
+            valido = false;
+        } else if (isNaN(value) || value <= 0) {
+            alert('Informe um valor válido.');
+            valido = false;
+        } else if (isNaN(totalParcelas) || totalParcelas < 1) {
+            alert('Informe uma quantidade de parcelas válida.');
+            valido = false;
+        }
+
+        return valido;
+    };
+
+    /**
+     * Cria uma nova recorrência via API (o backend já gera todas as parcelas) e atualiza
+     * recorrências, cartões (o gasto do mês pode mudar) e transações.
+     *
+     * @param {string} description descrição
+     * @param {number} value valor por parcela
+     * @param {number} contaId id da conta
+     * @param {number} cardId id do cartão, ou null
+     * @param {number} totalParcelas quantidade de parcelas
+     * @param {string} dataInicio data de início no formato YYYY-MM-DD, ou string vazia (omite, backend usa hoje)
+     * @returns
+     */
+    self.criarRecorrencia = function (description, value, contaId, cardId, totalParcelas, dataInicio) {
+        var corpo = {
+            descricao: description,
+            valor: value,
+            tipo: self.state.currentTypeRecorrencia === 'in' ? 'ENTRADA' : 'SAIDA',
+            categoria: self.state.currentCategoriaRecorrencia,
+            contaId: contaId,
+            cartaoId: cardId,
+            totalParcelas: totalParcelas
+        };
+
+        if (dataInicio) {
+            corpo.dataInicio = dataInicio;
+        }
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/recorrencias',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify(corpo),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.closeModal('#modalRecorrencia');
+                self.carregarRecorrencias();
+                self.carregarCartoes();
+                self.carregarTransacoes();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    self.abrirModalEditarValorRecorrencia = function (recorrencia) {
+        self.state.editingValorRecorrenciaId = recorrencia.id;
+        $('#inputRecorrenciaNewValue').val(recorrencia.valor);
+        self.openModal('#modalEditRecorrenciaValue');
+    };
+
+    self.atualizarValorRecorrencia = function () {
+        var novoValor = parseFloat($('#inputRecorrenciaNewValue').val().replace(',', '.'));
+
+        if (isNaN(novoValor) || novoValor <= 0) {
+            alert('Informe um valor válido.');
+            return;
+        }
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/recorrencias/' + self.state.editingValorRecorrenciaId + '/valor',
+            method: 'PUT',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify({ valor: novoValor }),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.closeModal('#modalEditRecorrenciaValue');
+                self.carregarRecorrencias();
+                self.carregarTransacoes();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Cancela as parcelas futuras de uma recorrência, após confirmação do usuário.
+     *
+     * @param {number} id id da recorrência
+     * @returns
+     */
+    self.cancelarRecorrenciaFuturas = function (id) {
+        if (confirm('Cancelar as parcelas futuras dessa recorrência? As parcelas passadas continuam no histórico.')) {
+            $.ajax({
+                url: self.apiBaseUrl + '/api/recorrencias/' + id,
+                method: 'DELETE',
+                headers: self.cabecalhoAuth(),
+                beforeSend: function () {
+                    self.mostrarCarregando();
+                },
+                success: function () {
+                    self.carregarRecorrencias();
+                    self.carregarTransacoes();
+                },
+                error: function (jqXHR) {
+                    self.tratarErroRequisicao(jqXHR);
+                },
+                complete: function () {
+                    self.esconderCarregando();
+                }
+            });
+        }
+    };
+
+    /**
      * Busca os cartões do usuário e atualiza a tela. Se as transações já tiverem
      * sido carregadas, renderiza elas de novo também — cobre o caso de essa chamada
      * terminar depois de carregarTransacoes(), quando os ícones de cartão ainda não
@@ -920,10 +1177,10 @@ function Dashboard() {
         // Categorias só fazem sentido pra saída: na entrada os chips somem e a
         // categoria vai como RENDA automaticamente; na saída o chip "Renda"
         // fica de fora
-        $('.categoria-chip').removeClass('active');
+        $('#categoriaRow .categoria-chip').removeClass('active');
         self.state.currentCategoria = isIn ? 'RENDA' : null;
         $('#categoriaRow').css('display', isIn ? 'none' : 'flex');
-        $('.categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
+        $('#categoriaRow .categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
     };
 
     self.validateTransaction = function (description, value) {
@@ -1079,9 +1336,15 @@ function Dashboard() {
                 }
             });
 
-            $(document).on('click', '.categoria-chip', function () {
+            $(document).on('click', '#categoriaRow .categoria-chip', function () {
                 self.state.currentCategoria = $(this).data('categoria');
-                $('.categoria-chip').removeClass('active');
+                $('#categoriaRow .categoria-chip').removeClass('active');
+                $(this).addClass('active');
+            });
+
+            $(document).on('click', '#categoriaRowRecorrencia .categoria-chip', function () {
+                self.state.currentCategoriaRecorrencia = $(this).data('categoria');
+                $('#categoriaRowRecorrencia .categoria-chip').removeClass('active');
                 $(this).addClass('active');
             });
 
@@ -1204,6 +1467,50 @@ function Dashboard() {
 
             $('#btnConfirmDeleteConta').on('click', self.excluirConta);
 
+            $('#btnNewRecorrencia').on('click', function () {
+                self.openModal('#modalRecorrencia');
+                self.resetRecorrenciaModal();
+            });
+
+            $('#modalRecorrencia').on('click', function (e) {
+                if ($(e.target).is('#modalRecorrencia')) {
+                    self.closeModal('#modalRecorrencia');
+                }
+            });
+
+            $('#btnRecorrenciaTypeIn, #btnRecorrenciaTypeOut').on('click', function () {
+                self.state.currentTypeRecorrencia = $(this).data('type');
+                self.applyRecorrenciaTypeStyle(self.state.currentTypeRecorrencia);
+            });
+
+            $('#btnConfirmRecorrencia').on('click', function () {
+                var description = $.trim($('#inputRecorrenciaDescription').val());
+                var rawValue = $('#inputRecorrenciaValue').val().replace(',', '.');
+                var value = parseFloat(rawValue);
+                var contaId = parseInt($('#inputRecorrenciaAccount').val());
+                var cardId = parseInt($('#inputRecorrenciaCard').val()) || null;
+                var totalParcelas = parseInt($('#inputRecorrenciaParcelas').val());
+                var dataInicio = $('#inputRecorrenciaDataInicio').val();
+
+                if (!contaId) {
+                    alert('Crie uma conta antes de lançar uma recorrência.');
+                } else if (self.validateRecorrencia(description, value, totalParcelas)) {
+                    if (self.state.currentCategoriaRecorrencia) {
+                        self.criarRecorrencia(description, value, contaId, cardId, totalParcelas, dataInicio);
+                    } else {
+                        alert('Escolha uma categoria.');
+                    }
+                }
+            });
+
+            $('#modalEditRecorrenciaValue').on('click', function (e) {
+                if ($(e.target).is('#modalEditRecorrenciaValue')) {
+                    self.closeModal('#modalEditRecorrenciaValue');
+                }
+            });
+
+            $('#btnConfirmEditRecorrenciaValue').on('click', self.atualizarValorRecorrencia);
+
             self.exibirDadosUsuario();
             self.exibirSaudacao();
             self.renderizarPeriodo();
@@ -1213,6 +1520,7 @@ function Dashboard() {
             self.carregarContas();
             self.carregarCartoes();
             self.carregarTransacoes();
+            self.carregarRecorrencias();
         } else {
             window.location.href = 'login.html';
         }
