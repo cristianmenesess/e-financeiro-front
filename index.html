@@ -149,6 +149,23 @@
 
             </div>
 
+            <!-- Gráficos -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <p class="section-title">Gastos por categoria</p>
+                    <div class="chart-canvas-wrap">
+                        <canvas id="chartCategorias"></canvas>
+                        <p class="chart-empty" id="chartCategoriasEmpty">Sem saídas nesse período.</p>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <p class="section-title">Entradas x saídas — últimos 6 meses</p>
+                    <div class="chart-canvas-wrap">
+                        <canvas id="chartTendencia"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <!-- Movimentações -->
             <div class="transactions-panel">
                 <div class="transactions-header">
@@ -397,6 +414,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
     <script src="assets/js/script.js"></script>
 
 </body>

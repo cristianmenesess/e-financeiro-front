@@ -384,6 +384,220 @@ function Dashboard() {
 
         self.renderTransactions(filtradas);
         self.atualizarFluxoLocal(filtradas);
+        self.atualizarGraficos();
+    };
+
+    self.charts = { categorias: null, tendencia: null };
+
+    self.getCssVar = function (name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    };
+
+    self.obterTransacoesDoMes = function (mes, ano) {
+        return self.state.transactions.filter(function (tx) {
+            var partes = tx.dataTransacao.split('-');
+            return parseInt(partes[0], 10) === ano && parseInt(partes[1], 10) - 1 === mes;
+        });
+    };
+
+    /**
+     * Agrupa as saídas do mês selecionado por categoria, pro donut de
+     * "Gastos por categoria" (RENDA fica de fora — é sempre entrada).
+     *
+     * @returns {object} { labels, valores, cores }
+     */
+    self.montarDadosCategorias = function () {
+        var mapaCategorias = {
+            DESPESA: { nome: 'Despesa', cor: self.getCssVar('--color-expense-dot') },
+            ALIMENTACAO: { nome: 'Alimentação', cor: self.getCssVar('--color-food-text') },
+            MORADIA: { nome: 'Moradia', cor: self.getCssVar('--color-home-text') },
+            OUTRO: { nome: 'Outro', cor: self.getCssVar('--color-text-muted') }
+        };
+
+        var totais = {};
+
+        self.obterTransacoesDoMes(self.state.periodo.mes, self.state.periodo.ano).forEach(function (tx) {
+            if (tx.tipo === 'SAIDA' && mapaCategorias[tx.categoria]) {
+                totais[tx.categoria] = (totais[tx.categoria] || 0) + tx.valor;
+            }
+        });
+
+        var labels = [];
+        var valores = [];
+        var cores = [];
+
+        Object.keys(mapaCategorias).forEach(function (categoria) {
+            if (totais[categoria]) {
+                labels.push(mapaCategorias[categoria].nome);
+                valores.push(totais[categoria]);
+                cores.push(mapaCategorias[categoria].cor);
+            }
+        });
+
+        return { labels: labels, valores: valores, cores: cores };
+    };
+
+    /**
+     * Monta entradas/saídas dos últimos 6 meses (incluindo o mês selecionado
+     * no seletor de período), pro gráfico de barras de tendência.
+     *
+     * @returns {object} { labels, entradas, saidas }
+     */
+    self.montarDadosTendencia = function () {
+        var mesesAbrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+        var labels = [];
+        var entradas = [];
+        var saidas = [];
+
+        for (var i = 5; i >= 0; i--) {
+            var data = new Date(self.state.periodo.ano, self.state.periodo.mes - i, 1);
+            var mes = data.getMonth();
+            var ano = data.getFullYear();
+
+            var totalEntradas = 0;
+            var totalSaidas = 0;
+
+            self.obterTransacoesDoMes(mes, ano).forEach(function (tx) {
+                if (tx.tipo === 'ENTRADA') {
+                    totalEntradas += tx.valor;
+                } else {
+                    totalSaidas += tx.valor;
+                }
+            });
+
+            labels.push(mesesAbrev[mes] + '/' + String(ano).slice(2));
+            entradas.push(totalEntradas);
+            saidas.push(totalSaidas);
+        }
+
+        return { labels: labels, entradas: entradas, saidas: saidas };
+    };
+
+    self.renderizarGraficoCategorias = function () {
+        var dados = self.montarDadosCategorias();
+        var $canvas = $('#chartCategorias');
+
+        if (self.charts.categorias) {
+            self.charts.categorias.destroy();
+            self.charts.categorias = null;
+        }
+
+        if (dados.valores.length === 0) {
+            $canvas.hide();
+            $('#chartCategoriasEmpty').addClass('visible');
+            return;
+        }
+
+        $canvas.show();
+        $('#chartCategoriasEmpty').removeClass('visible');
+
+        self.charts.categorias = new Chart($canvas[0], {
+            type: 'doughnut',
+            data: {
+                labels: dados.labels,
+                datasets: [{
+                    data: dados.valores,
+                    backgroundColor: dados.cores,
+                    borderColor: self.getCssVar('--color-surface'),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: self.getCssVar('--color-text-secondary'),
+                            boxWidth: 10,
+                            padding: 14,
+                            font: { family: 'DM Sans', size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return ' ' + context.label + ': ' + self.formatCurrency(context.raw);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    self.renderizarGraficoTendencia = function () {
+        var dados = self.montarDadosTendencia();
+
+        if (self.charts.tendencia) {
+            self.charts.tendencia.destroy();
+            self.charts.tendencia = null;
+        }
+
+        var corTexto = self.getCssVar('--color-text-muted');
+        var corGrade = self.getCssVar('--color-border');
+
+        self.charts.tendencia = new Chart($('#chartTendencia')[0], {
+            type: 'bar',
+            data: {
+                labels: dados.labels,
+                datasets: [
+                    {
+                        label: 'Entradas',
+                        data: dados.entradas,
+                        backgroundColor: self.getCssVar('--color-income-dot'),
+                        borderRadius: 4,
+                        maxBarThickness: 18
+                    },
+                    {
+                        label: 'Saídas',
+                        data: dados.saidas,
+                        backgroundColor: self.getCssVar('--color-expense-dot'),
+                        borderRadius: 4,
+                        maxBarThickness: 18
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: self.getCssVar('--color-text-secondary'),
+                            boxWidth: 10,
+                            padding: 14,
+                            font: { family: 'DM Sans', size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return ' ' + context.dataset.label + ': ' + self.formatCurrency(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: corTexto, font: { family: 'DM Sans', size: 11 } },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: { color: corTexto, font: { family: 'DM Mono', size: 10 } },
+                        grid: { color: corGrade }
+                    }
+                }
+            }
+        });
+    };
+
+    self.atualizarGraficos = function () {
+        self.renderizarGraficoCategorias();
+        self.renderizarGraficoTendencia();
     };
 
     /**
@@ -1346,6 +1560,10 @@ function Dashboard() {
                 self.state.currentCategoriaRecorrencia = $(this).data('categoria');
                 $('#categoriaRowRecorrencia .categoria-chip').removeClass('active');
                 $(this).addClass('active');
+            });
+
+            $(document).on('click', '.theme-toggle', function () {
+                self.atualizarGraficos();
             });
 
             $('#btnPrevMonth').on('click', function () {
