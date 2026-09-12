@@ -186,7 +186,7 @@ select {
     .main-content {
         width: 100%;
         margin-left: 0;
-        padding: calc(var(--topbar-h-mobile) + 16px) 16px calc(var(--bottom-nav-h) + 16px);
+        padding: calc(var(--topbar-h-mobile) + env(safe-area-inset-top) + 16px) 16px calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
     }
 
     .topbar-mobile {
@@ -343,12 +343,12 @@ select {
     top: 0;
     left: 0;
     right: 0;
-    height: var(--topbar-h-mobile);
+    height: calc(var(--topbar-h-mobile) + env(safe-area-inset-top));
     background: var(--color-surface);
     border-bottom: 0.5px solid var(--color-border);
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    padding: env(safe-area-inset-top) 16px 0;
     z-index: 40;
 }
 .account-selector {
@@ -430,9 +430,10 @@ select {
     bottom: 0;
     left: 0;
     right: 0;
-    height: var(--bottom-nav-h);
+    height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
     background: var(--color-surface);
     border-top: 0.5px solid var(--color-border);
+    padding-bottom: env(safe-area-inset-bottom);
     z-index: 40;
 }
 
@@ -461,7 +462,7 @@ select {
 /* FAB MOBILE (botão flutuante)  */
 .fab-mobile {
     position: fixed;
-    bottom: calc(var(--bottom-nav-h) + 16px);
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
     right: 20px;
     width: 52px;
     height: 52px;
@@ -1356,7 +1357,7 @@ select {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
     background: var(--color-bg);
 }
 
