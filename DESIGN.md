@@ -637,14 +637,18 @@ Relatórios, Insights IA, Metas, Configurações e Mais.
 
 ### Iconografia
 
-- **Lucide 0.454.0** via CDN (`https://unpkg.com/lucide@0.454.0/dist/umd/lucide.js`),
+- **Lucide 0.454.0** via CDN (`https://unpkg.com/lucide@0.454.0/dist/umd/lucide.js`; as telas do
+  app usam o `lucide.min.js` do mesmo pacote),
   traço 1,75–2px, sempre `currentColor`. Tamanhos: 15–16px em linhas e botões
   pequenos, **18px** padrão, 20px em destaque. Ícone de linha vive num `IconTile`.
 - Sem emoji e sem caractere Unicode como ícone, com duas exceções tipográficas: a seta
   `↑`/`↓` colada ao delta e o sinal `−` (U+2212) em valores negativos.
 - Os únicos SVGs desenhados à mão são os 6 glifos utilitários das primitivas
   (chevron, check, X, lupa, seta diagonal, traço), para não dependerem de CDN.
-- As telas atuais do app ainda usam Font Awesome; migrar para Lucide está pendente.
+- Nas telas jQuery, `assets/js/icones.js` troca os `<i data-lucide>` estáticos pelo SVG e
+  `icones.criar(nome, tamanho)` gera o SVG no JS. Tamanhos em token: `--glyph-xs` 14 (chips),
+  `--glyph-sm` 16 (linhas, botões pequenos), `--glyph-md` 18 (padrão), `--glyph-lg` 20
+  (destaque), aplicados pelas classes `.ef-icon--xs|sm|md|lg`.
 
 ### Marca
 

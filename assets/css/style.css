@@ -172,7 +172,6 @@ select {
 }
 
 .chevron-icon {
-    font-size: var(--text-2xs);
     color: var(--text-muted);
 }
 
@@ -191,10 +190,6 @@ select {
     height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
     padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
     z-index: var(--z-sticky);
-}
-
-.bottom-nav .ef-tabbar__pill i {
-    font-size: var(--text-md);
 }
 
 /* FAB MOBILE (botão flutuante — peça do app, sem equivalente no design system) */
@@ -404,30 +399,52 @@ select {
     color: var(--text-negative);
 }
 
-/* GRÁFICOS (Chart.js dentro de Card) */
-.chart-card .ef-mono-label {
-    display: block;
-    margin-bottom: var(--space-4);
+/* GRÁFICOS (DonutChart/DonutLegend e AreaChart do design system dentro de Card) */
+.chart-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
-.chart-canvas-wrap {
-    position: relative;
-    height: 220px;
+.chart-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    min-height: var(--segmented-h-sm);
+    margin-bottom: var(--space-5);
 }
 
-.chart-empty {
-    position: absolute;
-    inset: 0;
-    display: none;
+/* Anel + legenda lado a lado, centralizados; empilham quando falta largura */
+.chart-donut {
+    flex: 1;
+    display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
-    font: var(--type-body-sm);
-    text-align: center;
+    flex-wrap: wrap;
+    gap: var(--space-8);
 }
 
-.chart-empty.visible {
-    display: flex;
+/* Valor do mês no card de tendência: um degrau abaixo do saldo do topo */
+.chart-figure {
+    margin-bottom: var(--space-3);
+}
+
+.chart-figure .ef-figure__value {
+    font-size: var(--text-xl);
+}
+
+.chart-figure .ef-figure__delta {
+    font: var(--type-numeric);
+}
+
+.chart-trend {
+    margin-top: auto;
+}
+
+.chart-trend .ef-chart-empty {
+    height: 168px;
 }
 
 /* PAINEL DE MOVIMENTAÇÕES (Card sem padding + ListRow) */
@@ -508,7 +525,7 @@ select {
 }
 
 
-/* TELA DE CARTÕES E CONTAS */
+/* TELA DE CARTÕES */
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
@@ -650,20 +667,20 @@ select {
     display: block;
 }
 
-.modal-warning {
-    font: var(--type-body-sm);
-    color: var(--text-negative);
-    text-align: center;
+/* Dois campos lado a lado nos modais (valor + conta, parcelas + início) */
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+}
+
+/* Parcela de recorrência na lista ("3/10"): Badge com o ícone de repetição */
+.parcela-badge {
+    gap: var(--space-1);
+    flex-shrink: 0;
 }
 
 /* COLOR PICKER (paleta do usuário para cartões e contas) */
-.color-picker-label {
-    font: var(--type-mono-label);
-    letter-spacing: var(--tracking-mono-label);
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
 .color-picker {
     display: flex;
     flex-wrap: wrap;
@@ -788,17 +805,25 @@ select {
     padding: var(--space-2) 0 var(--space-1);
 }
 
-.auth-feedback i {
-    font-size: var(--text-2xl);
+/* Ícone do estado de sucesso/erro: tile tonal no tamanho do EmptyState */
+.auth-feedback__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--empty-icon-tile);
+    height: var(--empty-icon-tile);
+    border-radius: var(--radius-icon-tile);
     margin-bottom: var(--space-3);
 }
 
-.auth-feedback--success i {
-    color: var(--text-positive);
+.auth-feedback--success .auth-feedback__icon {
+    background: var(--tone-positive-bg);
+    color: var(--tone-positive-icon);
 }
 
-.auth-feedback--error i {
-    color: var(--text-negative);
+.auth-feedback--error .auth-feedback__icon {
+    background: var(--tone-negative-bg);
+    color: var(--tone-negative-icon);
 }
 
 .auth-feedback p {

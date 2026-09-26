@@ -12,6 +12,23 @@ Select({ options: ['Este mês', 'Últimos 90 dias'], placeholder: 'Selecione o p
 Fábrica DOM: recebe um objeto de props e devolve o elemento pronto. Além das props
 abaixo, todo componente aceita `className`, `style` (só posicionamento) e `attrs`.
 
+## Lista de opções
+
+O `<select>` continua nativo (teclado, leitor de tela e formulário intactos). Onde o
+navegador suporta select personalizável (`appearance: base-select`, Chromium 135+),
+`forms.css` desenha a lista com o acabamento da marca: painel `surface-raised` com
+`shadow-popover` e raio `md`, opção em hover afundada (`surface-sunken`), opção marcada
+em `surface-brand-soft` + `text-brand` com o check à direita, chevron girando ao abrir.
+Nos demais (Safari/Firefox, roda nativa no iOS) vale a lista do sistema. A marcação
+estática equivalente, para telas jQuery, é a mesma que a fábrica gera:
+
+```html
+<div class="ef-select">
+  <select class="ef-select__control" aria-label="Conta">…</select>
+  <span class="ef-select__chevron"><svg …><path d="m6 9 6 6 6-6" /></svg></span>
+</div>
+```
+
 ## Diretriz de uso (original do dump)
 
 Dropdown for filters and settings. Same geometry as `Input`.

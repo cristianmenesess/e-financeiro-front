@@ -60,6 +60,9 @@ function Dashboard() {
         periodo: { mes: new Date().getMonth(), ano: new Date().getFullYear() },
         categoriasFiltradas: [],
 
+        // Série exibida no gráfico de tendência: resultado, entradas ou saidas
+        serieTendencia: 'resultado',
+
         cards: [],
         contas: [],
         transactions: [],
@@ -160,34 +163,8 @@ function Dashboard() {
     };
 
     /**
-     * Exibe uma mensagem de erro apropriada a partir da resposta de uma chamada AJAX,
-     * cobrindo os formatos de erro que a API pode devolver (validação, erro genérico,
-     * falha de conexão).
-     *
-     * @param {object} jqXHR objeto de erro retornado pelo jQuery
-     * @returns
-     */
-    self.exibirErroAjax = function (jqXHR) {
-        if (!jqXHR.responseJSON) {
-            alert('Não foi possível conectar ao servidor. Tente novamente.');
-        } else if (jqXHR.responseJSON.mensagem) {
-            alert(jqXHR.responseJSON.mensagem);
-        } else if (jqXHR.status === 400) {
-            var campos = Object.keys(jqXHR.responseJSON);
-
-            if (campos.length > 0) {
-                alert(jqXHR.responseJSON[campos[0]]);
-            } else {
-                alert('Erro de validação. Tente novamente.');
-            }
-        } else {
-            alert('Ocorreu um erro. Tente novamente.');
-        }
-    };
-
-    /**
      * Trata o erro de qualquer chamada autenticada: se o token expirou (401), limpa
-     * a sessão e redireciona pro login; senão, delega pra exibirErroAjax.
+     * a sessão e redireciona pro login; senão, mostra o erro em Toast.
      *
      * @param {object} jqXHR objeto de erro retornado pelo jQuery
      * @returns
@@ -197,7 +174,7 @@ function Dashboard() {
             self.limparSessao();
             window.location.href = 'login.html';
         } else {
-            self.exibirErroAjax(jqXHR);
+            feedback.exibirErroAjax(jqXHR);
         }
     };
 
@@ -242,6 +219,33 @@ function Dashboard() {
         }
     };
 
+    /**
+     * Converte o texto de um campo de valor em número. Aceita o formato
+     * brasileiro (1.234,56) e o com ponto decimal (1234.56).
+     *
+     * @param {string} texto valor digitado
+     * @returns {number} valor, ou NaN se não for número
+     */
+    self.lerValor = function (texto) {
+        var limpo = $.trim(texto || '');
+
+        if (limpo.indexOf(',') !== -1) {
+            limpo = limpo.replace(/\./g, '').replace(',', '.');
+        }
+
+        return parseFloat(limpo);
+    };
+
+    /**
+     * Valor numérico no formato do campo (374,75), pra preencher um input.
+     *
+     * @param {number} valor valor em reais
+     * @returns {string} texto com vírgula decimal
+     */
+    self.valorParaCampo = function (valor) {
+        return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
     self.formatCurrency = function (value) {
         return 'R$ ' + value.toLocaleString('pt-BR', {
             minimumFractionDigits: 2,
@@ -268,22 +272,30 @@ function Dashboard() {
         return dia + ' ' + mes;
     };
 
+    /**
+     * Tom do IconTile, cor de série (donut) e ícone de cada categoria. Os ícones
+     * são nomes Lucide. Categoria nula ou desconhecida (ex.: lançamentos
+     * antigos, sem categoria) cai em OUTRO, então toda linha tem ícone.
+     *
+     * @param {string} categoria categoria da API (RENDA, DESPESA...)
+     * @returns {object} { classe, cor, icone }
+     */
     self.resolveIconeCategoria = function (categoria) {
         var mapa = {
-            RENDA: { classe: 'ef-icon-tile--positive', cor: '--tone-positive-accent', icone: 'fa-arrow-down-left' },
-            DESPESA: { classe: 'ef-icon-tile--negative', cor: '--tone-negative-accent', icone: 'fa-arrow-up-right' },
-            ALIMENTACAO: { classe: 'ef-icon-tile--warning', cor: '--tone-warning-accent', icone: 'fa-bag-shopping' },
-            MORADIA: { classe: 'ef-icon-tile--brand', cor: '--tone-brand-accent', icone: 'fa-house' },
-            OUTRO: { classe: '', cor: '--tone-neutral-accent', icone: 'fa-ellipsis' }
+            RENDA: { classe: 'ef-icon-tile--positive', cor: 'var(--tone-positive-accent)', icone: 'banknote' },
+            DESPESA: { classe: 'ef-icon-tile--negative', cor: 'var(--tone-negative-accent)', icone: 'receipt' },
+            ALIMENTACAO: { classe: 'ef-icon-tile--warning', cor: 'var(--tone-warning-accent)', icone: 'shopping-bag' },
+            MORADIA: { classe: 'ef-icon-tile--brand', cor: 'var(--tone-brand-accent)', icone: 'house' },
+            OUTRO: { classe: '', cor: 'var(--tone-neutral-accent)', icone: 'ellipsis' }
         };
 
         return mapa[categoria] || mapa.OUTRO;
     };
 
     /**
-     * Monta um IconButton pequeno do design system com um ícone Font Awesome.
+     * Monta um IconButton pequeno do design system com um ícone Lucide.
      *
-     * @param {string} icone classe do ícone (ex: "fa-trash")
+     * @param {string} icone nome Lucide (ex: "trash-2")
      * @param {string} rotulo nome acessível e tooltip
      * @param {boolean} destrutivo true pinta o hover de vermelho (sair, excluir)
      * @returns {jQuery} botão pronto
@@ -294,7 +306,7 @@ function Dashboard() {
             class: 'ef-icon-btn ef-icon-btn--sm' + (destrutivo ? ' icon-btn--destructive' : ''),
             title: rotulo,
             'aria-label': rotulo
-        }).append($('<i>', { class: 'fa-solid ' + icone }));
+        }).append(icones.criar(icone, 'sm'));
     };
 
     /**
@@ -302,22 +314,53 @@ function Dashboard() {
      *
      * @param {string} tag elemento raiz ("li" dentro de listas, "div" em grades)
      * @param {string} titulo texto do estado vazio
-     * @param {string} icone classe Font Awesome opcional (ex: "fa-wallet")
+     * @param {string} icone nome Lucide opcional (ex: "wallet")
      * @returns {jQuery} elemento pronto
      */
     self.criarEstadoVazio = function (tag, titulo, icone) {
         var $vazio = $('<' + tag + '>', { class: 'ef-empty ef-empty--compact' });
 
         if (icone) {
-            $vazio.append($('<span>', { class: 'ef-empty__icon', 'aria-hidden': 'true' }).append($('<i>', { class: 'fa-solid ' + icone })));
+            $vazio.append($('<span>', { class: 'ef-empty__icon', 'aria-hidden': 'true' }).append(icones.criar(icone, 'lg')));
         }
 
         return $vazio.append($('<p>', { class: 'ef-empty__title', text: titulo }));
     };
 
     /**
+     * Monta o IconTile de uma categoria (tom + ícone).
+     *
+     * @param {string} categoria categoria da API
+     * @returns {jQuery} tile pronto
+     */
+    self.criarTileCategoria = function (categoria) {
+        var icone = self.resolveIconeCategoria(categoria);
+
+        return $('<span>', { class: 'ef-icon-tile ' + icone.classe, 'aria-hidden': 'true' }).append(icones.criar(icone.icone, 'sm'));
+    };
+
+    /**
+     * Badge "3/10" das movimentações geradas por uma recorrência. A API só manda
+     * numeroParcela/totalParcelas nas parcelas; lançamento avulso não tem badge.
+     *
+     * @param {object} tx transação retornada pela API
+     * @returns {jQuery|null} badge, ou null quando não é parcela
+     */
+    self.criarBadgeParcela = function (tx) {
+        if (!tx.numeroParcela || !tx.totalParcelas) {
+            return null;
+        }
+
+        var descricao = 'Parcela ' + tx.numeroParcela + ' de ' + tx.totalParcelas;
+
+        return $('<span>', { class: 'ef-badge ef-badge--sm ef-badge--mono parcela-badge', title: descricao, 'aria-label': descricao })
+            .append(icones.criar('repeat', 'xs'), $('<span>', { 'aria-hidden': 'true', text: tx.numeroParcela + '/' + tx.totalParcelas }));
+    };
+
+    /**
      * Monta o elemento de uma movimentação na lista. Se a transação está vinculada
      * a um cartão, usa o ícone/cor do cartão; senão, usa o ícone da categoria.
+     * Parcela de recorrência ganha o badge "3/10" entre o texto e o valor.
      *
      * @param {object} tx transação retornada pela API
      * @returns {jQuery} elemento &lt;li&gt; pronto pra inserir na lista
@@ -333,16 +376,15 @@ function Dashboard() {
 
         if (card) {
             // Cor do cartão escolhida pelo usuário (paleta --swatch-*), aplicada em linha
-            $icon = $('<span>', { class: 'ef-icon-tile', 'aria-hidden': 'true' }).append($('<i>', { class: 'fa-solid fa-credit-card' }));
+            $icon = $('<span>', { class: 'ef-icon-tile', 'aria-hidden': 'true' }).append(icones.criar('credit-card', 'sm'));
             $icon.css({ background: card.corFundo, color: card.corTexto });
         } else {
-            var icone = self.resolveIconeCategoria(tx.categoria);
-            $icon = $('<span>', { class: 'ef-icon-tile ' + icone.classe, 'aria-hidden': 'true' }).append($('<i>', { class: 'fa-solid ' + icone.icone }));
+            $icon = self.criarTileCategoria(tx.categoria);
         }
 
-        var $delete = self.criarBotaoIcone('fa-trash', 'Excluir', true)
+        var $delete = self.criarBotaoIcone('trash-2', 'Excluir', true)
             .on('click', function () {
-                self.excluirTransacao(tx.id);
+                self.excluirTransacao(tx);
             });
 
         return $('<li>', { class: 'ef-list-row' }).append(
@@ -351,6 +393,7 @@ function Dashboard() {
                 $('<span>', { class: 'ef-list-row__title', text: tx.descricao }),
                 $('<span>', { class: 'ef-list-row__subtitle', text: metaText })
             ),
+            self.criarBadgeParcela(tx),
             $('<span>', { class: 'ef-list-row__end' }).append(
                 $('<span>', { class: 'ef-list-row__value ' + amountClass, text: prefix + self.formatCurrency(tx.valor) })
             ),
@@ -433,10 +476,74 @@ function Dashboard() {
         self.atualizarGraficos();
     };
 
-    self.charts = { categorias: null, tendencia: null };
+    /**
+     * Componentes do design system (ES modules), carregados em
+     * carregarDesignSystem. Fica null até o import terminar — os gráficos só
+     * são desenhados depois disso.
+     */
+    self.ds = null;
 
-    self.getCssVar = function (name) {
-        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    self.mesesNome = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+    /**
+     * Espera a API pública do design system (importada uma vez em feedback.js)
+     * e desenha os gráficos.
+     *
+     * @returns
+     */
+    self.carregarDesignSystem = function () {
+        feedback.componentes
+            .then(function (componentes) {
+                self.ds = componentes;
+                self.montarSeletorTendencia();
+                self.atualizarGraficos();
+            })
+            .catch(function () {
+                $('#chartCategorias, #chartTendencia').append($('<div>', { class: 'ef-chart-empty', text: 'Gráfico indisponível' }));
+            });
+    };
+
+    /**
+     * Total no centro do donut, que tem espaço pra ~9 caracteres: valor completo
+     * até R$ 999,99, inteiro até R$ 99.999 e abreviado daí pra cima.
+     *
+     * @param {number} valor total em reais
+     * @returns {string} valor formatado
+     */
+    self.formatarTotalDonut = function (valor) {
+        if (valor < 1000) {
+            return self.formatCurrency(valor);
+        }
+
+        if (valor < 100000) {
+            return 'R$ ' + Math.round(valor).toLocaleString('pt-BR');
+        }
+
+        return self.formatarValorCompacto(valor, true);
+    };
+
+    /**
+     * Formata um valor em forma curta pra espaço apertado (eixo, centro do
+     * donut): 950 · 1,2k · 4,22M. Negativo usa o sinal − (U+2212), como no
+     * restante do app.
+     *
+     * @param {number} valor valor em reais
+     * @param {boolean} comMoeda true prefixa "R$ "
+     * @returns {string} valor abreviado
+     */
+    self.formatarValorCompacto = function (valor, comMoeda) {
+        var absoluto = Math.abs(valor);
+        var texto;
+
+        if (absoluto >= 1000000) {
+            texto = (absoluto / 1000000).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + 'M';
+        } else if (absoluto >= 1000) {
+            texto = (absoluto / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + 'k';
+        } else {
+            texto = Math.round(absoluto).toLocaleString('pt-BR');
+        }
+
+        return (valor < 0 ? '−' : '') + (comMoeda ? 'R$ ' : '') + texto;
     };
 
     self.obterTransacoesDoMes = function (mes, ano) {
@@ -448,62 +555,45 @@ function Dashboard() {
 
     /**
      * Agrupa as saídas do mês selecionado por categoria, pro donut de
-     * "Gastos por categoria" (RENDA fica de fora — é sempre entrada).
+     * "Gastos por categoria" (RENDA fica de fora — é sempre entrada). As fatias
+     * saem da maior pra menor, com a mesma cor do IconTile da categoria.
      *
-     * @returns {object} { labels, valores, cores }
+     * @returns {Array} fatias no formato do DonutChart ({ label, value, color })
      */
     self.montarDadosCategorias = function () {
-        var mapaCategorias = {
-            DESPESA: { nome: 'Despesa', cor: self.getCssVar('--tone-negative-accent') },
-            ALIMENTACAO: { nome: 'Alimentação', cor: self.getCssVar('--tone-warning-accent') },
-            MORADIA: { nome: 'Moradia', cor: self.getCssVar('--tone-brand-accent') },
-            OUTRO: { nome: 'Outro', cor: self.getCssVar('--tone-neutral-accent') }
-        };
-
         var totais = {};
 
         self.obterTransacoesDoMes(self.state.periodo.mes, self.state.periodo.ano).forEach(function (tx) {
-            if (tx.tipo === 'SAIDA' && mapaCategorias[tx.categoria]) {
-                totais[tx.categoria] = (totais[tx.categoria] || 0) + tx.valor;
+            if (tx.tipo === 'SAIDA') {
+                var categoria = tx.categoria && tx.categoria !== 'RENDA' ? tx.categoria : 'OUTRO';
+                totais[categoria] = (totais[categoria] || 0) + tx.valor;
             }
         });
 
-        var labels = [];
-        var valores = [];
-        var cores = [];
-
-        Object.keys(mapaCategorias).forEach(function (categoria) {
-            if (totais[categoria]) {
-                labels.push(mapaCategorias[categoria].nome);
-                valores.push(totais[categoria]);
-                cores.push(mapaCategorias[categoria].cor);
-            }
-        });
-
-        return { labels: labels, valores: valores, cores: cores };
+        return self.categoriasDisponiveis
+            .filter(function (categoria) { return totais[categoria.valor]; })
+            .map(function (categoria) {
+                return { label: categoria.nome, value: totais[categoria.valor], color: self.resolveIconeCategoria(categoria.valor).cor };
+            })
+            .sort(function (a, b) { return b.value - a.value; });
     };
 
     /**
-     * Monta entradas/saídas dos últimos 6 meses (incluindo o mês selecionado
-     * no seletor de período), pro gráfico de barras de tendência.
+     * Monta entradas, saídas e resultado (entradas − saídas) dos últimos 6
+     * meses, incluindo o mês selecionado no seletor de período.
      *
-     * @returns {object} { labels, entradas, saidas }
+     * @returns {object} { labels, entradas, saidas, resultado }
      */
     self.montarDadosTendencia = function () {
-        var mesesAbrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-        var labels = [];
-        var entradas = [];
-        var saidas = [];
+        var mesesAbrev = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+        var dados = { labels: [], entradas: [], saidas: [], resultado: [] };
 
         for (var i = 5; i >= 0; i--) {
             var data = new Date(self.state.periodo.ano, self.state.periodo.mes - i, 1);
-            var mes = data.getMonth();
-            var ano = data.getFullYear();
-
             var totalEntradas = 0;
             var totalSaidas = 0;
 
-            self.obterTransacoesDoMes(mes, ano).forEach(function (tx) {
+            self.obterTransacoesDoMes(data.getMonth(), data.getFullYear()).forEach(function (tx) {
                 if (tx.tipo === 'ENTRADA') {
                     totalEntradas += tx.valor;
                 } else {
@@ -511,139 +601,119 @@ function Dashboard() {
                 }
             });
 
-            labels.push(mesesAbrev[mes] + '/' + String(ano).slice(2));
-            entradas.push(totalEntradas);
-            saidas.push(totalSaidas);
+            dados.labels.push(mesesAbrev[data.getMonth()]);
+            dados.entradas.push(totalEntradas);
+            dados.saidas.push(totalSaidas);
+            dados.resultado.push(totalEntradas - totalSaidas);
         }
 
-        return { labels: labels, entradas: entradas, saidas: saidas };
+        return dados;
     };
 
+    /**
+     * Donut de gastos por categoria (DonutChart + DonutLegend). Sem aurora: o
+     * card de saldo já usa a única aurora permitida por tela. Sem saídas no mês,
+     * o próprio DonutChart desenha o trilho vazio com "Sem dados".
+     *
+     * @returns
+     */
     self.renderizarGraficoCategorias = function () {
-        var dados = self.montarDadosCategorias();
-        var $canvas = $('#chartCategorias');
+        var fatias = self.montarDadosCategorias();
+        var total = fatias.reduce(function (soma, fatia) { return soma + fatia.value; }, 0);
+        var $grafico = $('#chartCategorias').empty();
 
-        if (self.charts.categorias) {
-            self.charts.categorias.destroy();
-            self.charts.categorias = null;
+        $grafico.append(self.ds.DonutChart({
+            data: fatias,
+            aurora: false,
+            centerLabel: 'Total',
+            centerValue: self.formatarTotalDonut(total)
+        }));
+
+        if (fatias.length > 0) {
+            $grafico.append(self.ds.DonutLegend({ data: fatias }));
         }
-
-        if (dados.valores.length === 0) {
-            $canvas.hide();
-            $('#chartCategoriasEmpty').addClass('visible');
-            return;
-        }
-
-        $canvas.show();
-        $('#chartCategoriasEmpty').removeClass('visible');
-
-        self.charts.categorias = new Chart($canvas[0], {
-            type: 'doughnut',
-            data: {
-                labels: dados.labels,
-                datasets: [{
-                    data: dados.valores,
-                    backgroundColor: dados.cores,
-                    borderColor: self.getCssVar('--surface-card'),
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '68%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: self.getCssVar('--text-secondary'),
-                            boxWidth: 10,
-                            padding: 14,
-                            font: { family: self.getCssVar('--font-sans'), size: parseInt(self.getCssVar('--text-xs'), 10) }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return ' ' + context.label + ': ' + self.formatCurrency(context.raw);
-                            }
-                        }
-                    }
-                }
-            }
-        });
     };
 
+    /**
+     * SegmentedControl que escolhe a série do gráfico de tendência. Montado uma
+     * vez só: ele guarda a própria seleção.
+     *
+     * @returns
+     */
+    self.montarSeletorTendencia = function () {
+        $('#chartTendenciaSerie').empty().append(self.ds.SegmentedControl({
+            size: 'sm',
+            value: self.state.serieTendencia,
+            options: [
+                { value: 'resultado', label: 'Resultado' },
+                { value: 'entradas', label: 'Entradas' },
+                { value: 'saidas', label: 'Saídas' }
+            ],
+            onChange: function (serie) {
+                self.state.serieTendencia = serie;
+                self.renderizarGraficoTendencia();
+            }
+        }));
+    };
+
+    /**
+     * Gráfico de tendência (AreaChart, uma série por vez — regra do design
+     * system) com o valor do mês selecionado e a variação sobre o mês anterior
+     * em destaque. Em Saídas, subir é ruim: o delta fica negativo.
+     *
+     * @returns
+     */
     self.renderizarGraficoTendencia = function () {
         var dados = self.montarDadosTendencia();
+        var serie = self.state.serieTendencia;
+        var valores = dados[serie];
+        var tons = { resultado: 'brand', entradas: 'positive', saidas: 'negative' };
+        var atual = valores[valores.length - 1];
+        var anterior = valores[valores.length - 2];
+        var mesAnterior = new Date(self.state.periodo.ano, self.state.periodo.mes - 1, 1).getMonth();
+        var $resumo = $('#chartTendenciaResumo').empty();
+        var $grafico = $('#chartTendencia').empty();
 
-        if (self.charts.tendencia) {
-            self.charts.tendencia.destroy();
-            self.charts.tendencia = null;
+        $resumo.append($('<span>', { class: 'ef-figure__value', text: (atual < 0 ? '−' : '') + self.formatCurrency(Math.abs(atual)) }));
+
+        if (anterior !== 0) {
+            var variacao = ((atual - anterior) / Math.abs(anterior)) * 100;
+            var melhorou = serie === 'saidas' ? variacao <= 0 : variacao >= 0;
+
+            $resumo.append(
+                $('<span>', {
+                    class: 'ef-figure__delta' + (melhorou ? '' : ' ef-figure__delta--negative'),
+                    text: (variacao >= 0 ? '↑ ' : '↓ ') + Math.abs(variacao).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'
+                }),
+                $('<span>', { class: 'ef-figure__caption', text: 'vs ' + self.mesesNome[mesAnterior] })
+            );
+        } else {
+            $resumo.append($('<span>', { class: 'ef-figure__caption', text: 'em ' + self.mesesNome[self.state.periodo.mes] }));
         }
 
-        var corTexto = self.getCssVar('--text-muted');
-        var corGrade = self.getCssVar('--chart-grid');
+        var semMovimento = valores.every(function (valor) { return valor === 0; });
 
-        self.charts.tendencia = new Chart($('#chartTendencia')[0], {
-            type: 'bar',
-            data: {
-                labels: dados.labels,
-                datasets: [
-                    {
-                        label: 'Entradas',
-                        data: dados.entradas,
-                        backgroundColor: self.getCssVar('--series-1'),
-                        borderRadius: 4,
-                        maxBarThickness: 18
-                    },
-                    {
-                        label: 'Saídas',
-                        data: dados.saidas,
-                        backgroundColor: self.getCssVar('--tone-negative-accent'),
-                        borderRadius: 4,
-                        maxBarThickness: 18
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: self.getCssVar('--text-secondary'),
-                            boxWidth: 10,
-                            padding: 14,
-                            font: { family: self.getCssVar('--font-sans'), size: parseInt(self.getCssVar('--text-xs'), 10) }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return ' ' + context.dataset.label + ': ' + self.formatCurrency(context.raw);
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: corTexto, font: { family: self.getCssVar('--font-sans'), size: parseInt(self.getCssVar('--text-2xs'), 10) } },
-                        grid: { display: false }
-                    },
-                    y: {
-                        ticks: { color: corTexto, font: { family: self.getCssVar('--font-mono'), size: parseInt(self.getCssVar('--text-micro'), 10) } },
-                        grid: { color: corGrade }
-                    }
+        if (semMovimento) {
+            $grafico.append($('<div>', { class: 'ef-chart-empty', role: 'img', 'aria-label': 'Sem lançamentos no período', text: 'Sem lançamentos no período' }));
+        } else {
+            $grafico.append(self.ds.AreaChart({
+                data: valores,
+                tone: tons[serie],
+                height: 168,
+                yTicks: 4,
+                xLabels: dados.labels,
+                formatY: function (valor) {
+                    return self.formatarValorCompacto(valor, false);
                 }
-            }
-        });
+            }));
+        }
     };
 
     self.atualizarGraficos = function () {
-        self.renderizarGraficoCategorias();
-        self.renderizarGraficoTendencia();
+        if (self.ds) {
+            self.renderizarGraficoCategorias();
+            self.renderizarGraficoTendencia();
+        }
     };
 
     /**
@@ -664,7 +734,7 @@ function Dashboard() {
             var icone = self.resolveIconeCategoria(categoria.valor);
             var $chip = $('<button>', { type: 'button', class: 'ef-tag filter-chip' })
                 .attr({ 'data-categoria': categoria.valor, 'aria-pressed': String(self.state.categoriasFiltradas.indexOf(categoria.valor) !== -1) })
-                .append($('<i>', { class: 'fa-solid ' + icone.icone }), ' ' + categoria.nome);
+                .append(icones.criar(icone.icone, 'xs'), ' ' + categoria.nome);
 
             $row.append($chip);
         });
@@ -674,7 +744,7 @@ function Dashboard() {
         var $list = $('#transactionsList').empty();
 
         if (transacoes.length === 0) {
-            $list.append(self.criarEstadoVazio('li', 'Nenhuma movimentação nesse período.', 'fa-receipt'));
+            $list.append(self.criarEstadoVazio('li', 'Nenhuma movimentação nesse período.', 'receipt'));
         } else {
             transacoes.forEach(function (tx) {
                 $list.append(self.buildTransactionItem(tx));
@@ -788,8 +858,8 @@ function Dashboard() {
      * @returns {jQuery} elemento pronto pra inserir na grade de cartões
      */
     self.buildCardItem = function (card) {
-        var $delete = self.criarBotaoIcone('fa-trash', 'Excluir', true).on('click', function () {
-                self.excluirCartao(card.id);
+        var $delete = self.criarBotaoIcone('trash-2', 'Excluir', true).on('click', function () {
+                self.excluirCartao(card);
             });
 
         return $('<div>', { class: 'card-item' }).css({ background: card.corFundo, color: card.corTexto }).append(
@@ -809,7 +879,7 @@ function Dashboard() {
         var $grid = $('#cardsGrid').empty();
 
         if (self.state.cards.length === 0) {
-            $grid.append(self.criarEstadoVazio('div', 'Nenhum cartão cadastrado ainda.', 'fa-credit-card'));
+            $grid.append(self.criarEstadoVazio('div', 'Nenhum cartão cadastrado ainda.', 'credit-card'));
         } else {
             self.state.cards.forEach(function (card) {
                 $grid.append(self.buildCardItem(card));
@@ -854,34 +924,46 @@ function Dashboard() {
         });
     };
 
+    /**
+     * Monta a linha de uma conta (ListRow): IconTile na cor escolhida pelo
+     * usuário (paleta --swatch-*, aplicada em linha como nos cartões), nome e
+     * as ações de editar/excluir.
+     *
+     * @param {object} conta conta retornada pela API
+     * @returns {jQuery} elemento &lt;li&gt; pronto pra inserir na lista
+     */
     self.buildContaItem = function (conta) {
-        var $editar = self.criarBotaoIcone('fa-pen', 'Editar', false)
+        var $icon = $('<span>', { class: 'ef-icon-tile', 'aria-hidden': 'true' })
+            .css({ background: conta.corFundo, color: conta.corTexto })
+            .append(icones.criar('wallet', 'sm'));
+
+        var $editar = self.criarBotaoIcone('pencil', 'Editar', false)
             .on('click', function () {
                 self.abrirEdicaoConta(conta);
             });
 
-        var $excluir = self.criarBotaoIcone('fa-trash', 'Excluir', true)
+        var $excluir = self.criarBotaoIcone('trash-2', 'Excluir', true)
             .on('click', function () {
                 self.abrirModalExclusaoConta(conta.id);
             });
 
-        return $('<div>', { class: 'card-item' }).css({ background: conta.corFundo, color: conta.corTexto }).append(
-            $('<div>', { class: 'card-item-top' }).append(
-                $('<div>', { class: 'card-chip' }),
-                $('<div>', { class: 'card-item-actions' }).append($editar, $excluir)
+        return $('<li>', { class: 'ef-list-row' }).append(
+            $('<span>', { class: 'ef-list-row__leading' }).append($icon),
+            $('<span>', { class: 'ef-list-row__text' }).append(
+                $('<span>', { class: 'ef-list-row__title', text: conta.nome })
             ),
-            $('<p>', { class: 'card-item-name', text: conta.nome })
+            $('<span>', { class: 'card-item-actions' }).append($editar, $excluir)
         );
     };
 
     self.renderContas = function () {
-        var $grid = $('#contasGrid').empty();
+        var $lista = $('#contasLista').empty();
 
         if (self.state.contas.length === 0) {
-            $grid.append(self.criarEstadoVazio('div', 'Nenhuma conta cadastrada ainda.', 'fa-wallet'));
+            $lista.append(self.criarEstadoVazio('li', 'Nenhuma conta cadastrada ainda.', 'wallet'));
         } else {
             self.state.contas.forEach(function (conta) {
-                $grid.append(self.buildContaItem(conta));
+                $lista.append(self.buildContaItem(conta));
             });
         }
     };
@@ -942,6 +1024,7 @@ function Dashboard() {
             success: function () {
                 self.closeModal('#modalConta');
                 self.carregarContas();
+                feedback.exibirSucesso('Conta criada', nome);
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -973,6 +1056,7 @@ function Dashboard() {
             success: function () {
                 self.closeModal('#modalConta');
                 self.carregarContas();
+                feedback.exibirSucesso('Conta atualizada', nome);
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1000,7 +1084,8 @@ function Dashboard() {
         var senha = $('#inputSenhaExclusaoConta').val();
 
         if (!senha) {
-            alert('Informe sua senha pra confirmar.');
+            feedback.marcarErro('#inputSenhaExclusaoConta', 'Informe sua senha');
+            feedback.focarPrimeiroErro('#modalDeleteConta');
             return;
         }
 
@@ -1024,10 +1109,20 @@ function Dashboard() {
 
                 self.carregarContas();
                 self.carregarTransacoes();
+                feedback.exibirSucesso('Conta excluída', 'As movimentações e recorrências dela também foram apagadas.');
             },
             error: function (jqXHR) {
+                // Senha errada volta 401 com mensagem: o erro vai no próprio campo
+                var senhaIncorreta = feedback.mensagemDaApi(jqXHR, 401);
+
                 $('#inputSenhaExclusaoConta').val('');
-                self.tratarErroRequisicao(jqXHR);
+
+                if (senhaIncorreta) {
+                    feedback.marcarErro('#inputSenhaExclusaoConta', senhaIncorreta);
+                    feedback.focarPrimeiroErro('#modalDeleteConta');
+                } else {
+                    self.tratarErroRequisicao(jqXHR);
+                }
             },
             complete: function () {
                 self.esconderCarregando();
@@ -1061,8 +1156,7 @@ function Dashboard() {
     };
 
     self.buildRecorrenciaItem = function (recorrencia) {
-        var icone = self.resolveIconeCategoria(recorrencia.categoria);
-        var $icon = $('<span>', { class: 'ef-icon-tile ' + icone.classe, 'aria-hidden': 'true' }).append($('<i>', { class: 'fa-solid ' + icone.icone }));
+        var $icon = self.criarTileCategoria(recorrencia.categoria);
 
         var decorridas = recorrencia.totalParcelas - recorrencia.parcelasRestantes;
         var metaCartao = recorrencia.nomeCartao ? ' · ' + recorrencia.nomeCartao : '';
@@ -1071,14 +1165,14 @@ function Dashboard() {
         var amountClass = recorrencia.tipo === 'ENTRADA' ? 'tx-amount--in' : 'tx-amount--out';
         var prefix = recorrencia.tipo === 'ENTRADA' ? '+' : '−';
 
-        var $editar = self.criarBotaoIcone('fa-pen', 'Editar valor', false)
+        var $editar = self.criarBotaoIcone('pencil', 'Editar valor', false)
             .on('click', function () {
                 self.abrirModalEditarValorRecorrencia(recorrencia);
             });
 
-        var $cancelar = self.criarBotaoIcone('fa-trash', 'Cancelar parcelas futuras', true)
+        var $cancelar = self.criarBotaoIcone('trash-2', 'Cancelar parcelas futuras', true)
             .on('click', function () {
-                self.cancelarRecorrenciaFuturas(recorrencia.id);
+                self.cancelarRecorrenciaFuturas(recorrencia);
             });
 
         return $('<li>', { class: 'ef-list-row' }).append(
@@ -1098,7 +1192,7 @@ function Dashboard() {
         var $lista = $('#recorrenciasLista').empty();
 
         if (self.state.recorrencias.length === 0) {
-            $lista.append(self.criarEstadoVazio('li', 'Nenhuma recorrência cadastrada ainda.', 'fa-rotate'));
+            $lista.append(self.criarEstadoVazio('li', 'Nenhuma recorrência cadastrada ainda.', 'repeat'));
         } else {
             self.state.recorrencias.forEach(function (recorrencia) {
                 $lista.append(self.buildRecorrenciaItem(recorrencia));
@@ -1132,7 +1226,8 @@ function Dashboard() {
 
         $('#categoriaRowRecorrencia .categoria-chip').attr('aria-pressed', 'false');
         self.state.currentCategoriaRecorrencia = isIn ? 'RENDA' : null;
-        $('#categoriaRowRecorrencia').css('display', isIn ? 'none' : 'flex');
+        feedback.limparErro('#categoriaRowRecorrencia');
+        $('#campoCategoriaRecorrencia').css('display', isIn ? 'none' : 'flex');
         $('#categoriaRowRecorrencia .categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
     };
 
@@ -1152,18 +1247,46 @@ function Dashboard() {
         self.applyRecorrenciaTypeStyle('in');
     };
 
-    self.validateRecorrencia = function (description, value, totalParcelas) {
+    /**
+     * Valida o modal de recorrência, marcando cada campo com problema (erro
+     * abaixo do campo, padrão Field) e focando o primeiro.
+     *
+     * @param {string} description descrição
+     * @param {number} value valor por parcela
+     * @param {number} contaId id da conta escolhida
+     * @param {number} totalParcelas quantidade de parcelas
+     * @returns {boolean} true se pode enviar
+     */
+    self.validateRecorrencia = function (description, value, contaId, totalParcelas) {
         var valido = true;
 
         if (!description) {
-            alert('Informe uma descrição.');
+            feedback.marcarErro('#inputRecorrenciaDescription', 'Informe uma descrição');
             valido = false;
-        } else if (isNaN(value) || value <= 0) {
-            alert('Informe um valor válido.');
+        }
+
+        if (isNaN(value) || value <= 0) {
+            feedback.marcarErro('#inputRecorrenciaValue', 'Informe um valor maior que zero');
             valido = false;
-        } else if (isNaN(totalParcelas) || totalParcelas < 1) {
-            alert('Informe uma quantidade de parcelas válida.');
+        }
+
+        if (!contaId) {
+            feedback.marcarErro('#inputRecorrenciaAccount', 'Crie uma conta antes de lançar');
             valido = false;
+        }
+
+        if (!self.state.currentCategoriaRecorrencia) {
+            feedback.marcarErro('#categoriaRowRecorrencia', 'Escolha uma categoria');
+            valido = false;
+        }
+
+        if (isNaN(totalParcelas) || totalParcelas < 1) {
+            feedback.marcarErro('#inputRecorrenciaParcelas', 'Informe ao menos 1 parcela');
+            valido = false;
+        }
+
+        if (!valido) {
+            feedback.focarPrimeiroErro('#modalRecorrencia');
         }
 
         return valido;
@@ -1210,6 +1333,7 @@ function Dashboard() {
                 self.carregarRecorrencias();
                 self.carregarCartoes();
                 self.carregarTransacoes();
+                feedback.exibirSucesso('Recorrência criada', totalParcelas + (totalParcelas === 1 ? ' parcela de ' : ' parcelas de ') + self.formatCurrency(value) + '.');
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1222,15 +1346,16 @@ function Dashboard() {
 
     self.abrirModalEditarValorRecorrencia = function (recorrencia) {
         self.state.editingValorRecorrenciaId = recorrencia.id;
-        $('#inputRecorrenciaNewValue').val(recorrencia.valor);
+        $('#inputRecorrenciaNewValue').val(self.valorParaCampo(recorrencia.valor));
         self.openModal('#modalEditRecorrenciaValue');
     };
 
     self.atualizarValorRecorrencia = function () {
-        var novoValor = parseFloat($('#inputRecorrenciaNewValue').val().replace(',', '.'));
+        var novoValor = self.lerValor($('#inputRecorrenciaNewValue').val());
 
         if (isNaN(novoValor) || novoValor <= 0) {
-            alert('Informe um valor válido.');
+            feedback.marcarErro('#inputRecorrenciaNewValue', 'Informe um valor maior que zero');
+            feedback.focarPrimeiroErro('#modalEditRecorrenciaValue');
             return;
         }
 
@@ -1247,6 +1372,7 @@ function Dashboard() {
                 self.closeModal('#modalEditRecorrenciaValue');
                 self.carregarRecorrencias();
                 self.carregarTransacoes();
+                feedback.exibirSucesso('Valor atualizado', 'As próximas parcelas passam a ' + self.formatCurrency(novoValor) + '.');
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1258,32 +1384,48 @@ function Dashboard() {
     };
 
     /**
-     * Cancela as parcelas futuras de uma recorrência, após confirmação do usuário.
+     * Pede confirmação (Dialog) e cancela as parcelas futuras de uma recorrência.
+     *
+     * @param {object} recorrencia recorrência retornada pela API
+     * @returns
+     */
+    self.cancelarRecorrenciaFuturas = function (recorrencia) {
+        feedback.confirmar({
+            titulo: 'Cancelar parcelas futuras',
+            descricao: 'As próximas parcelas de "' + recorrencia.descricao + '" serão apagadas. As que já passaram continuam no histórico.',
+            rotuloConfirmar: 'Cancelar parcelas',
+            aoConfirmar: function () {
+                self.executarCancelamentoRecorrencia(recorrencia.id);
+            }
+        });
+    };
+
+    /**
+     * Cancela as parcelas futuras de uma recorrência via API.
      *
      * @param {number} id id da recorrência
      * @returns
      */
-    self.cancelarRecorrenciaFuturas = function (id) {
-        if (confirm('Cancelar as parcelas futuras dessa recorrência? As parcelas passadas continuam no histórico.')) {
-            $.ajax({
-                url: self.apiBaseUrl + '/api/recorrencias/' + id,
-                method: 'DELETE',
-                headers: self.cabecalhoAuth(),
-                beforeSend: function () {
-                    self.mostrarCarregando();
-                },
-                success: function () {
-                    self.carregarRecorrencias();
-                    self.carregarTransacoes();
-                },
-                error: function (jqXHR) {
-                    self.tratarErroRequisicao(jqXHR);
-                },
-                complete: function () {
-                    self.esconderCarregando();
-                }
-            });
-        }
+    self.executarCancelamentoRecorrencia = function (id) {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/recorrencias/' + id,
+            method: 'DELETE',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.carregarRecorrencias();
+                self.carregarTransacoes();
+                feedback.exibirSucesso('Parcelas futuras canceladas');
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
     };
 
     /**
@@ -1343,6 +1485,7 @@ function Dashboard() {
             success: function () {
                 self.closeModal('#modalCard');
                 self.carregarCartoes();
+                feedback.exibirSucesso('Cartão salvo', name);
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1354,34 +1497,49 @@ function Dashboard() {
     };
 
     /**
-     * Exclui um cartão via API, após confirmação do usuário. As transações
-     * vinculadas ficam sem cartão (a API cuida disso), por isso recarrega
-     * cartões e transações juntos.
+     * Pede confirmação (Dialog) e exclui um cartão.
+     *
+     * @param {object} card cartão retornado pela API
+     * @returns
+     */
+    self.excluirCartao = function (card) {
+        feedback.confirmar({
+            titulo: 'Excluir cartão',
+            descricao: 'O cartão "' + card.nome + '" será excluído. As movimentações dele continuam, sem cartão.',
+            rotuloConfirmar: 'Excluir cartão',
+            aoConfirmar: function () {
+                self.executarExclusaoCartao(card.id);
+            }
+        });
+    };
+
+    /**
+     * Exclui um cartão via API. As transações vinculadas ficam sem cartão (a
+     * API cuida disso), por isso recarrega cartões e transações juntos.
      *
      * @param {number} id id do cartão
      * @returns
      */
-    self.excluirCartao = function (id) {
-        if (confirm('Excluir este cartão? As transações vinculadas a ele ficarão sem cartão.')) {
-            $.ajax({
-                url: self.apiBaseUrl + '/api/cartoes/' + id,
-                method: 'DELETE',
-                headers: self.cabecalhoAuth(),
-                beforeSend: function () {
-                    self.mostrarCarregando();
-                },
-                success: function () {
-                    self.carregarCartoes();
-                    self.carregarTransacoes();
-                },
-                error: function (jqXHR) {
-                    self.tratarErroRequisicao(jqXHR);
-                },
-                complete: function () {
-                    self.esconderCarregando();
-                }
-            });
-        }
+    self.executarExclusaoCartao = function (id) {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/cartoes/' + id,
+            method: 'DELETE',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.carregarCartoes();
+                self.carregarTransacoes();
+                feedback.exibirSucesso('Cartão excluído');
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
     };
 
     self.resetTransactionModal = function () {
@@ -1410,19 +1568,45 @@ function Dashboard() {
         // fica de fora
         $('#categoriaRow .categoria-chip').attr('aria-pressed', 'false');
         self.state.currentCategoria = isIn ? 'RENDA' : null;
-        $('#categoriaRow').css('display', isIn ? 'none' : 'flex');
+        feedback.limparErro('#categoriaRow');
+        $('#campoCategoria').css('display', isIn ? 'none' : 'flex');
         $('#categoriaRow .categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
     };
 
-    self.validateTransaction = function (description, value) {
+    /**
+     * Valida o modal de movimentação, marcando cada campo com problema (erro
+     * abaixo do campo, padrão Field) e focando o primeiro.
+     *
+     * @param {string} description descrição
+     * @param {number} value valor
+     * @param {number} contaId id da conta escolhida
+     * @returns {boolean} true se pode enviar
+     */
+    self.validateTransaction = function (description, value, contaId) {
         var valido = true;
 
         if (!description) {
-            alert('Informe uma descrição.');
+            feedback.marcarErro('#inputDescription', 'Informe uma descrição');
             valido = false;
-        } else if (isNaN(value) || value <= 0) {
-            alert('Informe um valor válido.');
+        }
+
+        if (isNaN(value) || value <= 0) {
+            feedback.marcarErro('#inputValue', 'Informe um valor maior que zero');
             valido = false;
+        }
+
+        if (!contaId) {
+            feedback.marcarErro('#inputAccount', 'Crie uma conta antes de lançar');
+            valido = false;
+        }
+
+        if (!self.state.currentCategoria) {
+            feedback.marcarErro('#categoriaRow', 'Escolha uma categoria');
+            valido = false;
+        }
+
+        if (!valido) {
+            feedback.focarPrimeiroErro('#modalTransaction');
         }
 
         return valido;
@@ -1459,6 +1643,7 @@ function Dashboard() {
                 self.closeModal('#modalTransaction');
                 self.carregarTransacoes();
                 self.carregarCartoes();
+                feedback.exibirSucesso('Movimentação adicionada', description + ' · ' + self.formatCurrency(value));
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1470,32 +1655,51 @@ function Dashboard() {
     };
 
     /**
-     * Exclui uma transação via API, após confirmação do usuário.
+     * Pede confirmação (Dialog) e exclui uma movimentação. Parcela de
+     * recorrência avisa que só aquela parcela sai.
+     *
+     * @param {object} tx transação retornada pela API
+     * @returns
+     */
+    self.excluirTransacao = function (tx) {
+        var parcela = tx.numeroParcela ? ' Só a parcela ' + tx.numeroParcela + '/' + tx.totalParcelas + ' sai; as outras continuam.' : '';
+
+        feedback.confirmar({
+            titulo: 'Excluir movimentação',
+            descricao: '"' + tx.descricao + '" (' + self.formatCurrency(tx.valor) + ') será apagada permanentemente.' + parcela,
+            rotuloConfirmar: 'Excluir movimentação',
+            aoConfirmar: function () {
+                self.executarExclusaoTransacao(tx.id);
+            }
+        });
+    };
+
+    /**
+     * Exclui uma transação via API.
      *
      * @param {number} id id da transação
      * @returns
      */
-    self.excluirTransacao = function (id) {
-        if (confirm('Excluir esta movimentação?')) {
-            $.ajax({
-                url: self.apiBaseUrl + '/api/transacoes/' + id,
-                method: 'DELETE',
-                headers: self.cabecalhoAuth(),
-                beforeSend: function () {
-                    self.mostrarCarregando();
-                },
-                success: function () {
-                    self.carregarTransacoes();
-                    self.carregarCartoes();
-                },
-                error: function (jqXHR) {
-                    self.tratarErroRequisicao(jqXHR);
-                },
-                complete: function () {
-                    self.esconderCarregando();
-                }
-            });
-        }
+    self.executarExclusaoTransacao = function (id) {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/transacoes/' + id,
+            method: 'DELETE',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.carregarTransacoes();
+                self.carregarCartoes();
+                feedback.exibirSucesso('Movimentação excluída');
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
     };
 
     self.resetCardModal = function () {
@@ -1521,6 +1725,7 @@ function Dashboard() {
     };
 
     self.openModal = function (selector) {
+        feedback.limparErros(selector);
         $(selector).prop('hidden', false);
     };
 
@@ -1547,8 +1752,9 @@ function Dashboard() {
                 self.closeModal('#' + $(this).closest('.ef-dialog').attr('id'));
             });
 
+            // Esc com a lista de um select aberta só fecha a lista, não o modal
             $(document).on('keydown', function (e) {
-                if (e.key === 'Escape') {
+                if (e.key === 'Escape' && !$(e.target).closest('select').length) {
                     $('.ef-dialog:not([hidden])').prop('hidden', true);
                 }
             });
@@ -1583,16 +1789,14 @@ function Dashboard() {
                 self.state.currentCategoria = $(this).data('categoria');
                 $('#categoriaRow .categoria-chip').attr('aria-pressed', 'false');
                 $(this).attr('aria-pressed', 'true');
+                feedback.limparErro('#categoriaRow');
             });
 
             $(document).on('click', '#categoriaRowRecorrencia .categoria-chip', function () {
                 self.state.currentCategoriaRecorrencia = $(this).data('categoria');
                 $('#categoriaRowRecorrencia .categoria-chip').attr('aria-pressed', 'false');
                 $(this).attr('aria-pressed', 'true');
-            });
-
-            $(document).on('click', '.theme-toggle', function () {
-                self.atualizarGraficos();
+                feedback.limparErro('#categoriaRowRecorrencia');
             });
 
             $('#btnPrevMonth').on('click', function () {
@@ -1629,19 +1833,12 @@ function Dashboard() {
 
             $('#btnConfirmTransaction').on('click', function () {
                 var description = $.trim($('#inputDescription').val());
-                var rawValue = $('#inputValue').val().replace(',', '.');
-                var value = parseFloat(rawValue);
+                var value = self.lerValor($('#inputValue').val());
                 var contaId = parseInt($('#inputAccount').val());
                 var cardId = parseInt($('#inputCard').val()) || null;
 
-                if (!contaId) {
-                    alert('Crie uma conta antes de lançar uma movimentação.');
-                } else if (self.validateTransaction(description, value)) {
-                    if (self.state.currentCategoria) {
-                        self.criarTransacao(description, value, contaId, cardId);
-                    } else {
-                        alert('Escolha uma categoria.');
-                    }
+                if (self.validateTransaction(description, value, contaId)) {
+                    self.criarTransacao(description, value, contaId, cardId);
                 }
             });
 
@@ -1678,7 +1875,8 @@ function Dashboard() {
                 if (name) {
                     self.criarCartao(name, self.state.selectedColor);
                 } else {
-                    alert('Informe o nome do cartão.');
+                    feedback.marcarErro('#inputCardName', 'Informe o nome do cartão');
+                    feedback.focarPrimeiroErro('#modalCard');
                 }
             });
 
@@ -1702,7 +1900,8 @@ function Dashboard() {
                         self.criarConta(nome, self.state.selectedContaColor);
                     }
                 } else {
-                    alert('Informe o nome da conta.');
+                    feedback.marcarErro('#inputContaName', 'Informe o nome da conta');
+                    feedback.focarPrimeiroErro('#modalConta');
                 }
             });
 
@@ -1732,21 +1931,14 @@ function Dashboard() {
 
             $('#btnConfirmRecorrencia').on('click', function () {
                 var description = $.trim($('#inputRecorrenciaDescription').val());
-                var rawValue = $('#inputRecorrenciaValue').val().replace(',', '.');
-                var value = parseFloat(rawValue);
+                var value = self.lerValor($('#inputRecorrenciaValue').val());
                 var contaId = parseInt($('#inputRecorrenciaAccount').val());
                 var cardId = parseInt($('#inputRecorrenciaCard').val()) || null;
                 var totalParcelas = parseInt($('#inputRecorrenciaParcelas').val());
                 var dataInicio = $('#inputRecorrenciaDataInicio').val();
 
-                if (!contaId) {
-                    alert('Crie uma conta antes de lançar uma recorrência.');
-                } else if (self.validateRecorrencia(description, value, totalParcelas)) {
-                    if (self.state.currentCategoriaRecorrencia) {
-                        self.criarRecorrencia(description, value, contaId, cardId, totalParcelas, dataInicio);
-                    } else {
-                        alert('Escolha uma categoria.');
-                    }
+                if (self.validateRecorrencia(description, value, contaId, totalParcelas)) {
+                    self.criarRecorrencia(description, value, contaId, cardId, totalParcelas, dataInicio);
                 }
             });
 
@@ -1764,6 +1956,7 @@ function Dashboard() {
             self.buildFilterRow();
             self.buildColorPicker();
             self.updateAccountSelector('all');
+            self.carregarDesignSystem();
             self.carregarContas();
             self.carregarCartoes();
             self.carregarTransacoes();

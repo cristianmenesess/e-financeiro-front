@@ -1,6 +1,7 @@
-// v2: telas migradas para o design system (design-system/ds.css). Trocar a
-// versão descarta o cache antigo, que serviria o CSS anterior (cache-first).
-const CACHE_NAME = 'e-financeiro-shell-v2';
+// v4: ícones em Lucide (icones.js), avisos com Toast/Dialog (feedback.js) e
+// campos com rótulo. Trocar a versão descarta o cache antigo, que serviria o
+// CSS/JS anterior (cache-first).
+const CACHE_NAME = 'e-financeiro-shell-v4';
 
 const APP_SHELL = [
     'index.html',
@@ -28,9 +29,44 @@ const APP_SHELL = [
     'design-system/components/navigation/navigation.css',
     'design-system/components/feedback/feedback.css',
     'design-system/patterns/patterns.css',
+    // Componentes do design system: script.js importa o index.js (que puxa todos)
+    'design-system/components/index.js',
+    'design-system/components/_internal/dom.js',
+    'design-system/components/actions/Button.js',
+    'design-system/components/actions/IconButton.js',
+    'design-system/components/actions/SegmentedControl.js',
+    'design-system/components/forms/Field.js',
+    'design-system/components/forms/Input.js',
+    'design-system/components/forms/SearchField.js',
+    'design-system/components/forms/Select.js',
+    'design-system/components/forms/Switch.js',
+    'design-system/components/forms/Checkbox.js',
+    'design-system/components/data-display/Card.js',
+    'design-system/components/data-display/StatCard.js',
+    'design-system/components/data-display/Badge.js',
+    'design-system/components/data-display/Tag.js',
+    'design-system/components/data-display/Avatar.js',
+    'design-system/components/data-display/InsightCard.js',
+    'design-system/components/data-display/DataTable.js',
+    'design-system/components/data-display/ListRow.js',
+    'design-system/components/charts/Sparkline.js',
+    'design-system/components/charts/AreaChart.js',
+    'design-system/components/charts/DonutChart.js',
+    'design-system/components/charts/ScoreGauge.js',
+    'design-system/components/charts/BarTicks.js',
+    'design-system/components/navigation/SidebarNav.js',
+    'design-system/components/navigation/TopBar.js',
+    'design-system/components/navigation/Tabs.js',
+    'design-system/components/navigation/TabBar.js',
+    'design-system/components/feedback/ProgressBar.js',
+    'design-system/components/feedback/Dialog.js',
+    'design-system/components/feedback/Toast.js',
+    'design-system/components/feedback/EmptyState.js',
     'design-system/assets/logo-lockup.png',
     'design-system/assets/logo-mark.png',
     'assets/js/theme.js',
+    'assets/js/icones.js',
+    'assets/js/feedback.js',
     'assets/js/script.js',
     'assets/js/login.js',
     'assets/js/cadastro.js',

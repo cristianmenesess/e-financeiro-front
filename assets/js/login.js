@@ -27,33 +27,9 @@ function TelaLogin() {
         $('#loadingOverlay').removeClass('active');
     };
 
-    /**
-     * Exibe uma mensagem de erro apropriada a partir da resposta de uma chamada AJAX,
-     * cobrindo os formatos de erro que a API pode devolver (validação, erro genérico, falha de conexão).
-     *
-     * @param {object} jqXHR objeto de erro retornado pelo jQuery
-     * @returns
-     */
-    self.exibirErroAjax = function (jqXHR) {
-        if (!jqXHR.responseJSON) {
-            alert('Não foi possível conectar ao servidor. Tente novamente.');
-        } else if (jqXHR.responseJSON.mensagem) {
-            alert(jqXHR.responseJSON.mensagem);
-        } else if (jqXHR.status === 400) {
-            var campos = Object.keys(jqXHR.responseJSON);
-
-            if (campos.length > 0) {
-                alert(jqXHR.responseJSON[campos[0]]);
-            } else {
-                alert('Erro de validação. Tente novamente.');
-            }
-        } else {
-            alert('Ocorreu um erro. Tente novamente.');
-        }
-    };
-
     self.abrirModalEsqueciSenha = function () {
         $('#inputEmailReset').val('');
+        feedback.limparErros('#modalEsqueciSenha');
         $('#formEsqueciSenha').show();
         $('#successEsqueciSenha').hide();
         $('#modalEsqueciSenha').prop('hidden', false);
@@ -87,20 +63,49 @@ function TelaLogin() {
                     $('#successEsqueciSenha').show();
                 },
                 error: function (jqXHR) {
-                    self.exibirErroAjax(jqXHR);
+                    feedback.exibirErroAjax(jqXHR);
                 },
                 complete: function () {
                     self.esconderCarregando();
                 }
             });
         } else {
-            alert('Informe seu e-mail.');
+            feedback.marcarErro('#inputEmailReset', 'Informe seu e-mail');
+            feedback.focarPrimeiroErro('#modalEsqueciSenha');
         }
     };
 
     /**
+     * Valida e-mail e senha, marcando o erro abaixo de cada campo vazio.
+     *
+     * @param {string} email e-mail digitado
+     * @param {string} senha senha digitada
+     * @returns {boolean} true se pode enviar
+     */
+    self.validarFormulario = function (email, senha) {
+        var valido = true;
+
+        if (!email) {
+            feedback.marcarErro('#inputEmail', 'Informe seu e-mail');
+            valido = false;
+        }
+
+        if (!senha) {
+            feedback.marcarErro('#inputSenha', 'Informe sua senha');
+            valido = false;
+        }
+
+        if (!valido) {
+            feedback.focarPrimeiroErro('.auth-card');
+        }
+
+        return valido;
+    };
+
+    /**
      * Autentica o usuário via API e, em caso de sucesso, guarda a sessão e
-     * redireciona pro dashboard.
+     * redireciona pro dashboard. Credenciais erradas (401) aparecem abaixo do
+     * campo de senha; os demais erros, em Toast.
      *
      * @returns
      */
@@ -108,7 +113,7 @@ function TelaLogin() {
         var email = $.trim($('#inputEmail').val());
         var senha = $('#inputSenha').val();
 
-        if (email && senha) {
+        if (self.validarFormulario(email, senha)) {
             $.ajax({
                 url: self.apiBaseUrl + '/api/autenticacao/login',
                 method: 'POST',
@@ -122,14 +127,33 @@ function TelaLogin() {
                     window.location.href = 'index.html';
                 },
                 error: function (jqXHR) {
-                    self.exibirErroAjax(jqXHR);
+                    var credenciaisInvalidas = feedback.mensagemDaApi(jqXHR, 401);
+
+                    if (credenciaisInvalidas) {
+                        $('#inputSenha').val('');
+                        feedback.marcarErro('#inputSenha', credenciaisInvalidas);
+                        feedback.focarPrimeiroErro('.auth-card');
+                    } else {
+                        feedback.exibirErroAjax(jqXHR);
+                    }
                 },
                 complete: function () {
                     self.esconderCarregando();
                 }
             });
-        } else {
-            alert('Preencha e-mail e senha.');
+        }
+    };
+
+    /**
+     * Mostra o aviso deixado por outra tela antes de redirecionar pra cá (ex.:
+     * senha redefinida), já que um Toast não sobrevive à troca de página.
+     *
+     * @returns
+     */
+    self.exibirAvisoPendente = function () {
+        if (sessionStorage.getItem('avisoLogin') === 'senha-redefinida') {
+            sessionStorage.removeItem('avisoLogin');
+            feedback.exibirSucesso('Senha redefinida', 'Entre com a nova senha.');
         }
     };
 
@@ -143,6 +167,8 @@ function TelaLogin() {
         if (self.obterToken()) {
             window.location.href = 'index.html';
         } else {
+            self.exibirAvisoPendente();
+
             $('#btnLogin').on('click', self.efetuarLogin);
 
             $('#inputEmail, #inputSenha').on('keydown', function (e) {

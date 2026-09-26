@@ -24,6 +24,7 @@
 /* Tiles, pontos e marcadores */
 --icon-tile:36px;--stat-icon-tile:30px;--empty-icon-tile:48px;
 --dot-sm:6px;--dot-md:8px;
+--glyph-xs:14px;--glyph-sm:16px;--glyph-md:18px;--glyph-lg:20px; /* glifos Lucide (DESIGN.md → Iconografia) */
 --nav-item-h:44px;--nav-marker-w:3px;--nav-marker-inset:11px;
 --tabbar-pill-w:44px;--tabbar-pill-h:28px;
 --sheet-handle-w:44px;--sheet-handle-h:4px;

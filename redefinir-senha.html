@@ -17,7 +17,6 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="design-system/ds.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="assets/js/theme.js"></script>
@@ -31,7 +30,7 @@
     </div>
 
     <button class="ef-icon-btn ef-icon-btn--surface ef-icon-btn--lg theme-toggle theme-toggle--auth" title="Alternar tema" aria-label="Alternar tema">
-        <i class="fa-solid fa-moon"></i>
+        <i data-lucide="moon" class="ef-icon ef-icon--md"></i>
     </button>
 
     <div class="auth-page">
@@ -42,14 +41,21 @@
 
             <div id="formRedefinirSenha">
                 <p class="auth-help-text">Escolha uma nova senha para acessar sua conta.</p>
-                <input class="ef-input" type="password" id="inputNovaSenha" placeholder="Nova senha (mínimo 8 caracteres)">
-                <input class="ef-input" type="password" id="inputConfirmarSenha" placeholder="Confirmar nova senha">
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputNovaSenha">Nova senha</label>
+                    <input class="ef-input" type="password" id="inputNovaSenha" autocomplete="new-password">
+                    <span class="ef-field__message">Mínimo de 8 caracteres.</span>
+                </div>
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputConfirmarSenha">Confirmar nova senha</label>
+                    <input class="ef-input" type="password" id="inputConfirmarSenha" autocomplete="new-password">
+                </div>
 
                 <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnRedefinir">Redefinir senha</button>
             </div>
 
             <div class="auth-feedback auth-feedback--error" id="erroToken">
-                <i class="fa-solid fa-circle-exclamation"></i>
+                <span class="auth-feedback__icon"><i data-lucide="circle-alert" class="ef-icon ef-icon--lg"></i></span>
                 <p>Link inválido ou expirado. Solicite um novo link na tela de login.</p>
                 <a href="login.html">Voltar para o login</a>
             </div>
@@ -59,6 +65,9 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/feedback.js"></script>
     <script src="assets/js/redefinir-senha.js"></script>
 
 </body>

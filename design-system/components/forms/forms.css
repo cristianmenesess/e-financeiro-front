@@ -69,7 +69,40 @@ input.ef-input,textarea.ef-input{appearance:none;outline:none}
 .ef-select__control:focus,.ef-select.is-focus .ef-select__control{border-color:var(--border-focus);box-shadow:var(--shadow-focus)}
 .ef-select__control[aria-invalid="true"],.ef-select.is-invalid .ef-select__control{border-color:var(--border-invalid)}
 .ef-select__control:disabled{background:var(--surface-sunken);cursor:not-allowed;opacity:.6}
-.ef-select__chevron{position:absolute;right:var(--space-3);top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-muted);display:flex}
+.ef-select__chevron{position:absolute;right:var(--space-3);top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-muted);display:flex;transition:transform var(--duration-fast) var(--ease-standard)}
+
+/* Lista de opções com o acabamento da marca (select personalizável,
+   appearance:base-select). Aprimoramento progressivo: onde o navegador não
+   suporta (Safari/Firefox), a lista nativa do sistema continua valendo — no iOS
+   é a roda nativa, que já é a melhor experiência ali. O <select> segue nativo:
+   teclado, leitor de tela e formulário não mudam. */
+@supports (appearance:base-select){
+  .ef-select__control,.ef-select__control::picker(select){appearance:base-select}
+  .ef-select__control{display:flex;align-items:center}
+  .ef-select__control::picker-icon{display:none}
+  .ef-select:has(.ef-select__control:open) .ef-select__chevron{transform:translateY(-50%) rotate(180deg)}
+  /* position-try-order normal: abre para baixo e só vira para cima se não couber
+     (o padrão do navegador escolhe o lado com mais espaço e cobre o que vem antes) */
+  .ef-select__control::picker(select){
+    position-try-order:normal;
+    margin-block:var(--space-1-5);padding:var(--space-1-5);
+    background:var(--surface-raised);color:var(--text-primary);
+    border:1px solid var(--border-subtle);border-radius:var(--radius-md);box-shadow:var(--shadow-popover);
+    opacity:1;translate:0 0;
+    transition:opacity var(--duration-fast) var(--ease-out),translate var(--duration-fast) var(--ease-out),display var(--duration-fast) allow-discrete,overlay var(--duration-fast) allow-discrete;
+  }
+  .ef-select__control:not(:open)::picker(select){opacity:0;translate:0 calc(var(--space-1) * -1)}
+  @starting-style{.ef-select__control:open::picker(select){opacity:0;translate:0 calc(var(--space-1) * -1)}}
+  .ef-select__control option{
+    display:flex;align-items:center;gap:var(--space-2-5);min-height:var(--field-h-sm);padding:0 var(--space-3);
+    border-radius:var(--radius-sm);font-family:var(--font-sans);font-size:var(--text-sm);font-weight:var(--weight-medium);
+    color:var(--text-primary);cursor:pointer;transition:var(--transition-control);
+  }
+  .ef-select__control option:hover,.ef-select__control option:focus-visible{background:var(--surface-sunken);outline:none}
+  .ef-select__control option:checked{background:var(--surface-brand-soft);color:var(--text-brand);font-weight:var(--weight-semibold)}
+  .ef-select__control option::checkmark{order:1;margin-inline-start:auto;color:var(--text-brand)}
+  .ef-select__control option:disabled{color:var(--text-faint);cursor:default;background:transparent}
+}
 
 /* Switch */
 .ef-switch{display:inline-flex;align-items:center;gap:var(--space-3);cursor:pointer}

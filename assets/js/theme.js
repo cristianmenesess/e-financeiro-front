@@ -34,17 +34,26 @@ function ControleTema() {
 
     /**
      * Troca o ícone de todos os botões de tema: lua no tema claro (convite pro
-     * escuro), sol no tema escuro (convite pro claro).
+     * escuro), sol no tema escuro (convite pro claro). Mantém o tamanho do
+     * ícone atual de cada botão (ef-icon--sm no rail, --md nas telas de login).
+     * Depende de icones.js; antes dele carregar (no <head>) não faz nada.
      *
      * @param {string} tema "claro" ou "escuro"
      * @returns
      */
     self.atualizarIcones = function (tema) {
-        var icones = document.querySelectorAll('.theme-toggle i');
-        var classe = tema === 'escuro' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        if (typeof icones === 'undefined') {
+            return;
+        }
 
-        for (var i = 0; i < icones.length; i++) {
-            icones[i].className = classe;
+        var botoes = document.querySelectorAll('.theme-toggle');
+        var nome = tema === 'escuro' ? 'sun' : 'moon';
+
+        for (var i = 0; i < botoes.length; i++) {
+            var atual = botoes[i].querySelector('.ef-icon');
+            var tamanho = atual ? (atual.getAttribute('class').match(/ef-icon--(\w+)/) || [])[1] : null;
+
+            botoes[i].replaceChildren(icones.criar(nome, tamanho || 'sm'));
         }
     };
 

@@ -28,40 +28,34 @@ function TelaCadastro() {
     };
 
     /**
-     * Exibe uma mensagem de erro apropriada a partir da resposta de uma chamada AJAX,
-     * cobrindo os formatos de erro que a API pode devolver (validação, erro genérico,
-     * falha de conexão).
+     * Valida o formulário, marcando o erro abaixo de cada campo com problema e
+     * focando o primeiro.
      *
-     * @param {object} jqXHR objeto de erro retornado pelo jQuery
-     * @returns
+     * @param {string} nome nome completo
+     * @param {string} email e-mail
+     * @param {string} senha senha
+     * @returns {boolean} true se pode enviar
      */
-    self.exibirErroAjax = function (jqXHR) {
-        if (!jqXHR.responseJSON) {
-            alert('Não foi possível conectar ao servidor. Tente novamente.');
-        } else if (jqXHR.responseJSON.mensagem) {
-            alert(jqXHR.responseJSON.mensagem);
-        } else if (jqXHR.status === 400) {
-            var campos = Object.keys(jqXHR.responseJSON);
-
-            if (campos.length > 0) {
-                alert(jqXHR.responseJSON[campos[0]]);
-            } else {
-                alert('Erro de validação. Tente novamente.');
-            }
-        } else {
-            alert('Ocorreu um erro. Tente novamente.');
-        }
-    };
-
     self.validarFormulario = function (nome, email, senha) {
         var valido = true;
 
-        if (!nome || !email || !senha) {
-            alert('Preencha todos os campos.');
+        if (!nome) {
+            feedback.marcarErro('#inputNome', 'Informe seu nome');
             valido = false;
-        } else if (senha.length < 8) {
-            alert('A senha deve ter no mínimo 8 caracteres.');
+        }
+
+        if (!email) {
+            feedback.marcarErro('#inputEmail', 'Informe seu e-mail');
             valido = false;
+        }
+
+        if (!senha || senha.length < 8) {
+            feedback.marcarErro('#inputSenha', 'A senha precisa de pelo menos 8 caracteres');
+            valido = false;
+        }
+
+        if (!valido) {
+            feedback.focarPrimeiroErro('.auth-card');
         }
 
         return valido;
@@ -92,7 +86,15 @@ function TelaCadastro() {
                     window.location.href = 'index.html';
                 },
                 error: function (jqXHR) {
-                    self.exibirErroAjax(jqXHR);
+                    // E-mail já cadastrado volta 409: o erro vai no próprio campo
+                    var emailEmUso = feedback.mensagemDaApi(jqXHR, 409);
+
+                    if (emailEmUso) {
+                        feedback.marcarErro('#inputEmail', emailEmUso);
+                        feedback.focarPrimeiroErro('.auth-card');
+                    } else {
+                        feedback.exibirErroAjax(jqXHR);
+                    }
                 },
                 complete: function () {
                     self.esconderCarregando();

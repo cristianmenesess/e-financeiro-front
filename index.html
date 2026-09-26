@@ -17,7 +17,6 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="design-system/ds.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="assets/js/theme.js"></script>
@@ -35,32 +34,32 @@
         <div class="ef-sidebar__logo sidebar-logo">
             <img class="sidebar-logo-img" src="design-system/assets/logo-lockup.png" alt="E-Financeiro">
             <button class="ef-icon-btn ef-icon-btn--sm theme-toggle" title="Alternar tema" aria-label="Alternar tema">
-                <i class="fa-solid fa-moon"></i>
+                <i data-lucide="moon" class="ef-icon ef-icon--sm"></i>
             </button>
         </div>
 
         <ul class="ef-sidebar__list">
             <li>
                 <button class="ef-nav-item nav-item" data-page="dashboard" aria-current="page">
-                    <span class="ef-nav-item__icon"><i class="fa-solid fa-house"></i></span>
+                    <span class="ef-nav-item__icon"><i data-lucide="house" class="ef-icon ef-icon--md"></i></span>
                     <span class="ef-nav-item__label">Dashboard</span>
                 </button>
             </li>
             <li>
                 <button class="ef-nav-item nav-item" data-page="cards">
-                    <span class="ef-nav-item__icon"><i class="fa-solid fa-credit-card"></i></span>
+                    <span class="ef-nav-item__icon"><i data-lucide="credit-card" class="ef-icon ef-icon--md"></i></span>
                     <span class="ef-nav-item__label">Cartões</span>
                 </button>
             </li>
             <li>
                 <button class="ef-nav-item nav-item" data-page="contas">
-                    <span class="ef-nav-item__icon"><i class="fa-solid fa-wallet"></i></span>
+                    <span class="ef-nav-item__icon"><i data-lucide="wallet" class="ef-icon ef-icon--md"></i></span>
                     <span class="ef-nav-item__label">Contas</span>
                 </button>
             </li>
             <li>
                 <button class="ef-nav-item nav-item" data-page="recorrencias">
-                    <span class="ef-nav-item__icon"><i class="fa-solid fa-rotate"></i></span>
+                    <span class="ef-nav-item__icon"><i data-lucide="repeat" class="ef-icon ef-icon--md"></i></span>
                     <span class="ef-nav-item__label">Recorrências</span>
                 </button>
             </li>
@@ -74,7 +73,7 @@
                     <span class="ef-user-chip__meta" id="sidebarUserEmail"></span>
                 </span>
                 <button class="ef-icon-btn ef-icon-btn--sm icon-btn--destructive" id="btnLogoutDesktop" title="Sair" aria-label="Sair">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <i data-lucide="log-out" class="ef-icon ef-icon--sm"></i>
                 </button>
             </div>
         </div>
@@ -89,18 +88,18 @@
             <div class="account-selector" id="btnAccountSelector">
                 <span class="account-dot" id="accountDot"></span>
                 <span class="account-label" id="accountLabel">Todas as contas</span>
-                <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                <i data-lucide="chevron-down" class="ef-icon ef-icon--xs chevron-icon"></i>
             </div>
             <div class="topbar-right">
                 <button class="ef-icon-btn ef-icon-btn--surface ef-icon-btn--sm theme-toggle" title="Alternar tema" aria-label="Alternar tema">
-                    <i class="fa-solid fa-moon"></i>
+                    <i data-lucide="moon" class="ef-icon ef-icon--sm"></i>
                 </button>
                 <button class="ef-icon-btn ef-icon-btn--surface ef-icon-btn--sm topbar-icon-btn" data-page="cards" title="Cartões" aria-label="Cartões">
-                    <i class="fa-solid fa-credit-card"></i>
+                    <i data-lucide="credit-card" class="ef-icon ef-icon--sm"></i>
                 </button>
                 <span class="ef-avatar ef-avatar--sm" id="mobileAvatar">--</span>
                 <button class="ef-icon-btn ef-icon-btn--sm icon-btn--destructive" id="btnLogoutMobile" title="Sair" aria-label="Sair">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <i data-lucide="log-out" class="ef-icon ef-icon--sm"></i>
                 </button>
             </div>
         </header>
@@ -113,11 +112,11 @@
                     <h1 class="page-title" id="dashboardGreeting">Dashboard</h1>
                     <div class="period-selector">
                         <button class="ef-icon-btn ef-icon-btn--sm" id="btnPrevMonth" title="Mês anterior" aria-label="Mês anterior">
-                            <i class="fa-solid fa-chevron-left"></i>
+                            <i data-lucide="chevron-left" class="ef-icon ef-icon--sm"></i>
                         </button>
                         <p class="page-subtitle" id="balancePeriod"></p>
                         <button class="ef-icon-btn ef-icon-btn--sm" id="btnNextMonth" title="Próximo mês" aria-label="Próximo mês">
-                            <i class="fa-solid fa-chevron-right"></i>
+                            <i data-lucide="chevron-right" class="ef-icon ef-icon--sm"></i>
                         </button>
                     </div>
                 </div>
@@ -169,18 +168,20 @@
 
             <!-- Gráficos -->
             <div class="charts-grid">
+                <!-- DonutChart + DonutLegend e AreaChart do design system (montados em script.js) -->
                 <section class="ef-card chart-card">
-                    <p class="ef-mono-label">Gastos por categoria</p>
-                    <div class="chart-canvas-wrap">
-                        <canvas id="chartCategorias"></canvas>
-                        <p class="chart-empty" id="chartCategoriasEmpty">Sem saídas nesse período.</p>
+                    <div class="chart-card-head">
+                        <p class="ef-mono-label">Gastos por categoria</p>
                     </div>
+                    <div class="chart-donut" id="chartCategorias"></div>
                 </section>
                 <section class="ef-card chart-card">
-                    <p class="ef-mono-label">Entradas x saídas — últimos 6 meses</p>
-                    <div class="chart-canvas-wrap">
-                        <canvas id="chartTendencia"></canvas>
+                    <div class="chart-card-head">
+                        <p class="ef-mono-label">Últimos 6 meses</p>
+                        <div id="chartTendenciaSerie"></div>
                     </div>
+                    <div class="ef-figure chart-figure" id="chartTendenciaResumo"></div>
+                    <div class="chart-trend" id="chartTendencia"></div>
                 </section>
             </div>
 
@@ -190,7 +191,7 @@
                     <div class="transactions-header">
                         <p class="ef-mono-label">Últimas movimentações</p>
                         <button class="ef-btn ef-btn--primary ef-btn--sm" id="btnNewTransaction">
-                            <i class="fa-solid fa-plus"></i>
+                            <i data-lucide="plus" class="ef-icon ef-icon--sm"></i>
                             <span class="btn-label">Nova movimentação</span>
                         </button>
                     </div>
@@ -209,7 +210,7 @@
                     <p class="page-subtitle">Gerencie seus cartões cadastrados</p>
                 </div>
                 <button class="ef-btn ef-btn--primary ef-btn--sm" id="btnNewCard">
-                    <i class="fa-solid fa-plus"></i>
+                    <i data-lucide="plus" class="ef-icon ef-icon--sm"></i>
                     <span class="btn-label">Novo cartão</span>
                 </button>
             </div>
@@ -226,12 +227,16 @@
                     <p class="page-subtitle">Gerencie suas contas cadastradas</p>
                 </div>
                 <button class="ef-btn ef-btn--primary ef-btn--sm" id="btnNewConta">
-                    <i class="fa-solid fa-plus"></i>
+                    <i data-lucide="plus" class="ef-icon ef-icon--sm"></i>
                     <span class="btn-label">Nova conta</span>
                 </button>
             </div>
 
-            <div class="cards-grid" id="contasGrid"></div>
+            <section class="ef-card ef-card--pad-none">
+                <div class="ef-card__body">
+                    <ul class="transactions-list" id="contasLista"></ul>
+                </div>
+            </section>
         </div>
 
         <!-- RECORRÊNCIAS -->
@@ -243,7 +248,7 @@
                     <p class="page-subtitle">Parcelas e gastos ou entradas fixas</p>
                 </div>
                 <button class="ef-btn ef-btn--primary ef-btn--sm" id="btnNewRecorrencia">
-                    <i class="fa-solid fa-plus"></i>
+                    <i data-lucide="plus" class="ef-icon ef-icon--sm"></i>
                     <span class="btn-label">Nova recorrência</span>
                 </button>
             </div>
@@ -256,26 +261,26 @@
         </div>
 
         <button class="fab-mobile" id="btnFabMobile" aria-label="Nova movimentação">
-            <i class="fa-solid fa-plus"></i>
+            <i data-lucide="plus" class="ef-icon ef-icon--lg"></i>
         </button>
 
     </div>
 
     <nav class="bottom-nav ef-tabbar" aria-label="Navegação">
         <button class="ef-tabbar__item bottom-nav-item" data-page="dashboard" aria-current="page">
-            <span class="ef-tabbar__pill"><i class="fa-solid fa-house"></i></span>
+            <span class="ef-tabbar__pill"><i data-lucide="house" class="ef-icon ef-icon--lg"></i></span>
             <span class="ef-tabbar__label">Início</span>
         </button>
         <button class="ef-tabbar__item bottom-nav-item" data-page="cards">
-            <span class="ef-tabbar__pill"><i class="fa-solid fa-credit-card"></i></span>
+            <span class="ef-tabbar__pill"><i data-lucide="credit-card" class="ef-icon ef-icon--lg"></i></span>
             <span class="ef-tabbar__label">Cartões</span>
         </button>
         <button class="ef-tabbar__item bottom-nav-item" data-page="contas">
-            <span class="ef-tabbar__pill"><i class="fa-solid fa-wallet"></i></span>
+            <span class="ef-tabbar__pill"><i data-lucide="wallet" class="ef-icon ef-icon--lg"></i></span>
             <span class="ef-tabbar__label">Contas</span>
         </button>
         <button class="ef-tabbar__item bottom-nav-item" data-page="recorrencias">
-            <span class="ef-tabbar__pill"><i class="fa-solid fa-rotate"></i></span>
+            <span class="ef-tabbar__pill"><i data-lucide="repeat" class="ef-icon ef-icon--lg"></i></span>
             <span class="ef-tabbar__label">Recorrências</span>
         </button>
     </nav>
@@ -291,50 +296,72 @@
                 <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
             </div>
 
-            <div class="type-row">
-                <button class="type-btn active-in" id="btnTypeIn" data-type="in">
-                    <i class="fa-solid fa-arrow-down-left"></i> Entrada
+            <div class="type-row" role="group" aria-label="Tipo">
+                <button type="button" class="type-btn active-in" id="btnTypeIn" data-type="in">
+                    <i data-lucide="arrow-down-left" class="ef-icon ef-icon--sm"></i> Entrada
                 </button>
-                <button class="type-btn" id="btnTypeOut" data-type="out">
-                    <i class="fa-solid fa-arrow-up-right"></i> Saída
-                </button>
-            </div>
-
-            <input class="ef-input" type="text" id="inputDescription" placeholder="Descrição (ex: Aluguel)">
-            <input class="ef-input ef-input--mono" type="text" id="inputValue" placeholder="Valor (R$)" inputmode="decimal">
-            <div class="ef-select">
-                <select class="ef-select__control" id="inputAccount" aria-label="Conta"></select>
-                <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
-            </div>
-
-            <div class="categoria-row" id="categoriaRow">
-                <button class="ef-tag categoria-chip" data-categoria="RENDA" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-arrow-down-left"></i> Renda
-                </button>
-                <button class="ef-tag categoria-chip" data-categoria="DESPESA" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-arrow-up-right"></i> Despesa
-                </button>
-                <button class="ef-tag categoria-chip" data-categoria="ALIMENTACAO" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-bag-shopping"></i> Alimentação
-                </button>
-                <button class="ef-tag categoria-chip" data-categoria="MORADIA" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-house"></i> Moradia
-                </button>
-                <button class="ef-tag categoria-chip" data-categoria="OUTRO" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-ellipsis"></i> Outro
+                <button type="button" class="type-btn" id="btnTypeOut" data-type="out">
+                    <i data-lucide="arrow-up-right" class="ef-icon ef-icon--sm"></i> Saída
                 </button>
             </div>
 
-            <div class="card-row" id="cardRow">
-                <div class="ef-select">
-                    <select class="ef-select__control" id="inputCard" aria-label="Cartão">
-                        <option value="">Sem cartão (débito / dinheiro)</option>
-                    </select>
-                    <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputDescription">Descrição</label>
+                <input class="ef-input" type="text" id="inputDescription" placeholder="Ex.: Aluguel" autocomplete="off">
+            </div>
+
+            <div class="field-grid">
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputValue">Valor</label>
+                    <div class="ef-input ef-input--mono">
+                        <span class="ef-input__affix">R$</span>
+                        <input class="ef-input__control" type="text" id="inputValue" placeholder="0,00" inputmode="decimal" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputAccount">Conta</label>
+                    <div class="ef-select">
+                        <select class="ef-select__control" id="inputAccount"></select>
+                        <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                    </div>
                 </div>
             </div>
 
-            <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmTransaction">Adicionar</button>
+            <div class="ef-field" id="campoCategoria">
+                <span class="ef-field__label" id="rotuloCategoria">Categoria</span>
+                <div class="categoria-row" id="categoriaRow" role="group" aria-labelledby="rotuloCategoria">
+                    <button class="ef-tag categoria-chip" data-categoria="RENDA" type="button" aria-pressed="false">
+                        <i data-lucide="banknote" class="ef-icon ef-icon--xs"></i> Renda
+                    </button>
+                    <button class="ef-tag categoria-chip" data-categoria="DESPESA" type="button" aria-pressed="false">
+                        <i data-lucide="receipt" class="ef-icon ef-icon--xs"></i> Despesa
+                    </button>
+                    <button class="ef-tag categoria-chip" data-categoria="ALIMENTACAO" type="button" aria-pressed="false">
+                        <i data-lucide="shopping-bag" class="ef-icon ef-icon--xs"></i> Alimentação
+                    </button>
+                    <button class="ef-tag categoria-chip" data-categoria="MORADIA" type="button" aria-pressed="false">
+                        <i data-lucide="house" class="ef-icon ef-icon--xs"></i> Moradia
+                    </button>
+                    <button class="ef-tag categoria-chip" data-categoria="OUTRO" type="button" aria-pressed="false">
+                        <i data-lucide="ellipsis" class="ef-icon ef-icon--xs"></i> Outro
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-row" id="cardRow">
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputCard">Cartão</label>
+                    <div class="ef-select">
+                        <select class="ef-select__control" id="inputCard">
+                            <option value="">Sem cartão (débito / dinheiro)</option>
+                        </select>
+                        <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmTransaction">Adicionar movimentação</button>
         </div>
     </div>
 
@@ -349,13 +376,17 @@
                 <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
             </div>
 
-            <input class="ef-input" type="text" id="inputCardName"
-                placeholder="Nome do cartão (ex: Nubank, Itaú...)">
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputCardName">Nome do cartão</label>
+                <input class="ef-input" type="text" id="inputCardName" placeholder="Ex.: Nubank, Itaú" autocomplete="off">
+            </div>
 
-            <p class="color-picker-label">Cor do ícone</p>
-            <div class="color-picker" id="colorPicker"></div>
+            <div class="ef-field">
+                <span class="ef-field__label" id="rotuloCorCartao">Cor do ícone</span>
+                <div class="color-picker" id="colorPicker" role="group" aria-labelledby="rotuloCorCartao"></div>
+            </div>
 
-            <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmCard">Salvar cartão</button>
+            <button type="button" class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmCard">Salvar cartão</button>
         </div>
     </div>
 
@@ -370,13 +401,17 @@
                 <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
             </div>
 
-            <input class="ef-input" type="text" id="inputContaName"
-                placeholder="Nome da conta (ex: Nubank, Carteira...)">
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputContaName">Nome da conta</label>
+                <input class="ef-input" type="text" id="inputContaName" placeholder="Ex.: Pessoal, Empresa" autocomplete="off">
+            </div>
 
-            <p class="color-picker-label">Cor</p>
-            <div class="color-picker" id="colorPickerConta"></div>
+            <div class="ef-field">
+                <span class="ef-field__label" id="rotuloCorConta">Cor</span>
+                <div class="color-picker" id="colorPickerConta" role="group" aria-labelledby="rotuloCorConta"></div>
+            </div>
 
-            <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmConta">Salvar conta</button>
+            <button type="button" class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmConta">Salvar conta</button>
         </div>
     </div>
 
@@ -387,15 +422,18 @@
             <div class="ef-dialog__head">
                 <div class="ef-dialog__text">
                     <h2 class="ef-dialog__title" id="modalDeleteContaTitle">Excluir conta</h2>
+                    <p class="ef-dialog__description">A conta e todas as movimentações e recorrências dela serão apagadas permanentemente.</p>
                 </div>
                 <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
             </div>
 
-            <p class="modal-warning">Isso vai excluir a conta e todas as transações e recorrências vinculadas a ela, permanentemente. Digite sua senha pra confirmar.</p>
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputSenhaExclusaoConta">Sua senha</label>
+                <input class="ef-input" type="password" id="inputSenhaExclusaoConta" autocomplete="current-password">
+                <span class="ef-field__message">Confirme com a senha para excluir.</span>
+            </div>
 
-            <input class="ef-input" type="password" id="inputSenhaExclusaoConta" placeholder="Sua senha">
-
-            <button class="ef-btn ef-btn--danger ef-btn--lg ef-btn--block" id="btnConfirmDeleteConta">Excluir conta e transações</button>
+            <button type="button" class="ef-btn ef-btn--danger ef-btn--lg ef-btn--block" id="btnConfirmDeleteConta">Excluir conta e movimentações</button>
         </div>
     </div>
 
@@ -410,53 +448,84 @@
                 <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
             </div>
 
-            <div class="type-row">
-                <button class="type-btn active-in" id="btnRecorrenciaTypeIn" data-type="in">
-                    <i class="fa-solid fa-arrow-down-left"></i> Entrada
+            <div class="type-row" role="group" aria-label="Tipo">
+                <button type="button" class="type-btn active-in" id="btnRecorrenciaTypeIn" data-type="in">
+                    <i data-lucide="arrow-down-left" class="ef-icon ef-icon--sm"></i> Entrada
                 </button>
-                <button class="type-btn" id="btnRecorrenciaTypeOut" data-type="out">
-                    <i class="fa-solid fa-arrow-up-right"></i> Saída
-                </button>
-            </div>
-
-            <input class="ef-input" type="text" id="inputRecorrenciaDescription" placeholder="Descrição (ex: Aluguel, Geladeira 10x)">
-            <input class="ef-input ef-input--mono" type="text" id="inputRecorrenciaValue" placeholder="Valor por parcela (R$)" inputmode="decimal">
-            <div class="ef-select">
-                <select class="ef-select__control" id="inputRecorrenciaAccount" aria-label="Conta"></select>
-                <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
-            </div>
-
-            <div class="categoria-row" id="categoriaRowRecorrencia">
-                <button class="ef-tag categoria-chip" data-categoria="RENDA" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-arrow-down-left"></i> Renda
-                </button>
-                <button class="ef-tag categoria-chip" data-categoria="DESPESA" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-arrow-up-right"></i> Despesa
-                </button>
-                <button class="ef-tag categoria-chip" data-categoria="ALIMENTACAO" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-bag-shopping"></i> Alimentação
-                </button>
-                <button class="ef-tag categoria-chip" data-categoria="MORADIA" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-house"></i> Moradia
-                </button>
-                <button class="ef-tag categoria-chip" data-categoria="OUTRO" type="button" aria-pressed="false">
-                    <i class="fa-solid fa-ellipsis"></i> Outro
+                <button type="button" class="type-btn" id="btnRecorrenciaTypeOut" data-type="out">
+                    <i data-lucide="arrow-up-right" class="ef-icon ef-icon--sm"></i> Saída
                 </button>
             </div>
 
-            <div class="card-row" id="cardRowRecorrencia">
-                <div class="ef-select">
-                    <select class="ef-select__control" id="inputRecorrenciaCard" aria-label="Cartão">
-                        <option value="">Sem cartão (débito / dinheiro)</option>
-                    </select>
-                    <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputRecorrenciaDescription">Descrição</label>
+                <input class="ef-input" type="text" id="inputRecorrenciaDescription" placeholder="Ex.: Aluguel, Geladeira 10x" autocomplete="off">
+            </div>
+
+            <div class="field-grid">
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputRecorrenciaValue">Valor por parcela</label>
+                    <div class="ef-input ef-input--mono">
+                        <span class="ef-input__affix">R$</span>
+                        <input class="ef-input__control" type="text" id="inputRecorrenciaValue" placeholder="0,00" inputmode="decimal" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputRecorrenciaAccount">Conta</label>
+                    <div class="ef-select">
+                        <select class="ef-select__control" id="inputRecorrenciaAccount"></select>
+                        <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                    </div>
                 </div>
             </div>
 
-            <input class="ef-input ef-input--mono" type="number" id="inputRecorrenciaParcelas" placeholder="Quantidade de parcelas" min="1">
-            <input class="ef-input ef-input--mono" type="date" id="inputRecorrenciaDataInicio" placeholder="Data de início">
+            <div class="ef-field" id="campoCategoriaRecorrencia">
+                <span class="ef-field__label" id="rotuloCategoriaRecorrencia">Categoria</span>
+                <div class="categoria-row" id="categoriaRowRecorrencia" role="group" aria-labelledby="rotuloCategoriaRecorrencia">
+                    <button class="ef-tag categoria-chip" data-categoria="RENDA" type="button" aria-pressed="false">
+                        <i data-lucide="banknote" class="ef-icon ef-icon--xs"></i> Renda
+                    </button>
+                    <button class="ef-tag categoria-chip" data-categoria="DESPESA" type="button" aria-pressed="false">
+                        <i data-lucide="receipt" class="ef-icon ef-icon--xs"></i> Despesa
+                    </button>
+                    <button class="ef-tag categoria-chip" data-categoria="ALIMENTACAO" type="button" aria-pressed="false">
+                        <i data-lucide="shopping-bag" class="ef-icon ef-icon--xs"></i> Alimentação
+                    </button>
+                    <button class="ef-tag categoria-chip" data-categoria="MORADIA" type="button" aria-pressed="false">
+                        <i data-lucide="house" class="ef-icon ef-icon--xs"></i> Moradia
+                    </button>
+                    <button class="ef-tag categoria-chip" data-categoria="OUTRO" type="button" aria-pressed="false">
+                        <i data-lucide="ellipsis" class="ef-icon ef-icon--xs"></i> Outro
+                    </button>
+                </div>
+            </div>
 
-            <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmRecorrencia">Salvar recorrência</button>
+            <div class="card-row" id="cardRowRecorrencia">
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputRecorrenciaCard">Cartão</label>
+                    <div class="ef-select">
+                        <select class="ef-select__control" id="inputRecorrenciaCard">
+                            <option value="">Sem cartão (débito / dinheiro)</option>
+                        </select>
+                        <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-grid">
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputRecorrenciaParcelas">Parcelas</label>
+                    <input class="ef-input ef-input--mono" type="number" id="inputRecorrenciaParcelas" placeholder="Ex.: 12" min="1" inputmode="numeric">
+                </div>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputRecorrenciaDataInicio">Primeira parcela</label>
+                    <input class="ef-input ef-input--mono" type="date" id="inputRecorrenciaDataInicio">
+                </div>
+            </div>
+
+            <button type="button" class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmRecorrencia">Salvar recorrência</button>
         </div>
     </div>
 
@@ -472,14 +541,22 @@
                 <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
             </div>
 
-            <input class="ef-input ef-input--mono" type="text" id="inputRecorrenciaNewValue" placeholder="Novo valor (R$)" inputmode="decimal">
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputRecorrenciaNewValue">Novo valor por parcela</label>
+                <div class="ef-input ef-input--mono">
+                    <span class="ef-input__affix">R$</span>
+                    <input class="ef-input__control" type="text" id="inputRecorrenciaNewValue" placeholder="0,00" inputmode="decimal" autocomplete="off">
+                </div>
+            </div>
 
-            <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmEditRecorrenciaValue">Salvar novo valor</button>
+            <button type="button" class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmEditRecorrenciaValue">Salvar novo valor</button>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/feedback.js"></script>
     <script src="assets/js/script.js"></script>
 
 </body>

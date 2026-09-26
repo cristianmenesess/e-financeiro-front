@@ -98,16 +98,23 @@ export default [
     },
     js.configs.recommended,
     {
-        // Scripts clássicos das telas do app (jQuery, sem módulos).
+        // Scripts clássicos das telas do app (jQuery, sem módulos). icones e
+        // feedback são as instâncias dos scripts compartilhados (icones.js,
+        // feedback.js), carregados antes do script de cada tela.
         files: ['assets/js/**/*.js'],
         languageOptions: {
             sourceType: 'script',
-            globals: Object.assign({}, globals.browser, globals.jquery, { Chart: 'readonly' })
+            globals: Object.assign({}, globals.browser, globals.jquery, { icones: 'readonly', feedback: 'readonly' })
         },
         rules: {
             // As telas criam a instância no topo do arquivo e só a usam dentro dela.
             'no-unused-vars': ['error', { vars: 'local', args: 'none', caughtErrors: 'none' }]
         }
+    },
+    {
+        // Os scripts compartilhados declaram as próprias instâncias globais.
+        files: ['assets/js/icones.js', 'assets/js/feedback.js'],
+        rules: { 'no-redeclare': ['error', { builtinGlobals: false }] }
     },
     {
         files: ['sw.js'],

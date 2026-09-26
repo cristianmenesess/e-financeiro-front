@@ -17,7 +17,6 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="design-system/ds.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="assets/js/theme.js"></script>
@@ -31,7 +30,7 @@
     </div>
 
     <button class="ef-icon-btn ef-icon-btn--surface ef-icon-btn--lg theme-toggle theme-toggle--auth" title="Alternar tema" aria-label="Alternar tema">
-        <i class="fa-solid fa-moon"></i>
+        <i data-lucide="moon" class="ef-icon ef-icon--md"></i>
     </button>
 
     <div class="auth-page">
@@ -40,8 +39,14 @@
                 <img src="design-system/assets/logo-lockup.png" alt="E-Financeiro">
             </div>
 
-            <input class="ef-input" type="email" id="inputEmail" placeholder="E-mail">
-            <input class="ef-input" type="password" id="inputSenha" placeholder="Senha">
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputEmail">E-mail</label>
+                <input class="ef-input" type="email" id="inputEmail" placeholder="voce@exemplo.com" autocomplete="email">
+            </div>
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputSenha">Senha</label>
+                <input class="ef-input" type="password" id="inputSenha" autocomplete="current-password">
+            </div>
             <a class="forgot-password-link" href="#" id="linkEsqueciSenha">Esqueceu a senha?</a>
 
             <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnLogin">Entrar</button>
@@ -63,18 +68,24 @@
 
             <div id="formEsqueciSenha">
                 <p class="auth-help-text">Informe seu e-mail cadastrado e enviaremos um link para redefinir sua senha.</p>
-                <input class="ef-input" type="email" id="inputEmailReset" placeholder="E-mail">
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputEmailReset">E-mail</label>
+                    <input class="ef-input" type="email" id="inputEmailReset" placeholder="voce@exemplo.com" autocomplete="email">
+                </div>
                 <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnEnviarReset">Enviar link</button>
             </div>
 
             <div class="auth-feedback auth-feedback--success" id="successEsqueciSenha">
-                <i class="fa-solid fa-envelope-circle-check"></i>
+                <span class="auth-feedback__icon"><i data-lucide="mail-check" class="ef-icon ef-icon--lg"></i></span>
                 <p>Se esse e-mail estiver cadastrado, você vai receber um link para redefinir sua senha em instantes.</p>
             </div>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/feedback.js"></script>
     <script src="assets/js/login.js"></script>
 
 </body>

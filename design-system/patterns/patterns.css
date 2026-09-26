@@ -90,6 +90,12 @@
 /* Icon (Lucide) */
 .ef-icon{display:inline-flex;flex:0 0 auto}
 .ef-icon svg{width:100%;height:100%}
+/* Tamanhos de glifo para quem gera o SVG direto (telas jQuery): 14 em chips, 16 em
+   linhas e botões pequenos, 18 padrão, 20 em destaque */
+.ef-icon--xs{width:var(--glyph-xs);height:var(--glyph-xs)}
+.ef-icon--sm{width:var(--glyph-sm);height:var(--glyph-sm)}
+.ef-icon--md{width:var(--glyph-md);height:var(--glyph-md)}
+.ef-icon--lg{width:var(--glyph-lg);height:var(--glyph-lg)}
 
 /* Visibilidade por corte (1024px). Fica no fim do arquivo de propósito: precisa
    vencer utilitários de layout (.ef-row, .ef-stack) de mesma especificidade. */

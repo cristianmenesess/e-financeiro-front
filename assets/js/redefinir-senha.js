@@ -19,43 +19,25 @@ function TelaRedefinirSenha() {
     };
 
     /**
-     * Exibe uma mensagem de erro apropriada a partir da resposta de uma chamada AJAX,
-     * cobrindo os formatos de erro que a API pode devolver (validação, erro genérico,
-     * falha de conexão).
+     * Valida a nova senha e a confirmação, marcando o erro abaixo do campo.
      *
-     * @param {object} jqXHR objeto de erro retornado pelo jQuery
-     * @returns
+     * @param {string} novaSenha nova senha
+     * @param {string} confirmarSenha confirmação
+     * @returns {boolean} true se pode enviar
      */
-    self.exibirErroAjax = function (jqXHR) {
-        if (!jqXHR.responseJSON) {
-            alert('Não foi possível conectar ao servidor. Tente novamente.');
-        } else if (jqXHR.responseJSON.mensagem) {
-            alert(jqXHR.responseJSON.mensagem);
-        } else if (jqXHR.status === 400) {
-            var campos = Object.keys(jqXHR.responseJSON);
-
-            if (campos.length > 0) {
-                alert(jqXHR.responseJSON[campos[0]]);
-            } else {
-                alert('Erro de validação. Tente novamente.');
-            }
-        } else {
-            alert('Ocorreu um erro. Tente novamente.');
-        }
-    };
-
     self.validarFormulario = function (novaSenha, confirmarSenha) {
         var valido = true;
 
-        if (!novaSenha || !confirmarSenha) {
-            alert('Preencha os dois campos de senha.');
-            valido = false;
-        } else if (novaSenha.length < 8) {
-            alert('A senha deve ter no mínimo 8 caracteres.');
+        if (!novaSenha || novaSenha.length < 8) {
+            feedback.marcarErro('#inputNovaSenha', 'A senha precisa de pelo menos 8 caracteres');
             valido = false;
         } else if (novaSenha !== confirmarSenha) {
-            alert('As senhas não coincidem.');
+            feedback.marcarErro('#inputConfirmarSenha', 'As senhas não são iguais');
             valido = false;
+        }
+
+        if (!valido) {
+            feedback.focarPrimeiroErro('#formRedefinirSenha');
         }
 
         return valido;
@@ -82,11 +64,12 @@ function TelaRedefinirSenha() {
                     self.mostrarCarregando();
                 },
                 success: function () {
-                    alert('Senha redefinida com sucesso! Faça login.');
+                    // O Toast não sobrevive ao redirecionamento: a tela de login mostra o aviso
+                    sessionStorage.setItem('avisoLogin', 'senha-redefinida');
                     window.location.href = 'login.html';
                 },
                 error: function (jqXHR) {
-                    self.exibirErroAjax(jqXHR);
+                    feedback.exibirErroAjax(jqXHR);
                 },
                 complete: function () {
                     self.esconderCarregando();
