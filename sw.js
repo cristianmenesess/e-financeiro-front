@@ -1,4 +1,6 @@
-const CACHE_NAME = 'e-financeiro-shell-v1';
+// v2: telas migradas para o design system (design-system/ds.css). Trocar a
+// versão descarta o cache antigo, que serviria o CSS anterior (cache-first).
+const CACHE_NAME = 'e-financeiro-shell-v2';
 
 const APP_SHELL = [
     'index.html',
@@ -7,6 +9,27 @@ const APP_SHELL = [
     'redefinir-senha.html',
     'manifest.json',
     'assets/css/style.css',
+    'design-system/ds.css',
+    'design-system/tokens/index.css',
+    'design-system/tokens/fonts.css',
+    'design-system/tokens/colors.css',
+    'design-system/tokens/typography.css',
+    'design-system/tokens/spacing.css',
+    'design-system/tokens/radius.css',
+    'design-system/tokens/elevation.css',
+    'design-system/tokens/motion.css',
+    'design-system/tokens/layout.css',
+    'design-system/tokens/components.css',
+    'design-system/tokens/base.css',
+    'design-system/components/actions/actions.css',
+    'design-system/components/forms/forms.css',
+    'design-system/components/data-display/data-display.css',
+    'design-system/components/charts/charts.css',
+    'design-system/components/navigation/navigation.css',
+    'design-system/components/feedback/feedback.css',
+    'design-system/patterns/patterns.css',
+    'design-system/assets/logo-lockup.png',
+    'design-system/assets/logo-mark.png',
     'assets/js/theme.js',
     'assets/js/script.js',
     'assets/js/login.js',

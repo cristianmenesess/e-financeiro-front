@@ -1,0 +1,25 @@
+{
+  "name": "e-financeiro-front",
+  "private": true,
+  "description": "Front-end do E-Financeiro. Sem build step: as dependências abaixo são só ferramentas de desenvolvimento (lint, typecheck, servidor local).",
+  "type": "module",
+  "scripts": {
+    "dev": "serve -l 5501 .",
+    "lint": "npm run lint:js && npm run lint:css && npm run lint:design",
+    "lint:js": "eslint .",
+    "lint:css": "stylelint \"**/*.css\"",
+    "lint:design": "designmd lint DESIGN.md",
+    "typecheck": "tsc -p tsconfig.json",
+    "check": "npm run typecheck && npm run lint"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@google/design.md": "0.4.0",
+    "eslint": "10.11.0",
+    "globals": "17.12.0",
+    "serve": "14.2.6",
+    "stylelint": "17.15.0",
+    "stylelint-declaration-strict-value": "1.12.1",
+    "typescript": "7.0.2"
+  }
+}

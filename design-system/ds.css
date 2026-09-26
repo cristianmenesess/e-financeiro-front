@@ -1,0 +1,12 @@
+/* E-Financeiro Design System — ponto de entrada único.
+   <link rel="stylesheet" href="design-system/ds.css"> traz tokens (claro e escuro),
+   base e o CSS de todos os componentes. Contrato visual: DESIGN.md na raiz. */
+@import url("tokens/index.css");
+@import url("tokens/base.css");
+@import url("components/actions/actions.css");
+@import url("components/forms/forms.css");
+@import url("components/data-display/data-display.css");
+@import url("components/charts/charts.css");
+@import url("components/navigation/navigation.css");
+@import url("components/feedback/feedback.css");
+@import url("patterns/patterns.css");

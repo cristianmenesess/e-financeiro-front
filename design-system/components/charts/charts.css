@@ -1,0 +1,64 @@
+/* ── Gráficos: Sparkline · AreaChart · DonutChart · DonutLegend · ScoreGauge · BarTicks ──
+   Porte de components/charts/*.jsx do dump. A geometria é SVG gerado em JS;
+   aqui ficam só cor, tipografia e estado vazio. O tom vira a variável
+   --ef-chart-color, lida pelo SVG via currentcolor/var(). */
+
+.ef-chart{display:block;overflow:visible;--ef-chart-color:var(--tone-positive-accent)}
+.ef-chart--positive{--ef-chart-color:var(--tone-positive-accent)}
+.ef-chart--negative{--ef-chart-color:var(--tone-negative-accent)}
+.ef-chart--brand{--ef-chart-color:var(--tone-brand-accent)}
+.ef-chart--violet{--ef-chart-color:var(--tone-ai-accent)}
+.ef-chart--blue{--ef-chart-color:var(--tone-info-accent)}
+.ef-chart--warning{--ef-chart-color:var(--tone-warning-accent)}
+.ef-chart__line{fill:none;stroke:var(--ef-chart-color);stroke-linecap:round;stroke-linejoin:round}
+.ef-chart__stop{stop-color:var(--ef-chart-color)}
+.ef-chart__dot{fill:var(--ef-chart-color)}
+.ef-chart__grid{stroke:var(--chart-grid);stroke-width:1}
+.ef-chart__axis{fill:var(--chart-axis);font-family:var(--font-mono);font-size:var(--text-2xs)}
+.ef-chart__axis--x{letter-spacing:.06em}
+
+/* Estado vazio: série com menos de 2 pontos */
+.ef-chart-empty{
+  display:flex;align-items:center;justify-content:center;
+  border:1px dashed var(--border-default);border-radius:var(--radius-md);
+  color:var(--text-faint);font:var(--type-mono-label);letter-spacing:var(--tracking-mono-label);text-transform:uppercase;
+}
+
+/* BarTicks */
+.ef-bar-ticks{display:flex;align-items:flex-end;--ef-chart-color:var(--tone-positive-accent)}
+.ef-bar-ticks__bar{flex:1;min-width:2px;border-radius:var(--radius-hairline);background:var(--ef-chart-color)}
+
+/* DonutChart */
+.ef-donut{position:relative;flex:0 0 auto}
+.ef-donut__aurora{position:absolute;border-radius:var(--radius-circle);background:var(--gradient-aurora);filter:blur(26px);opacity:.9}
+.ef-donut__svg{position:relative;transform:rotate(-90deg);display:block}
+.ef-donut__slice{fill:none;stroke-linecap:round;transition:opacity var(--duration-fast) var(--ease-standard)}
+.ef-donut__slice:hover{opacity:.8}
+.ef-donut__track{fill:none;stroke:var(--control-track)}
+.ef-donut__hub{
+  position:absolute;border-radius:var(--radius-circle);background:var(--surface-card);box-shadow:var(--shadow-sm);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-0-5);
+}
+.ef-donut__hub-label{font:var(--type-caption);color:var(--text-muted)}
+.ef-donut__hub-value{font:var(--type-numeric-lg);color:var(--text-primary)}
+
+/* DonutLegend */
+.ef-donut-legend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--space-3);min-width:200px}
+.ef-donut-legend__item{display:flex;align-items:center;gap:var(--space-2-5)}
+.ef-donut-legend__dot{width:var(--dot-md);height:var(--dot-md);border-radius:var(--radius-circle);flex:0 0 auto}
+.ef-donut-legend__label{flex:1;font:var(--type-body-sm);color:var(--text-primary)}
+.ef-donut-legend__value{font:var(--type-numeric);color:var(--text-secondary)}
+
+/* Séries fixas (DESIGN.md → Colors → Data series) */
+.ef-series-1{--ef-series:var(--series-1)}.ef-series-2{--ef-series:var(--series-2)}.ef-series-3{--ef-series:var(--series-3)}
+.ef-series-4{--ef-series:var(--series-4)}.ef-series-5{--ef-series:var(--series-5)}.ef-series-6{--ef-series:var(--series-6)}
+
+/* ScoreGauge */
+.ef-gauge{position:relative;--ef-chart-color:var(--tone-brand-accent)}
+.ef-gauge__svg{transform:rotate(135deg);display:block}
+.ef-gauge__track{fill:none;stroke:var(--control-track);stroke-linecap:round}
+.ef-gauge__value{fill:none;stroke:var(--ef-chart-color);stroke-linecap:round;transition:stroke-dasharray var(--duration-slow) var(--ease-out)}
+.ef-gauge__center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-0-5)}
+.ef-gauge__number{font-family:var(--font-mono);font-weight:var(--weight-bold);color:var(--text-primary);line-height:var(--leading-flat)}
+.ef-gauge__label{font:var(--type-numeric);color:var(--text-muted)}
+.ef-gauge__caption{font:var(--type-caption);color:var(--text-muted)}

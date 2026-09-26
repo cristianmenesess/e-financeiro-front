@@ -9,18 +9,30 @@ function Dashboard() {
 
     self.apiBaseUrl = 'https://e-financeiro.onrender.com';
 
-    self.cardColors = [
-        { bg: '#E1F5EE', color: '#0F6E56' },
-        { bg: '#FCEBEB', color: '#A32D2D' },
-        { bg: '#E6F1FB', color: '#185FA5' },
-        { bg: '#EEEDFE', color: '#534AB7' },
-        { bg: '#FAEEDA', color: '#854F0B' },
-        { bg: '#FBE9F0', color: '#993356' },
-        { bg: '#EAF3DE', color: '#3B6D11' },
-        { bg: '#F1EFE8', color: '#5F5E5A' },
-        { bg: '#E8F4FD', color: '#1565A8' },
-        { bg: '#FFF3CD', color: '#856404' }
-    ];
+    /**
+     * Paleta de cores que o usuário escolhe para cartões e contas. Vem dos tokens
+     * --swatch-N-bg/--swatch-N-fg do design system (design-system/tokens/colors.css).
+     * O texto hex lido é exatamente o que vai (e já foi) gravado na API em
+     * corFundo/corTexto — por isso os valores dos tokens nunca podem ser reformatados.
+     *
+     * @returns {Array} lista de { bg, color }
+     */
+    self.lerPaletaDeCores = function () {
+        var estilos = getComputedStyle(document.documentElement);
+        var total = parseInt(estilos.getPropertyValue('--swatch-count'), 10) || 0;
+        var paleta = [];
+
+        for (var i = 1; i <= total; i++) {
+            paleta.push({
+                bg: estilos.getPropertyValue('--swatch-' + i + '-bg').trim(),
+                color: estilos.getPropertyValue('--swatch-' + i + '-fg').trim()
+            });
+        }
+
+        return paleta;
+    };
+
+    self.cardColors = self.lerPaletaDeCores();
 
     self.categoriasDisponiveis = [
         { valor: 'RENDA', nome: 'Renda' },
@@ -201,11 +213,8 @@ function Dashboard() {
         $('.page').removeClass('active');
         $('#page' + self.capitalize(page)).addClass('active');
 
-        $('.nav-item').removeClass('active');
-        $('.nav-item[data-page="' + page + '"]').addClass('active');
-
-        $('.bottom-nav-item').removeClass('active');
-        $('.bottom-nav-item[data-page="' + page + '"]').addClass('active');
+        $('.nav-item, .bottom-nav-item').removeAttr('aria-current');
+        $('.nav-item[data-page="' + page + '"], .bottom-nav-item[data-page="' + page + '"]').attr('aria-current', 'page');
 
         self.toggleFabMobile(page === 'dashboard');
     };
@@ -261,14 +270,49 @@ function Dashboard() {
 
     self.resolveIconeCategoria = function (categoria) {
         var mapa = {
-            RENDA: { classe: 'tx-icon--income', icone: 'fa-arrow-down-left' },
-            DESPESA: { classe: 'tx-icon--expense', icone: 'fa-arrow-up-right' },
-            ALIMENTACAO: { classe: 'tx-icon--food', icone: 'fa-bag-shopping' },
-            MORADIA: { classe: 'tx-icon--home', icone: 'fa-house' },
-            OUTRO: { classe: 'tx-icon--outro', icone: 'fa-ellipsis' }
+            RENDA: { classe: 'ef-icon-tile--positive', cor: '--tone-positive-accent', icone: 'fa-arrow-down-left' },
+            DESPESA: { classe: 'ef-icon-tile--negative', cor: '--tone-negative-accent', icone: 'fa-arrow-up-right' },
+            ALIMENTACAO: { classe: 'ef-icon-tile--warning', cor: '--tone-warning-accent', icone: 'fa-bag-shopping' },
+            MORADIA: { classe: 'ef-icon-tile--brand', cor: '--tone-brand-accent', icone: 'fa-house' },
+            OUTRO: { classe: '', cor: '--tone-neutral-accent', icone: 'fa-ellipsis' }
         };
 
         return mapa[categoria] || mapa.OUTRO;
+    };
+
+    /**
+     * Monta um IconButton pequeno do design system com um ícone Font Awesome.
+     *
+     * @param {string} icone classe do ícone (ex: "fa-trash")
+     * @param {string} rotulo nome acessível e tooltip
+     * @param {boolean} destrutivo true pinta o hover de vermelho (sair, excluir)
+     * @returns {jQuery} botão pronto
+     */
+    self.criarBotaoIcone = function (icone, rotulo, destrutivo) {
+        return $('<button>', {
+            type: 'button',
+            class: 'ef-icon-btn ef-icon-btn--sm' + (destrutivo ? ' icon-btn--destructive' : ''),
+            title: rotulo,
+            'aria-label': rotulo
+        }).append($('<i>', { class: 'fa-solid ' + icone }));
+    };
+
+    /**
+     * Monta o EmptyState do design system (ícone opcional + título).
+     *
+     * @param {string} tag elemento raiz ("li" dentro de listas, "div" em grades)
+     * @param {string} titulo texto do estado vazio
+     * @param {string} icone classe Font Awesome opcional (ex: "fa-wallet")
+     * @returns {jQuery} elemento pronto
+     */
+    self.criarEstadoVazio = function (tag, titulo, icone) {
+        var $vazio = $('<' + tag + '>', { class: 'ef-empty ef-empty--compact' });
+
+        if (icone) {
+            $vazio.append($('<span>', { class: 'ef-empty__icon', 'aria-hidden': 'true' }).append($('<i>', { class: 'fa-solid ' + icone })));
+        }
+
+        return $vazio.append($('<p>', { class: 'ef-empty__title', text: titulo }));
     };
 
     /**
@@ -281,33 +325,35 @@ function Dashboard() {
     self.buildTransactionItem = function (tx) {
         var card = self.getCardById(tx.cartaoId);
         var amountClass = tx.tipo === 'ENTRADA' ? 'tx-amount--in' : 'tx-amount--out';
-        var prefix = tx.tipo === 'ENTRADA' ? '+' : '-';
+        var prefix = tx.tipo === 'ENTRADA' ? '+' : '−';
         var metaCard = card ? ' · ' + card.nome : '';
         var metaText = self.formatarData(tx.dataTransacao) + ' · ' + tx.nomeConta + metaCard;
 
         var $icon;
 
         if (card) {
-            $icon = $('<div>', { class: 'tx-icon' }).append($('<i>', { class: 'fa-solid fa-credit-card' }));
+            // Cor do cartão escolhida pelo usuário (paleta --swatch-*), aplicada em linha
+            $icon = $('<span>', { class: 'ef-icon-tile', 'aria-hidden': 'true' }).append($('<i>', { class: 'fa-solid fa-credit-card' }));
             $icon.css({ background: card.corFundo, color: card.corTexto });
         } else {
             var icone = self.resolveIconeCategoria(tx.categoria);
-            $icon = $('<div>', { class: 'tx-icon ' + icone.classe }).append($('<i>', { class: 'fa-solid ' + icone.icone }));
+            $icon = $('<span>', { class: 'ef-icon-tile ' + icone.classe, 'aria-hidden': 'true' }).append($('<i>', { class: 'fa-solid ' + icone.icone }));
         }
 
-        var $delete = $('<button>', { class: 'item-delete-btn', title: 'Excluir' })
-            .append($('<i>', { class: 'fa-solid fa-trash' }))
+        var $delete = self.criarBotaoIcone('fa-trash', 'Excluir', true)
             .on('click', function () {
                 self.excluirTransacao(tx.id);
             });
 
-        return $('<li>', { class: 'tx-item' }).append(
-            $icon,
-            $('<div>', { class: 'tx-info' }).append(
-                $('<p>', { class: 'tx-name', text: tx.descricao }),
-                $('<p>', { class: 'tx-meta', text: metaText })
+        return $('<li>', { class: 'ef-list-row' }).append(
+            $('<span>', { class: 'ef-list-row__leading' }).append($icon),
+            $('<span>', { class: 'ef-list-row__text' }).append(
+                $('<span>', { class: 'ef-list-row__title', text: tx.descricao }),
+                $('<span>', { class: 'ef-list-row__subtitle', text: metaText })
             ),
-            $('<span>', { class: 'tx-amount ' + amountClass, text: prefix + self.formatCurrency(tx.valor) }),
+            $('<span>', { class: 'ef-list-row__end' }).append(
+                $('<span>', { class: 'ef-list-row__value ' + amountClass, text: prefix + self.formatCurrency(tx.valor) })
+            ),
             $delete
         );
     };
@@ -408,10 +454,10 @@ function Dashboard() {
      */
     self.montarDadosCategorias = function () {
         var mapaCategorias = {
-            DESPESA: { nome: 'Despesa', cor: self.getCssVar('--color-expense-dot') },
-            ALIMENTACAO: { nome: 'Alimentação', cor: self.getCssVar('--color-food-text') },
-            MORADIA: { nome: 'Moradia', cor: self.getCssVar('--color-home-text') },
-            OUTRO: { nome: 'Outro', cor: self.getCssVar('--color-text-muted') }
+            DESPESA: { nome: 'Despesa', cor: self.getCssVar('--tone-negative-accent') },
+            ALIMENTACAO: { nome: 'Alimentação', cor: self.getCssVar('--tone-warning-accent') },
+            MORADIA: { nome: 'Moradia', cor: self.getCssVar('--tone-brand-accent') },
+            OUTRO: { nome: 'Outro', cor: self.getCssVar('--tone-neutral-accent') }
         };
 
         var totais = {};
@@ -498,7 +544,7 @@ function Dashboard() {
                 datasets: [{
                     data: dados.valores,
                     backgroundColor: dados.cores,
-                    borderColor: self.getCssVar('--color-surface'),
+                    borderColor: self.getCssVar('--surface-card'),
                     borderWidth: 2
                 }]
             },
@@ -510,10 +556,10 @@ function Dashboard() {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: self.getCssVar('--color-text-secondary'),
+                            color: self.getCssVar('--text-secondary'),
                             boxWidth: 10,
                             padding: 14,
-                            font: { family: 'DM Sans', size: 12 }
+                            font: { family: self.getCssVar('--font-sans'), size: parseInt(self.getCssVar('--text-xs'), 10) }
                         }
                     },
                     tooltip: {
@@ -536,8 +582,8 @@ function Dashboard() {
             self.charts.tendencia = null;
         }
 
-        var corTexto = self.getCssVar('--color-text-muted');
-        var corGrade = self.getCssVar('--color-border');
+        var corTexto = self.getCssVar('--text-muted');
+        var corGrade = self.getCssVar('--chart-grid');
 
         self.charts.tendencia = new Chart($('#chartTendencia')[0], {
             type: 'bar',
@@ -547,14 +593,14 @@ function Dashboard() {
                     {
                         label: 'Entradas',
                         data: dados.entradas,
-                        backgroundColor: self.getCssVar('--color-income-dot'),
+                        backgroundColor: self.getCssVar('--series-1'),
                         borderRadius: 4,
                         maxBarThickness: 18
                     },
                     {
                         label: 'Saídas',
                         data: dados.saidas,
-                        backgroundColor: self.getCssVar('--color-expense-dot'),
+                        backgroundColor: self.getCssVar('--tone-negative-accent'),
                         borderRadius: 4,
                         maxBarThickness: 18
                     }
@@ -567,10 +613,10 @@ function Dashboard() {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: self.getCssVar('--color-text-secondary'),
+                            color: self.getCssVar('--text-secondary'),
                             boxWidth: 10,
                             padding: 14,
-                            font: { family: 'DM Sans', size: 12 }
+                            font: { family: self.getCssVar('--font-sans'), size: parseInt(self.getCssVar('--text-xs'), 10) }
                         }
                     },
                     tooltip: {
@@ -583,11 +629,11 @@ function Dashboard() {
                 },
                 scales: {
                     x: {
-                        ticks: { color: corTexto, font: { family: 'DM Sans', size: 11 } },
+                        ticks: { color: corTexto, font: { family: self.getCssVar('--font-sans'), size: parseInt(self.getCssVar('--text-2xs'), 10) } },
                         grid: { display: false }
                     },
                     y: {
-                        ticks: { color: corTexto, font: { family: 'DM Mono', size: 10 } },
+                        ticks: { color: corTexto, font: { family: self.getCssVar('--font-mono'), size: parseInt(self.getCssVar('--text-micro'), 10) } },
                         grid: { color: corGrade }
                     }
                 }
@@ -609,23 +655,16 @@ function Dashboard() {
     self.buildFilterRow = function () {
         var $row = $('#filterRow').empty();
 
-        var $todas = $('<button>', { class: 'filter-chip', text: 'Todas' }).attr('data-categoria', '');
-
-        if (self.state.categoriasFiltradas.length === 0) {
-            $todas.addClass('active');
-        }
+        var $todas = $('<button>', { type: 'button', class: 'ef-tag filter-chip', text: 'Todas' })
+            .attr({ 'data-categoria': '', 'aria-pressed': String(self.state.categoriasFiltradas.length === 0) });
 
         $row.append($todas);
 
         self.categoriasDisponiveis.forEach(function (categoria) {
             var icone = self.resolveIconeCategoria(categoria.valor);
-            var $chip = $('<button>', { class: 'filter-chip' })
-                .attr('data-categoria', categoria.valor)
+            var $chip = $('<button>', { type: 'button', class: 'ef-tag filter-chip' })
+                .attr({ 'data-categoria': categoria.valor, 'aria-pressed': String(self.state.categoriasFiltradas.indexOf(categoria.valor) !== -1) })
                 .append($('<i>', { class: 'fa-solid ' + icone.icone }), ' ' + categoria.nome);
-
-            if (self.state.categoriasFiltradas.indexOf(categoria.valor) !== -1) {
-                $chip.addClass('active');
-            }
 
             $row.append($chip);
         });
@@ -635,9 +674,7 @@ function Dashboard() {
         var $list = $('#transactionsList').empty();
 
         if (transacoes.length === 0) {
-            $list.append(
-                $('<li>', { class: 'tx-empty', text: 'Nenhuma movimentação nesse período.' })
-            );
+            $list.append(self.criarEstadoVazio('li', 'Nenhuma movimentação nesse período.', 'fa-receipt'));
         } else {
             transacoes.forEach(function (tx) {
                 $list.append(self.buildTransactionItem(tx));
@@ -718,20 +755,14 @@ function Dashboard() {
      * @returns
      */
     self.buildAccountTabs = function () {
-        var $todas = $('<button>', { class: 'acc-tab', text: 'Tudo' }).attr('data-view', 'all');
-
-        if (self.state.currentView === 'all') {
-            $todas.addClass('active');
-        }
+        var $todas = $('<button>', { type: 'button', class: 'ef-tag acc-tab', text: 'Tudo' })
+            .attr({ 'data-view': 'all', 'aria-pressed': String(self.state.currentView === 'all') });
 
         var $wrapper = $('<div>').append($todas);
 
         self.state.contas.forEach(function (conta) {
-            var $tab = $('<button>', { class: 'acc-tab', text: conta.nome }).attr('data-view', conta.id);
-
-            if (self.state.currentView === conta.id) {
-                $tab.addClass('active');
-            }
+            var $tab = $('<button>', { type: 'button', class: 'ef-tag acc-tab', text: conta.nome })
+                .attr({ 'data-view': conta.id, 'aria-pressed': String(self.state.currentView === conta.id) });
 
             $wrapper.append($tab);
         });
@@ -757,7 +788,7 @@ function Dashboard() {
      * @returns {jQuery} elemento pronto pra inserir na grade de cartões
      */
     self.buildCardItem = function (card) {
-        var $delete = $('<button>', { class: 'item-delete-btn', title: 'Excluir' }).append($('<i>', { class: 'fa-solid fa-trash' })).on('click', function () {
+        var $delete = self.criarBotaoIcone('fa-trash', 'Excluir', true).on('click', function () {
                 self.excluirCartao(card.id);
             });
 
@@ -778,12 +809,7 @@ function Dashboard() {
         var $grid = $('#cardsGrid').empty();
 
         if (self.state.cards.length === 0) {
-            $grid.append(
-                $('<div>', { class: 'card-empty' }).append(
-                    $('<i>', { class: 'fa-solid fa-credit-card' }),
-                    $('<p>', { text: 'Nenhum cartão cadastrado ainda.' })
-                )
-            );
+            $grid.append(self.criarEstadoVazio('div', 'Nenhum cartão cadastrado ainda.', 'fa-credit-card'));
         } else {
             self.state.cards.forEach(function (card) {
                 $grid.append(self.buildCardItem(card));
@@ -829,14 +855,12 @@ function Dashboard() {
     };
 
     self.buildContaItem = function (conta) {
-        var $editar = $('<button>', { class: 'item-edit-btn', title: 'Editar' })
-            .append($('<i>', { class: 'fa-solid fa-pen' }))
+        var $editar = self.criarBotaoIcone('fa-pen', 'Editar', false)
             .on('click', function () {
                 self.abrirEdicaoConta(conta);
             });
 
-        var $excluir = $('<button>', { class: 'item-delete-btn', title: 'Excluir' })
-            .append($('<i>', { class: 'fa-solid fa-trash' }))
+        var $excluir = self.criarBotaoIcone('fa-trash', 'Excluir', true)
             .on('click', function () {
                 self.abrirModalExclusaoConta(conta.id);
             });
@@ -854,12 +878,7 @@ function Dashboard() {
         var $grid = $('#contasGrid').empty();
 
         if (self.state.contas.length === 0) {
-            $grid.append(
-                $('<div>', { class: 'card-empty' }).append(
-                    $('<i>', { class: 'fa-solid fa-wallet' }),
-                    $('<p>', { text: 'Nenhuma conta cadastrada ainda.' })
-                )
-            );
+            $grid.append(self.criarEstadoVazio('div', 'Nenhuma conta cadastrada ainda.', 'fa-wallet'));
         } else {
             self.state.contas.forEach(function (conta) {
                 $grid.append(self.buildContaItem(conta));
@@ -887,7 +906,7 @@ function Dashboard() {
         self.state.editingContaId = null;
         $('#inputContaName').val('');
         self.state.selectedContaColor = self.cardColors[0];
-        $('#modalConta .modal-title').text('Nova conta');
+        $('#modalConta .ef-dialog__title').text('Nova conta');
         self.buildContaColorPicker();
         self.openModal('#modalConta');
     };
@@ -898,7 +917,7 @@ function Dashboard() {
         self.state.editingContaId = conta.id;
         $('#inputContaName').val(conta.nome);
         self.state.selectedContaColor = corAtual || { bg: conta.corFundo, color: conta.corTexto };
-        $('#modalConta .modal-title').text('Editar conta');
+        $('#modalConta .ef-dialog__title').text('Editar conta');
         self.buildContaColorPicker();
         self.openModal('#modalConta');
     };
@@ -1043,35 +1062,35 @@ function Dashboard() {
 
     self.buildRecorrenciaItem = function (recorrencia) {
         var icone = self.resolveIconeCategoria(recorrencia.categoria);
-        var $icon = $('<div>', { class: 'tx-icon ' + icone.classe }).append($('<i>', { class: 'fa-solid ' + icone.icone }));
+        var $icon = $('<span>', { class: 'ef-icon-tile ' + icone.classe, 'aria-hidden': 'true' }).append($('<i>', { class: 'fa-solid ' + icone.icone }));
 
         var decorridas = recorrencia.totalParcelas - recorrencia.parcelasRestantes;
         var metaCartao = recorrencia.nomeCartao ? ' · ' + recorrencia.nomeCartao : '';
         var metaText = decorridas + ' de ' + recorrencia.totalParcelas + ' · ' + recorrencia.nomeConta + metaCartao;
 
         var amountClass = recorrencia.tipo === 'ENTRADA' ? 'tx-amount--in' : 'tx-amount--out';
-        var prefix = recorrencia.tipo === 'ENTRADA' ? '+' : '-';
+        var prefix = recorrencia.tipo === 'ENTRADA' ? '+' : '−';
 
-        var $editar = $('<button>', { class: 'item-edit-btn', title: 'Editar valor' })
-            .append($('<i>', { class: 'fa-solid fa-pen' }))
+        var $editar = self.criarBotaoIcone('fa-pen', 'Editar valor', false)
             .on('click', function () {
                 self.abrirModalEditarValorRecorrencia(recorrencia);
             });
 
-        var $cancelar = $('<button>', { class: 'item-delete-btn', title: 'Cancelar parcelas futuras' })
-            .append($('<i>', { class: 'fa-solid fa-trash' }))
+        var $cancelar = self.criarBotaoIcone('fa-trash', 'Cancelar parcelas futuras', true)
             .on('click', function () {
                 self.cancelarRecorrenciaFuturas(recorrencia.id);
             });
 
-        return $('<li>', { class: 'tx-item' }).append(
-            $icon,
-            $('<div>', { class: 'tx-info' }).append(
-                $('<p>', { class: 'tx-name', text: recorrencia.descricao }),
-                $('<p>', { class: 'tx-meta', text: metaText })
+        return $('<li>', { class: 'ef-list-row' }).append(
+            $('<span>', { class: 'ef-list-row__leading' }).append($icon),
+            $('<span>', { class: 'ef-list-row__text' }).append(
+                $('<span>', { class: 'ef-list-row__title', text: recorrencia.descricao }),
+                $('<span>', { class: 'ef-list-row__subtitle', text: metaText })
             ),
-            $('<span>', { class: 'tx-amount ' + amountClass, text: prefix + self.formatCurrency(recorrencia.valor) }),
-            $('<div>', { class: 'card-item-actions' }).append($editar, $cancelar)
+            $('<span>', { class: 'ef-list-row__end' }).append(
+                $('<span>', { class: 'ef-list-row__value ' + amountClass, text: prefix + self.formatCurrency(recorrencia.valor) })
+            ),
+            $('<span>', { class: 'card-item-actions' }).append($editar, $cancelar)
         );
     };
 
@@ -1079,9 +1098,7 @@ function Dashboard() {
         var $lista = $('#recorrenciasLista').empty();
 
         if (self.state.recorrencias.length === 0) {
-            $lista.append(
-                $('<li>', { class: 'tx-empty', text: 'Nenhuma recorrência cadastrada ainda.' })
-            );
+            $lista.append(self.criarEstadoVazio('li', 'Nenhuma recorrência cadastrada ainda.', 'fa-rotate'));
         } else {
             self.state.recorrencias.forEach(function (recorrencia) {
                 $lista.append(self.buildRecorrenciaItem(recorrencia));
@@ -1113,7 +1130,7 @@ function Dashboard() {
         $('#btnRecorrenciaTypeOut').toggleClass('active-out', !isIn).removeClass('active-in');
         $('#cardRowRecorrencia').toggleClass('visible', !isIn);
 
-        $('#categoriaRowRecorrencia .categoria-chip').removeClass('active');
+        $('#categoriaRowRecorrencia .categoria-chip').attr('aria-pressed', 'false');
         self.state.currentCategoriaRecorrencia = isIn ? 'RENDA' : null;
         $('#categoriaRowRecorrencia').css('display', isIn ? 'none' : 'flex');
         $('#categoriaRowRecorrencia .categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
@@ -1391,7 +1408,7 @@ function Dashboard() {
         // Categorias só fazem sentido pra saída: na entrada os chips somem e a
         // categoria vai como RENDA automaticamente; na saída o chip "Renda"
         // fica de fora
-        $('#categoriaRow .categoria-chip').removeClass('active');
+        $('#categoriaRow .categoria-chip').attr('aria-pressed', 'false');
         self.state.currentCategoria = isIn ? 'RENDA' : null;
         $('#categoriaRow').css('display', isIn ? 'none' : 'flex');
         $('#categoriaRow .categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
@@ -1504,11 +1521,11 @@ function Dashboard() {
     };
 
     self.openModal = function (selector) {
-        $(selector).addClass('open');
+        $(selector).prop('hidden', false);
     };
 
     self.closeModal = function (selector) {
-        $(selector).removeClass('open');
+        $(selector).prop('hidden', true);
     };
 
     /**
@@ -1524,6 +1541,18 @@ function Dashboard() {
                 window.location.href = 'login.html';
             });
 
+            // Botão X e tecla Esc fecham qualquer Dialog aberto (o clique no fundo
+            // continua tratado por modal, mais abaixo)
+            $(document).on('click', '.ef-dialog__close', function () {
+                self.closeModal('#' + $(this).closest('.ef-dialog').attr('id'));
+            });
+
+            $(document).on('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    $('.ef-dialog:not([hidden])').prop('hidden', true);
+                }
+            });
+
             $(document).on('click', '.nav-item, .bottom-nav-item, .topbar-icon-btn[data-page]', function () {
                 self.navigateTo($(this).data('page'));
             });
@@ -1532,8 +1561,8 @@ function Dashboard() {
                 var view = $(this).data('view');
                 self.state.currentView = view;
 
-                $('.acc-tab').removeClass('active');
-                $('[data-view="' + view + '"]').addClass('active');
+                $('.acc-tab').attr('aria-pressed', 'false');
+                $('.acc-tab[data-view="' + view + '"]').attr('aria-pressed', 'true');
 
                 self.updateAccountSelector(view);
                 self.carregarTransacoes();
@@ -1552,14 +1581,14 @@ function Dashboard() {
 
             $(document).on('click', '#categoriaRow .categoria-chip', function () {
                 self.state.currentCategoria = $(this).data('categoria');
-                $('#categoriaRow .categoria-chip').removeClass('active');
-                $(this).addClass('active');
+                $('#categoriaRow .categoria-chip').attr('aria-pressed', 'false');
+                $(this).attr('aria-pressed', 'true');
             });
 
             $(document).on('click', '#categoriaRowRecorrencia .categoria-chip', function () {
                 self.state.currentCategoriaRecorrencia = $(this).data('categoria');
-                $('#categoriaRowRecorrencia .categoria-chip').removeClass('active');
-                $(this).addClass('active');
+                $('#categoriaRowRecorrencia .categoria-chip').attr('aria-pressed', 'false');
+                $(this).attr('aria-pressed', 'true');
             });
 
             $(document).on('click', '.theme-toggle', function () {

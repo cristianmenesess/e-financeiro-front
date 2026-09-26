@@ -1,0 +1,12 @@
+/* Tokens do E-Financeiro — só variáveis, sem regras de elemento.
+   Use este arquivo quando precisar dos tokens sem o reset de base.css
+   (ex.: assets/css/style.css do app, que tem reset próprio). */
+@import url("fonts.css");
+@import url("colors.css");
+@import url("typography.css");
+@import url("spacing.css");
+@import url("radius.css");
+@import url("elevation.css");
+@import url("motion.css");
+@import url("layout.css");
+@import url("components.css");

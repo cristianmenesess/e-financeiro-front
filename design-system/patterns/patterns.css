@@ -1,0 +1,103 @@
+/* ── Padrões de composição: AppShell · Grid · SectionTitle · Icon ─────
+   Porte de ui_kits/admin-dashboard/Shell.jsx do dump. O corte desktop/mobile
+   (1024px) é feito em CSS: o rail sai, a tab bar entra, a busca vira botão —
+   sem remover nenhum dado (DESIGN.md → Layout). */
+
+.ef-shell{display:flex;min-height:100vh;background:var(--bg-canvas);color:var(--text-primary)}
+.ef-shell__rail{position:sticky;top:0;height:100vh;height:100dvh}
+.ef-shell__main{flex:1;min-width:0;display:flex;flex-direction:column}
+.ef-shell__content{
+  display:flex;flex-direction:column;gap:var(--space-6);
+  padding:var(--space-6) var(--pad-page) var(--space-12);max-width:var(--content-max);width:100%;
+}
+.ef-shell__logo{height:var(--space-6);display:block}
+.ef-shell__mark{height:26px;display:block}
+.ef-shell__tabbar{position:fixed;left:0;right:0;bottom:0;z-index:var(--z-sticky);padding-bottom:env(safe-area-inset-bottom);background:var(--surface-glass)}
+.ef-shell__mobile-actions{display:flex;gap:var(--space-2-5);flex-wrap:wrap}
+
+@media (max-width:1023.98px){
+  .ef-shell__rail{display:none}
+  .ef-shell__main{padding-bottom:calc(var(--tabbar-height) + env(safe-area-inset-bottom))}
+  .ef-shell__content{padding:var(--space-4) var(--pad-page-mobile) var(--space-6)}
+  .ef-shell .ef-topbar{padding:var(--space-3) var(--pad-page-mobile)}
+}
+@media (min-width:1024px){
+  .ef-shell__tabbar{display:none}
+}
+
+/* Grid de cards: repeat(auto-fit, minmax(min(<min>,100%),1fr)) */
+.ef-grid{display:grid;gap:var(--space-5);grid-template-columns:repeat(auto-fit,minmax(min(var(--ef-grid-min,220px),100%),1fr))}
+.ef-grid--tight{gap:var(--space-3)}
+
+/* Colunas assimétricas usadas nas telas (colapsam para 1 coluna no mobile) */
+.ef-columns{display:grid;gap:var(--space-5)}
+.ef-columns--2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.ef-columns--3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ef-columns--wide-left{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.ef-columns--wide-right{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)}
+.ef-columns--report{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr)}
+.ef-columns__full{grid-column:1 / -1}
+@media (max-width:1023.98px){
+  .ef-columns{grid-template-columns:1fr}
+}
+
+/* Pilha vertical genérica */
+.ef-stack{display:flex;flex-direction:column;gap:var(--space-4)}
+.ef-stack--tight{gap:var(--space-2-5)}
+.ef-stack--loose{gap:var(--space-5)}
+.ef-row{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap}
+.ef-row--between{justify-content:space-between}
+
+/* SectionTitle */
+.ef-section-title{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4)}
+.ef-section-title__text{font:var(--type-h4);letter-spacing:var(--tracking-heading);margin:0}
+.ef-card-section-head{padding:var(--pad-card) var(--pad-card) var(--space-3)}
+.ef-card-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);
+  padding:var(--space-4) var(--pad-card);border-top:1px solid var(--border-subtle);
+}
+
+/* Número de destaque em card (saldo, valor de conta) */
+.ef-figure{display:flex;align-items:baseline;gap:var(--space-3-5);flex-wrap:wrap;margin-bottom:var(--space-4)}
+.ef-figure__value{font:var(--type-numeric-xl);font-size:var(--text-3xl);letter-spacing:-0.03em}
+.ef-figure__delta{font:var(--type-numeric-lg);color:var(--text-positive)}
+.ef-figure__delta--negative{color:var(--text-negative)}
+.ef-figure__caption{font:var(--type-caption);color:var(--text-muted)}
+@media (max-width:1023.98px){.ef-figure__value{font-size:var(--text-xl)}}
+
+/* Utilitários de texto (só tokens) — para composição em templates e telas */
+.ef-stack--flush{gap:0}
+.ef-text-positive{color:var(--text-positive)}
+.ef-text-negative{color:var(--text-negative)}
+.ef-text-muted{color:var(--text-muted)}
+.ef-text-inverse-muted{color:var(--text-inverse-muted)}
+.ef-strong{font-weight:var(--weight-semibold)}
+.ef-bold{font-weight:var(--weight-bold)}
+.ef-caption{font:var(--type-caption);color:var(--text-muted)}
+.ef-caption--faint{color:var(--text-faint)}
+.ef-h4{font:var(--type-h4);letter-spacing:var(--tracking-heading);margin:0}
+.ef-h2{font:var(--type-h2);letter-spacing:var(--tracking-display);margin:0}
+.ef-body-sm{font:var(--type-body-sm);text-wrap:pretty;margin:0}
+.ef-mono-sub{font:var(--type-mono-label);letter-spacing:var(--tracking-wide);color:var(--text-muted);text-transform:uppercase}
+.ef-numeric-muted{font:var(--type-numeric);color:var(--text-muted)}
+.ef-divider{height:1px;background:var(--border-subtle);border:none;margin:0}
+.ef-accent-dot{color:var(--highlight-positive)}
+.ef-measure{max-width:56ch}
+.ef-grow{flex:1;min-width:0}
+.ef-push{margin-left:auto}
+.ef-center{display:flex;justify-content:center}
+
+/* Icon (Lucide) */
+.ef-icon{display:inline-flex;flex:0 0 auto}
+.ef-icon svg{width:100%;height:100%}
+
+/* Visibilidade por corte (1024px). Fica no fim do arquivo de propósito: precisa
+   vencer utilitários de layout (.ef-row, .ef-stack) de mesma especificidade. */
+.ef-mobile-only{display:none}
+@media (max-width:1023.98px){
+  .ef-desktop-only{display:none}
+  .ef-mobile-only{display:flex}
+}
+
+/* Logotipo no tema escuro: cápsula branca (DESIGN.md → Marca) */
+[data-theme="dark"] .ef-shell__logo,[data-theme="dark"] .ef-shell__mark{background:var(--neutral-0);border-radius:var(--radius-pill);padding:var(--space-1) var(--space-2-5);box-sizing:content-box}

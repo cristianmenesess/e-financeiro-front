@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Sem a barra final (/design-system), os caminhos relativos resolveriam na pasta de cima. -->
+    <script>if (/\/design-system$/.test(location.pathname)) { location.replace(location.pathname + '/' + location.search + location.hash); }</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Design System — E-Financeiro</title>
+    <link rel="icon" href="assets/logo-mark.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="ds.css">
+    <link rel="stylesheet" href="showcase/showcase.css">
+    <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.js"></script>
+</head>
+
+<body>
+    <div class="sc">
+        <nav class="sc-toc" id="toc" aria-label="Seções do design system">
+            <img class="sc-toc__logo" src="assets/logo-lockup.png" alt="E-Financeiro">
+            <a href="templates/">Templates (telas completas)</a>
+        </nav>
+
+        <main class="sc-main">
+            <header class="sc-hero">
+                <span class="ef-mono-label">E-Financeiro · Design System</span>
+                <h1 class="sc-hero__title">Biblioteca completa</h1>
+                <p class="sc-hero__lead">
+                    Todos os componentes de <code>design-system/components</code>, com variantes e estados
+                    (default, hover, active, focus, disabled, loading, erro, vazio, selecionado), renderizados
+                    nos temas claro e escuro lado a lado. O contrato visual e a fonte da verdade dos tokens é o
+                    <code>DESIGN.md</code> na raiz do repositório.
+                </p>
+                <span class="ef-numeric-muted" id="contador"></span>
+                <div class="sc-links">
+                    <a class="ef-btn ef-btn--primary ef-btn--sm" href="templates/">Abrir templates</a>                </div>
+            </header>
+
+            <div id="showcase"></div>
+
+            <section class="sc-section" id="templates">
+                <header class="sc-section__head">
+                    <span class="sc-section__kicker">Templates</span>
+                    <h2 class="sc-section__title">Telas completas no AppShell</h2>
+                    <p class="sc-section__desc">Visão geral, Transações, Contas, Relatórios, Insights IA, Metas,
+                        Configurações e Mais — porte dos UI kits do dump, responsivo no corte de 1024px.</p>
+                </header>
+                <div class="sc-themes">
+                    <iframe class="sc-iframe" src="templates/?tela=overview&amp;tema=claro" title="Template Visão geral — tema claro" loading="lazy"></iframe>
+                    <iframe class="sc-iframe" src="templates/?tela=overview&amp;tema=escuro" title="Template Visão geral — tema escuro" loading="lazy"></iframe>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <noscript>O showcase é montado em JavaScript (ES modules). Sirva a pasta com <code>npm run dev</code> e ative o JavaScript.</noscript>
+    <script type="module" src="showcase/showcase.js"></script>
+</body>
+
+</html>

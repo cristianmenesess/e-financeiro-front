@@ -1,0 +1,116 @@
+/* ── Feedback: ProgressBar · Dialog · Toast · EmptyState ──────────────
+   Porte de components/feedback/*.jsx do dump. O Dialog ganhou o posicionamento
+   "sheet" do Sheet do UI kit mobile (conflito de duplicata resolvido a favor
+   do Dialog). */
+
+@keyframes ef-fade{from{opacity:0}to{opacity:1}}
+@keyframes ef-rise{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes ef-sheet-up{from{transform:translateY(100%)}to{transform:none}}
+
+/* ProgressBar */
+.ef-progress{display:flex;flex-direction:column;gap:var(--space-2);--ef-progress-color:var(--tone-brand-accent)}
+.ef-progress--positive{--ef-progress-color:var(--tone-positive-accent)}
+.ef-progress--warning{--ef-progress-color:var(--tone-warning-accent)}
+.ef-progress--negative{--ef-progress-color:var(--tone-negative-accent)}
+.ef-progress--ai{--ef-progress-color:var(--tone-ai-accent)}
+.ef-progress__head{display:flex;justify-content:space-between;gap:var(--space-3)}
+.ef-progress__label{font:var(--type-caption);color:var(--text-secondary)}
+.ef-progress__value{font:var(--type-numeric);color:var(--text-primary)}
+.ef-progress__track{height:var(--space-2);border-radius:var(--radius-pill);background:var(--control-track);overflow:hidden}
+.ef-progress__fill{height:100%;background:var(--ef-progress-color);border-radius:var(--radius-pill);transition:width var(--duration-slow) var(--ease-out)}
+.ef-progress__segments{display:flex;gap:var(--micro-gap)}
+.ef-progress__segment{flex:1;border-radius:var(--radius-hairline);background:var(--control-track-strong)}
+.ef-progress__segment--on{background:var(--ef-progress-color)}
+
+/* Dialog */
+.ef-dialog{
+  position:fixed;inset:0;z-index:var(--z-modal);
+  display:flex;align-items:center;justify-content:center;padding:var(--space-6);
+  background:var(--surface-overlay);backdrop-filter:var(--blur-scrim);-webkit-backdrop-filter:var(--blur-scrim);
+  animation:ef-fade var(--duration-normal) var(--ease-out);
+}
+.ef-dialog[hidden]{display:none}
+.ef-dialog--inline{position:relative;inset:auto;z-index:auto;min-height:320px;border-radius:var(--radius-card);animation:none}
+.ef-dialog__panel{
+  width:100%;max-width:var(--dialog-width);background:var(--surface-card);color:var(--text-primary);
+  border-radius:var(--radius-sheet);box-shadow:var(--shadow-xl);
+  padding:var(--pad-card-roomy);display:flex;flex-direction:column;gap:var(--space-4);
+  animation:ef-rise var(--duration-normal) var(--ease-entrance);
+  max-height:calc(100dvh - var(--space-12));overflow-y:auto;
+}
+.ef-dialog__handle{display:none;width:var(--sheet-handle-w);height:var(--sheet-handle-h);border-radius:var(--radius-pill);background:var(--control-track-strong);align-self:center}
+.ef-dialog__head{display:flex;align-items:flex-start;gap:var(--space-4)}
+.ef-dialog__text{flex:1;display:flex;flex-direction:column;gap:var(--space-1-5)}
+.ef-dialog__title{font:var(--type-h3);letter-spacing:var(--tracking-heading);margin:0}
+.ef-dialog__description{font:var(--type-body-sm);color:var(--text-secondary);text-wrap:pretty;margin:0}
+.ef-dialog__close{
+  border:none;background:none;cursor:pointer;color:var(--text-muted);
+  padding:var(--space-1);margin:calc(var(--space-1) * -1);display:flex;border-radius:var(--radius-xs);
+  transition:var(--transition-control);
+}
+.ef-dialog__close:hover{color:var(--text-primary);background:var(--action-ghost-hover)}
+.ef-dialog__close:focus-visible{outline:none;box-shadow:var(--shadow-focus)}
+.ef-dialog__footer{display:flex;justify-content:flex-end;gap:var(--space-2-5);margin-top:var(--space-1)}
+
+/* Posicionamento "sheet": sobe da borda inferior, raio só no topo, alça.
+   "auto" = sheet abaixo de 1024px (corte desktop/mobile), centralizado acima. */
+.ef-dialog--sheet{align-items:flex-end;padding:0}
+.ef-dialog--sheet .ef-dialog__panel{
+  max-width:none;border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
+  padding:var(--space-3-5) var(--space-5) calc(var(--space-10) + env(safe-area-inset-bottom));
+  animation:ef-sheet-up var(--duration-normal) var(--ease-entrance);
+}
+.ef-dialog--sheet .ef-dialog__handle{display:block}
+@media (max-width:1023.98px){
+  .ef-dialog--auto{align-items:flex-end;padding:0}
+  .ef-dialog--auto .ef-dialog__panel{
+    max-width:none;border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
+    padding:var(--space-3-5) var(--space-5) calc(var(--space-10) + env(safe-area-inset-bottom));
+    animation:ef-sheet-up var(--duration-normal) var(--ease-entrance);
+  }
+  .ef-dialog--auto .ef-dialog__handle{display:block}
+}
+
+/* Toast */
+.ef-toast{
+  display:flex;align-items:flex-start;gap:var(--space-3);min-width:var(--toast-min);max-width:var(--toast-max);
+  padding:var(--space-3-5) var(--space-4);background:var(--surface-inverse);color:var(--text-inverse);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-lg);
+  animation:ef-rise var(--duration-normal) var(--ease-entrance);
+  --ef-toast-accent:var(--tone-neutral-accent);
+}
+.ef-toast--positive{--ef-toast-accent:var(--tone-positive-accent)}
+.ef-toast--negative{--ef-toast-accent:var(--tone-negative-accent)}
+.ef-toast--warning{--ef-toast-accent:var(--tone-warning-accent)}
+.ef-toast--ai{--ef-toast-accent:var(--tone-ai-accent)}
+.ef-toast__dot{width:var(--dot-md);height:var(--dot-md);border-radius:var(--radius-circle);background:var(--ef-toast-accent);margin-top:var(--space-1-5);flex:0 0 auto}
+.ef-toast__text{flex:1;display:flex;flex-direction:column;gap:var(--micro-gap);min-width:0}
+.ef-toast__title{font:var(--type-body-sm);font-weight:var(--weight-semibold)}
+.ef-toast__message{font:var(--type-caption);font-weight:var(--weight-regular);color:var(--text-inverse-muted)}
+.ef-toast__action{
+  border:none;background:none;padding:0;cursor:pointer;color:var(--teal-200);
+  font:var(--type-body-sm);font-weight:var(--weight-semibold);text-decoration:underline;text-underline-offset:3px;
+}
+.ef-toast__close{border:none;background:none;cursor:pointer;color:var(--text-inverse-muted);padding:0;display:flex;border-radius:var(--radius-xs)}
+.ef-toast__close:hover{color:var(--text-inverse)}
+.ef-toast__close:focus-visible,.ef-toast__action:focus-visible{outline:none;box-shadow:var(--shadow-focus)}
+/* Região fixa de toasts: canto inferior direito no desktop, centro no mobile */
+.ef-toast-region{position:fixed;right:var(--space-6);bottom:var(--space-6);z-index:var(--z-toast);display:flex;flex-direction:column;gap:var(--space-2-5)}
+@media (max-width:1023.98px){
+  .ef-toast-region{left:var(--space-4);right:var(--space-4);bottom:calc(var(--tabbar-height) + var(--space-4) + env(safe-area-inset-bottom));align-items:center}
+}
+
+/* EmptyState */
+.ef-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  gap:var(--space-3);padding:var(--space-14) var(--space-8);
+}
+.ef-empty--compact{gap:var(--space-2);padding:var(--space-8) var(--space-6)}
+.ef-empty__icon{
+  width:var(--empty-icon-tile);height:var(--empty-icon-tile);border-radius:var(--radius-icon-tile);
+  background:var(--surface-sunken);color:var(--text-faint);
+  display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-1);
+}
+.ef-empty__title{font:var(--type-h4);letter-spacing:var(--tracking-heading);margin:0}
+.ef-empty__description{font:var(--type-body-sm);color:var(--text-muted);max-width:var(--empty-text-max);text-wrap:pretty;margin:0}
+.ef-empty__action{margin-top:var(--space-2)}

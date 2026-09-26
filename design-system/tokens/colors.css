@@ -1,0 +1,230 @@
+/* E-Financeiro · cores
+   Fonte da verdade: DESIGN.md (raiz do repositório). Este arquivo é a
+   implementação em CSS — mudou um valor aqui, mude lá também (e vice-versa).
+
+   Camadas:
+   1. Escalas (teal, navy, neutral, status) — valores brutos, iguais nos dois temas.
+   2. Semânticos (surface, text, border, action…) — o que os componentes usam.
+   3. Tons (tone-*) e controles (control-*) — acréscimo da integração ao projeto
+      para que os componentes funcionem no tema escuro sem referenciar escala bruta.
+   4. Tema escuro — só redefine semânticos, via [data-theme="dark"] (o mesmo
+      atributo que assets/js/theme.js já aplica no <html>). */
+
+:root {
+/* ── Brand · Teal (from the E-Financeiro mark) ───────────────────── */
+--teal-50:#EAF6F4;--teal-100:#D2ECE8;--teal-200:#A6D9D1;--teal-300:#6FC2B6;
+--teal-400:#44A99A;--teal-500:#309084;--teal-600:#27776D;--teal-700:#1E5D55;
+--teal-800:#16443E;--teal-900:#0F2E2A;
+/* ── Brand · Navy (from the E-Financeiro mark) ───────────────────── */
+--navy-50:#EDF1F5;--navy-100:#D6DEE7;--navy-200:#AEBDCD;--navy-300:#7E93AC;
+--navy-400:#546C89;--navy-500:#304860;--navy-600:#273B4E;--navy-700:#1E2E3D;
+--navy-800:#16222D;--navy-900:#0E171F;
+/* ── Neutrals · cool, very faintly teal-tinted ───────────────────── */
+--neutral-0:#FFFFFF;--neutral-25:#FAFCFC;--neutral-50:#F4F8F7;--neutral-100:#EAF0EF;
+--neutral-200:#DCE5E4;--neutral-300:#C2CFCD;--neutral-400:#9AACAA;--neutral-500:#748582;
+--neutral-600:#5A6A68;--neutral-700:#43514F;--neutral-800:#2C3736;--neutral-900:#1A2221;
+/* ── Data & status hues ──────────────────────────────────────────── */
+--green-50:#E4FBEE;--green-100:#C2F3D8;--green-400:#4BD183;--green-500:#24C060;--green-600:#17A24C;--green-700:#0F7D39;
+--red-50:#FDECEC;--red-100:#FBD6D6;--red-400:#F27272;--red-500:#E24A4A;--red-600:#C43333;
+--amber-50:#FEF4E6;--amber-100:#FCE6C4;--amber-400:#F5B45F;--amber-500:#F2A03D;--amber-600:#D07F1C;
+--violet-50:#F0EDFE;--violet-100:#E0DAFD;--violet-400:#A797F5;--violet-500:#8B7BF0;--violet-600:#6E5CD9;
+--blue-50:#EAF3FE;--blue-100:#D3E6FC;--blue-400:#75B4F8;--blue-500:#4B9BF5;--blue-600:#2C7DD6;
+
+/* ── Semantic · surfaces ─────────────────────────────────────────── */
+--bg-canvas:#F1F6F5;
+--bg-canvas-alt:#EDF3F7;
+--surface-card:var(--neutral-0);
+--surface-sunken:#F7FAF9;
+--surface-raised:var(--neutral-0);
+--surface-muted:var(--neutral-100);
+--surface-inverse:var(--navy-800);
+--surface-inverse-alt:var(--navy-700);
+--surface-brand:var(--teal-500);
+--surface-brand-soft:var(--teal-50);
+--surface-overlay:rgba(14,23,31,.48);
+--surface-glass:rgba(255,255,255,.72);
+
+/* ── Semantic · text ─────────────────────────────────────────────── */
+--text-primary:var(--navy-800);
+--text-secondary:var(--neutral-600);
+--text-muted:var(--neutral-500);
+--text-faint:var(--neutral-400);
+--text-inverse:var(--neutral-0);
+--text-inverse-muted:var(--navy-200);
+--text-brand:var(--teal-600);
+--text-positive:var(--green-600);
+--text-negative:var(--red-600);
+--text-warning:var(--amber-600);
+--text-link:var(--teal-600);
+--text-link-hover:var(--teal-700);
+
+/* ── Semantic · borders ──────────────────────────────────────────── */
+--border-subtle:#E8EEED;
+--border-default:var(--neutral-200);
+--border-strong:var(--neutral-300);
+--border-brand:var(--teal-300);
+--border-inverse:rgba(255,255,255,.14);
+
+/* ── Semantic · interaction ──────────────────────────────────────── */
+--action-primary:var(--teal-500);
+--action-primary-hover:var(--teal-600);
+--action-primary-active:var(--teal-700);
+--action-dark:var(--navy-700);
+--action-dark-hover:var(--navy-800);
+--action-success:var(--green-500);
+--action-danger:var(--red-500);
+--action-ghost-hover:var(--neutral-100);
+--focus-ring:rgba(48,144,132,.32);
+
+/* ── Data visualisation series (fixed order) ─────────────────────── */
+--series-1:var(--green-500);   /* growth / stocks     */
+--series-2:var(--blue-500);    /* ETFs / accounts     */
+--series-3:var(--violet-500);  /* forecast / AI       */
+--series-4:var(--amber-500);   /* crypto / alerts     */
+--series-5:var(--teal-500);    /* brand / balance     */
+--series-6:var(--neutral-400); /* cash / rest         */
+--chart-grid:#EDF2F1;
+--chart-axis:var(--neutral-400);
+--chart-fill-positive:linear-gradient(180deg,rgba(36,192,96,.22),rgba(36,192,96,0)); /* @kind other */
+--chart-fill-negative:linear-gradient(180deg,rgba(226,74,74,.20),rgba(226,74,74,0)); /* @kind other */
+--chart-fill-brand:linear-gradient(180deg,rgba(48,144,132,.22),rgba(48,144,132,0)); /* @kind other */
+
+/* ── Brand atmosphere (aurora wash used behind hero + kpi bands) ─── */
+--aurora-mint:rgba(75,209,131,.30);
+--aurora-teal:rgba(48,144,132,.22);
+--aurora-violet:rgba(139,123,240,.22);
+--aurora-sky:rgba(75,155,245,.18);
+--gradient-aurora:radial-gradient(60% 80% at 15% 20%,var(--aurora-mint),transparent 70%),radial-gradient(55% 70% at 75% 15%,var(--aurora-sky),transparent 70%),radial-gradient(60% 75% at 85% 80%,var(--aurora-violet),transparent 70%),radial-gradient(50% 60% at 40% 90%,var(--aurora-teal),transparent 70%); /* @kind other */
+--gradient-brand:linear-gradient(135deg,var(--teal-500),var(--teal-600)); /* @kind other */
+--gradient-inverse:linear-gradient(160deg,var(--navy-700),var(--navy-900)); /* @kind other */
+
+/* ── Integração · tons (Badge, IconTile, InsightCard, ProgressBar…) ─
+   No claro, apontam exatamente para os valores que os componentes do dump
+   usavam direto na escala. `bg` = fundo tonal; `fg` = texto forte (Badge);
+   `icon` = glifo em tile; `accent` = cor sólida (pontos, barras, arcos). */
+--tone-neutral-bg:var(--surface-muted);--tone-neutral-fg:var(--text-secondary);--tone-neutral-icon:var(--text-secondary);--tone-neutral-accent:var(--neutral-400);
+--tone-brand-bg:var(--teal-50);--tone-brand-fg:var(--teal-700);--tone-brand-icon:var(--teal-600);--tone-brand-accent:var(--teal-500);
+--tone-positive-bg:var(--green-50);--tone-positive-fg:var(--green-700);--tone-positive-icon:var(--green-600);--tone-positive-accent:var(--green-500);
+--tone-negative-bg:var(--red-50);--tone-negative-fg:var(--red-600);--tone-negative-icon:var(--red-500);--tone-negative-accent:var(--red-500);
+--tone-warning-bg:var(--amber-50);--tone-warning-fg:var(--amber-600);--tone-warning-icon:var(--amber-600);--tone-warning-accent:var(--amber-500);
+--tone-info-bg:var(--blue-50);--tone-info-fg:var(--blue-600);--tone-info-icon:var(--blue-600);--tone-info-accent:var(--blue-500);
+--tone-ai-bg:var(--violet-50);--tone-ai-fg:var(--violet-600);--tone-ai-icon:var(--violet-500);--tone-ai-accent:var(--violet-500);
+--tone-solid-bg:var(--navy-700);--tone-solid-fg:var(--text-inverse);
+
+/* ── Integração · controles ──────────────────────────────────────── */
+--control-hover:var(--neutral-50);          /* hover de Button secondary / IconButton surface */
+--control-brand-hover:var(--teal-100);      /* hover de IconButton brand */
+--control-success-hover:var(--green-600);
+--control-success-text:var(--navy-900);
+--control-danger-hover:var(--red-600);
+--control-inverse-bg:rgba(255,255,255,.08);
+--control-inverse-hover:rgba(255,255,255,.16);
+--control-track:var(--neutral-100);         /* trilho de ProgressBar e ScoreGauge */
+--control-track-strong:var(--neutral-200);  /* segmentos vazios, alça do sheet */
+--control-switch-off:var(--neutral-300);
+--control-thumb:var(--neutral-0);
+--border-focus:var(--teal-400);
+--border-invalid:var(--red-400);
+--avatar-bg:var(--teal-100);
+--avatar-fg:var(--teal-700);
+--avatar-ring:var(--teal-200);
+--selection-bg:var(--teal-100);
+--selection-fg:var(--navy-800);
+--highlight-positive:var(--green-400);      /* ponto final em manchete sobre inverse */
+}
+
+/* ── Paleta do usuário (cartões e contas) ──────────────────────────
+   Cores que o usuário escolhe para cada cartão/conta. Os valores são DADOS:
+   o app grava exatamente este texto no backend (corFundo/corTexto) e compara
+   de volta ao editar — não altere nem reformate um hex existente; para mudar a
+   paleta, acrescente novos pares. Iguais nos dois temas (é a cor do objeto). */
+:root{
+--swatch-1-bg:#E1F5EE;--swatch-1-fg:#0F6E56;
+--swatch-2-bg:#FCEBEB;--swatch-2-fg:#A32D2D;
+--swatch-3-bg:#E6F1FB;--swatch-3-fg:#185FA5;
+--swatch-4-bg:#EEEDFE;--swatch-4-fg:#534AB7;
+--swatch-5-bg:#FAEEDA;--swatch-5-fg:#854F0B;
+--swatch-6-bg:#FBE9F0;--swatch-6-fg:#993356;
+--swatch-7-bg:#EAF3DE;--swatch-7-fg:#3B6D11;
+--swatch-8-bg:#F1EFE8;--swatch-8-fg:#5F5E5A;
+--swatch-9-bg:#E8F4FD;--swatch-9-fg:#1565A8;
+--swatch-10-bg:#FFF3CD;--swatch-10-fg:#856404;
+--swatch-count:10; /* @kind other */
+}
+
+/* ── Tema escuro ─────────────────────────────────────────────────────
+   Autorado na integração (o dump só definia o claro). Mantém a mesma
+   gramática: canvas mais escuro que o card, texto nunca semitransparente,
+   marca teal e status com a mesma matiz, um degrau mais claro. */
+[data-theme="dark"] {
+color-scheme:dark;
+--bg-canvas:#0A1117;
+--bg-canvas-alt:var(--navy-900);
+--surface-card:#111B24;
+--surface-sunken:#0D161D;
+--surface-raised:#16222D;
+--surface-muted:#1A2731;
+--surface-inverse:var(--navy-700);
+--surface-inverse-alt:var(--navy-600);
+--surface-brand:var(--teal-500);
+--surface-brand-soft:rgba(48,144,132,.18);
+--surface-overlay:rgba(3,7,10,.64);
+--surface-glass:rgba(17,27,36,.76);
+
+--text-primary:var(--neutral-100);
+--text-secondary:var(--neutral-300);
+--text-muted:var(--neutral-400);
+--text-faint:var(--neutral-500);
+--text-inverse:var(--neutral-0);
+--text-inverse-muted:var(--navy-200);
+--text-brand:var(--teal-300);
+--text-positive:var(--green-400);
+--text-negative:var(--red-400);
+--text-warning:var(--amber-400);
+--text-link:var(--teal-300);
+--text-link-hover:var(--teal-200);
+
+--border-subtle:rgba(255,255,255,.07);
+--border-default:rgba(255,255,255,.12);
+--border-strong:rgba(255,255,255,.2);
+--border-brand:var(--teal-600);
+--border-inverse:rgba(255,255,255,.14);
+
+--action-primary:var(--teal-500);
+--action-primary-hover:var(--teal-400);
+--action-primary-active:var(--teal-300);
+--action-dark:var(--navy-600);
+--action-dark-hover:var(--navy-500);
+--action-success:var(--green-500);
+--action-danger:var(--red-500);
+--action-ghost-hover:rgba(255,255,255,.06);
+--focus-ring:rgba(68,169,154,.45);
+
+--chart-grid:rgba(255,255,255,.06);
+--chart-axis:var(--neutral-500);
+
+--tone-neutral-bg:var(--surface-muted);--tone-neutral-fg:var(--text-secondary);--tone-neutral-icon:var(--text-secondary);
+--tone-brand-bg:rgba(48,144,132,.2);--tone-brand-fg:var(--teal-300);--tone-brand-icon:var(--teal-300);
+--tone-positive-bg:rgba(36,192,96,.16);--tone-positive-fg:var(--green-400);--tone-positive-icon:var(--green-400);
+--tone-negative-bg:rgba(226,74,74,.16);--tone-negative-fg:var(--red-400);--tone-negative-icon:var(--red-400);
+--tone-warning-bg:rgba(242,160,61,.16);--tone-warning-fg:var(--amber-400);--tone-warning-icon:var(--amber-400);
+--tone-info-bg:rgba(75,155,245,.16);--tone-info-fg:var(--blue-400);--tone-info-icon:var(--blue-400);
+--tone-ai-bg:rgba(139,123,240,.18);--tone-ai-fg:var(--violet-400);--tone-ai-icon:var(--violet-400);
+--tone-solid-bg:var(--navy-600);
+
+--control-hover:rgba(255,255,255,.05);
+--control-brand-hover:rgba(48,144,132,.3);
+--control-success-hover:var(--green-400);
+--control-danger-hover:var(--red-400);
+--control-track:rgba(255,255,255,.08);
+--control-track-strong:rgba(255,255,255,.14);
+--control-switch-off:var(--neutral-700);
+--control-thumb:var(--neutral-0);
+--border-focus:var(--teal-400);
+--border-invalid:var(--red-400);
+--avatar-bg:rgba(48,144,132,.24);
+--avatar-fg:var(--teal-200);
+--avatar-ring:var(--teal-700);
+--selection-bg:var(--teal-700);
+--selection-fg:var(--neutral-0);
+}

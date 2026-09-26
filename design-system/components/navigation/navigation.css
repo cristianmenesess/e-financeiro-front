@@ -1,0 +1,92 @@
+/* ── Navegação: SidebarNav · NavItem · TopBar · Tabs · TabBar ─────────
+   Porte de components/navigation/*.jsx do dump. Selecionado = [aria-current="page"]
+   (rail e tab bar) ou [aria-selected="true"] (abas). */
+
+/* SidebarNav */
+.ef-sidebar{
+  width:var(--sidebar-width);flex:0 0 auto;display:flex;flex-direction:column;gap:var(--space-2);
+  background:var(--surface-card);border-right:1px solid var(--border-subtle);
+  padding:var(--space-5) var(--space-3);
+  transition:width var(--duration-normal) var(--ease-out);
+}
+.ef-sidebar--collapsed{width:var(--sidebar-width-collapsed)}
+.ef-sidebar__logo{padding:var(--space-1) var(--space-2-5) var(--space-5);display:flex;justify-content:flex-start}
+.ef-sidebar--collapsed .ef-sidebar__logo{padding:var(--space-1) 0 var(--space-5);justify-content:center}
+.ef-sidebar__list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--space-0-5);flex:1}
+.ef-sidebar__footer{border-top:1px solid var(--border-subtle);padding-top:var(--space-3)}
+
+/* NavItem */
+.ef-nav-item{
+  position:relative;width:100%;display:flex;align-items:center;gap:var(--space-3);
+  height:var(--nav-item-h);padding:0 var(--space-3);border:none;border-radius:var(--radius-md);cursor:pointer;
+  background:transparent;color:var(--text-secondary);text-align:left;text-decoration:none;
+  font:var(--type-body-sm);font-weight:var(--weight-medium);
+  transition:var(--transition-control);
+}
+.ef-sidebar--collapsed .ef-nav-item,.ef-nav-item--collapsed{padding:0;justify-content:center}
+.ef-nav-item:hover:not([aria-current="page"]),.ef-nav-item.is-hover{background:var(--action-ghost-hover)}
+.ef-nav-item:active,.ef-nav-item.is-active{transform:scale(var(--press-scale))}
+.ef-nav-item:focus-visible,.ef-nav-item.is-focus{outline:none;box-shadow:var(--shadow-focus)}
+.ef-nav-item[aria-current="page"]{background:var(--surface-sunken);color:var(--text-primary);font-weight:var(--weight-semibold)}
+.ef-nav-item[aria-current="page"]::before{
+  content:"";position:absolute;left:0;top:var(--nav-marker-inset);bottom:var(--nav-marker-inset);width:var(--nav-marker-w);
+  border-radius:0 var(--nav-marker-w) var(--nav-marker-w) 0;background:var(--action-primary);
+}
+.ef-nav-item__icon{display:flex;flex:0 0 auto;color:inherit}
+.ef-nav-item[aria-current="page"] .ef-nav-item__icon{color:var(--text-brand)}
+.ef-nav-item__label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ef-nav-item:disabled{opacity:.45;cursor:not-allowed}
+
+/* TopBar */
+.ef-topbar{
+  display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;
+  min-height:var(--topbar-height);padding:var(--space-3-5) var(--pad-page);
+  background:var(--surface-glass);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);
+  border-bottom:1px solid var(--border-subtle);color:var(--text-primary);
+}
+.ef-topbar--sticky{position:sticky;top:0;z-index:var(--z-sticky)}
+.ef-topbar--compact{padding:var(--space-3) var(--pad-page-mobile)}
+.ef-topbar__text{display:flex;flex-direction:column;gap:var(--space-0-5);min-width:0;flex:1}
+.ef-topbar__breadcrumb{font:var(--type-mono-label);letter-spacing:var(--tracking-mono-label);text-transform:uppercase;color:var(--text-muted)}
+.ef-topbar__title{font:var(--type-h3);letter-spacing:var(--tracking-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
+.ef-topbar__subtitle{font:var(--type-caption);font-weight:var(--weight-regular);color:var(--text-muted)}
+.ef-topbar__actions{display:flex;align-items:center;gap:var(--space-2-5)}
+
+/* Tabs */
+.ef-tabs{display:flex;align-items:center;gap:var(--space-6);border-bottom:1px solid var(--border-subtle);overflow-x:auto;scrollbar-width:none}
+.ef-tabs__item{
+  border:none;background:none;padding:0 0 var(--space-3);cursor:pointer;margin-bottom:calc(var(--space-px) * -1);
+  font:var(--type-body-sm);font-weight:var(--weight-medium);color:var(--text-muted);
+  border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:var(--space-2);
+  transition:var(--transition-control);
+}
+.ef-tabs__item:hover:not([aria-selected="true"],:disabled),.ef-tabs__item.is-hover{color:var(--text-secondary);border-bottom-color:var(--border-default)}
+.ef-tabs__item:focus-visible,.ef-tabs__item.is-focus{outline:none;box-shadow:var(--shadow-focus)}
+.ef-tabs__item[aria-selected="true"]{color:var(--text-primary);font-weight:var(--weight-semibold);border-bottom-color:var(--action-primary)}
+.ef-tabs__item:disabled{opacity:.45;cursor:not-allowed}
+.ef-tabs__count{font:var(--type-mono-label);color:var(--text-faint)}
+
+/* TabBar (mobile) */
+.ef-tabbar{
+  display:flex;align-items:stretch;justify-content:space-around;
+  height:var(--tabbar-height);padding:var(--space-2) var(--space-2) var(--space-4);
+  background:var(--surface-glass);backdrop-filter:var(--blur-glass);-webkit-backdrop-filter:var(--blur-glass);
+  border-top:1px solid var(--border-subtle);
+}
+.ef-tabbar__item{
+  flex:1;min-width:var(--touch-target);border:none;background:none;cursor:pointer;padding:0;text-decoration:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-1);
+  color:var(--text-muted);
+}
+.ef-tabbar__pill{
+  display:flex;align-items:center;justify-content:center;width:var(--tabbar-pill-w);height:var(--tabbar-pill-h);
+  border-radius:var(--radius-pill);background:transparent;transition:var(--transition-control);
+}
+.ef-tabbar__label{font-size:var(--text-micro);font-weight:var(--weight-medium);letter-spacing:.01em}
+.ef-tabbar__item:hover:not([aria-current="page"]) .ef-tabbar__pill,.ef-tabbar__item.is-hover .ef-tabbar__pill{background:var(--action-ghost-hover)}
+.ef-tabbar__item:active .ef-tabbar__pill,.ef-tabbar__item.is-active .ef-tabbar__pill{transform:scale(.94)}
+.ef-tabbar__item:focus-visible,.ef-tabbar__item.is-focus{outline:none}
+.ef-tabbar__item:focus-visible .ef-tabbar__pill,.ef-tabbar__item.is-focus .ef-tabbar__pill{box-shadow:var(--shadow-focus)}
+.ef-tabbar__item[aria-current="page"]{color:var(--text-brand)}
+.ef-tabbar__item[aria-current="page"] .ef-tabbar__pill{background:var(--surface-brand-soft)}
+.ef-tabbar__item[aria-current="page"] .ef-tabbar__label{font-weight:var(--weight-bold)}

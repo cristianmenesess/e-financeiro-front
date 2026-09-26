@@ -1,0 +1,34 @@
+:root{
+--font-sans:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
+--font-mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+--font-display:var(--font-sans);
+
+/* Weights — Manrope 300/400/500/600/700/800 */
+--weight-light:300;--weight-regular:400;--weight-medium:500;
+--weight-semibold:600;--weight-bold:700;--weight-extrabold:800;
+
+/* Size ramp — the 12/14/18/24/44/72/88 rungs come straight from the brand ruler */
+--text-micro:10px;--text-2xs:11px;--text-xs:12px;--text-sm:14px;--text-base:16px;
+--text-md:18px;--text-lg:20px;--text-xl:24px;--text-2xl:32px;--text-3xl:44px;
+--text-4xl:56px;--text-5xl:72px;--text-6xl:88px;
+
+--leading-flat:1;--leading-tight:1.08;--leading-snug:1.25;
+--leading-normal:1.5;--leading-relaxed:1.65;
+
+--tracking-display:-0.035em;--tracking-heading:-0.02em;--tracking-normal:0em;
+--tracking-wide:0.04em;--tracking-label:0.08em;--tracking-mono-label:0.12em;
+
+/* Composed roles */
+--type-display:var(--weight-bold) var(--text-5xl)/var(--leading-tight) var(--font-display);
+--type-h1:var(--weight-bold) var(--text-3xl)/var(--leading-tight) var(--font-display);
+--type-h2:var(--weight-bold) var(--text-2xl)/var(--leading-snug) var(--font-display);
+--type-h3:var(--weight-semibold) var(--text-xl)/var(--leading-snug) var(--font-sans);
+--type-h4:var(--weight-semibold) var(--text-md)/var(--leading-snug) var(--font-sans);
+--type-body:var(--weight-regular) var(--text-base)/var(--leading-normal) var(--font-sans);
+--type-body-sm:var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-sans);
+--type-caption:var(--weight-medium) var(--text-xs)/var(--leading-snug) var(--font-sans);
+--type-numeric-xl:var(--weight-bold) var(--text-2xl)/var(--leading-tight) var(--font-mono);
+--type-numeric-lg:var(--weight-semibold) var(--text-xl)/var(--leading-tight) var(--font-mono);
+--type-numeric:var(--weight-medium) var(--text-sm)/var(--leading-snug) var(--font-mono);
+--type-mono-label:var(--weight-medium) var(--text-xs)/var(--leading-snug) var(--font-mono);
+}

@@ -1,0 +1,4 @@
+/* E-Financeiro webfonts.
+   Manrope (UI + display) and JetBrains Mono (numerals, labels, tickers) are the
+   two families used across the product. Both are served from Google Fonts. */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap");

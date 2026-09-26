@@ -7,7 +7,7 @@
     <title>Redefinir senha — E-Financeiro</title>
 
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#04342C">
+    <meta name="theme-color" content="#F1F6F5">
     <link rel="icon" href="assets/imagens/icons/favicon-32.png" sizes="32x32">
     <link rel="apple-touch-icon" href="assets/imagens/icons/apple-touch-icon.png">
     <meta name="mobile-web-app-capable" content="yes">
@@ -17,8 +17,8 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="design-system/ds.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="assets/js/theme.js"></script>
     <script src="assets/js/pwa.js"></script>
@@ -30,23 +30,22 @@
         <div class="spinner"></div>
     </div>
 
-    <button class="theme-toggle theme-toggle--auth" title="Alternar tema">
+    <button class="ef-icon-btn ef-icon-btn--surface ef-icon-btn--lg theme-toggle theme-toggle--auth" title="Alternar tema" aria-label="Alternar tema">
         <i class="fa-solid fa-moon"></i>
     </button>
 
     <div class="auth-page">
-        <div class="auth-card">
+        <div class="auth-card ef-card ef-card--pad-roomy">
             <div class="auth-logo">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>E-Financeiro</span>
+                <img src="design-system/assets/logo-lockup.png" alt="E-Financeiro">
             </div>
 
             <div id="formRedefinirSenha">
                 <p class="auth-help-text">Escolha uma nova senha para acessar sua conta.</p>
-                <input class="modal-input" type="password" id="inputNovaSenha" placeholder="Nova senha (mínimo 8 caracteres)">
-                <input class="modal-input" type="password" id="inputConfirmarSenha" placeholder="Confirmar nova senha">
+                <input class="ef-input" type="password" id="inputNovaSenha" placeholder="Nova senha (mínimo 8 caracteres)">
+                <input class="ef-input" type="password" id="inputConfirmarSenha" placeholder="Confirmar nova senha">
 
-                <button class="modal-confirm" id="btnRedefinir">Redefinir senha</button>
+                <button class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnRedefinir">Redefinir senha</button>
             </div>
 
             <div class="auth-feedback auth-feedback--error" id="erroToken">

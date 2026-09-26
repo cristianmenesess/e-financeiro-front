@@ -56,11 +56,11 @@ function TelaLogin() {
         $('#inputEmailReset').val('');
         $('#formEsqueciSenha').show();
         $('#successEsqueciSenha').hide();
-        $('#modalEsqueciSenha').addClass('open');
+        $('#modalEsqueciSenha').prop('hidden', false);
     };
 
     self.fecharModalEsqueciSenha = function () {
-        $('#modalEsqueciSenha').removeClass('open');
+        $('#modalEsqueciSenha').prop('hidden', true);
     };
 
     /**
@@ -158,6 +158,14 @@ function TelaLogin() {
 
             $('#modalEsqueciSenha').on('click', function (e) {
                 if ($(e.target).is('#modalEsqueciSenha')) {
+                    self.fecharModalEsqueciSenha();
+                }
+            });
+
+            $('#btnFecharEsqueciSenha').on('click', self.fecharModalEsqueciSenha);
+
+            $(document).on('keydown', function (e) {
+                if (e.key === 'Escape') {
                     self.fecharModalEsqueciSenha();
                 }
             });

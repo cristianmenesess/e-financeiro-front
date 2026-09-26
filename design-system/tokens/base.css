@@ -1,0 +1,19 @@
+/* Base do design system: reset leve + papéis tipográficos nos elementos.
+   Vem do dump (tokens/base.css); a única mudança é ::selection usar os
+   tokens semânticos de seleção, para funcionar nos dois temas. */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg-canvas);color:var(--text-primary);font:var(--type-body);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,h4,h5,h6,p,figure{margin:0}
+h1{font:var(--type-h1);letter-spacing:var(--tracking-display)}
+h2{font:var(--type-h2);letter-spacing:var(--tracking-heading)}
+h3{font:var(--type-h3);letter-spacing:var(--tracking-heading)}
+h4{font:var(--type-h4)}
+a{color:var(--text-link);text-decoration-color:color-mix(in oklab,var(--text-link) 40%,transparent);text-underline-offset:3px}
+a:hover{color:var(--text-link-hover);text-decoration-color:currentcolor}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:none;box-shadow:var(--shadow-focus);border-radius:var(--radius-xs)}
+::selection{background:var(--selection-bg);color:var(--selection-fg)}
+.ef-mono-label{font:var(--type-mono-label);letter-spacing:var(--tracking-mono-label);text-transform:uppercase;color:var(--text-muted)}
+.ef-numeric{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.ef-visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}

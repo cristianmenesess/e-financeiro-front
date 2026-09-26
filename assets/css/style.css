@@ -1,101 +1,8 @@
-/* VARIÁVEIS GLOBAIS */
+/* ALIASES DE LAYOUT DO APP */
 :root {
-    --color-bg: #F7F6F3;
-    --color-surface: #FFFFFF;
-    --color-surface-alt: #F0EEE9;
-    --color-border: rgba(0, 0, 0, 0.08);
-    --color-border-md: rgba(0, 0, 0, 0.14);
-
-    --color-text-primary: #1A1917;
-    --color-text-secondary: #6B6860;
-    --color-text-muted: #A09D98;
-
-    --color-income: #0F6E56;
-    --color-income-bg: #E1F5EE;
-    --color-income-dot: #1D9E75;
-
-    --color-expense: #A32D2D;
-    --color-expense-bg: #FCEBEB;
-    --color-expense-dot: #E24B4A;
-
-    --color-account-dot: #1D9E75;
-
-    /* Verde-cédula: identidade da marca (sidebar, card de saldo, botões) */
-    --color-brand: #04342C;
-    --color-brand-strong: #0A5240;
-    --color-brand-soft: #5DCAA5;
-    --color-brand-text: #F0FAF5;
-
-    /* Botões e elementos "ativos" (invertem no tema escuro) */
-    --color-action-bg: #04342C;
-    --color-action-text: #E9F7F1;
-
-    --shadow-card: 0 1px 2px rgba(26, 25, 23, 0.04), 0 6px 16px rgba(26, 25, 23, 0.06);
-
-    --color-hover-strong: #E8E6E0;
-    --color-avatar-bg: #E6F1FB;
-    --color-avatar-text: #185FA5;
-    --color-food-bg: #FAEEDA;
-    --color-food-text: #854F0B;
-    --color-home-bg: #EEEDFE;
-    --color-home-text: #534AB7;
-    --color-tab-bg: rgba(255, 255, 255, 0.5);
-    --color-tab-bg-hover: rgba(255, 255, 255, 0.8);
-
-    color-scheme: light;
-
-    --sidebar-width: 220px;
-    --topbar-h-mobile: 60px;
-    --bottom-nav-h: 64px;
-
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
-    --radius-pill: 100px;
-
-    --font-main: 'DM Sans', sans-serif;
-    --font-mono: 'DM Mono', monospace;
-
-    --transition: 0.18s ease;
+    --topbar-h-mobile: var(--topbar-height);
+    --bottom-nav-h: var(--tabbar-height);
 }
-
-/* TEMA ESCURO — ativado via data-theme="dark" */
-[data-theme="dark"] {
-    --color-bg: #131210;
-    --color-surface: #1D1C1A;
-    --color-surface-alt: #292824;
-    --color-border: rgba(255, 255, 255, 0.08);
-    --color-border-md: rgba(255, 255, 255, 0.15);
-
-    --color-text-primary: #ECEAE5;
-    --color-text-secondary: #A5A29A;
-    --color-text-muted: #73706A;
-
-    --color-income: #5DCAA5;
-    --color-income-bg: rgba(29, 158, 117, 0.16);
-
-    --color-expense: #F09595;
-    --color-expense-bg: rgba(226, 75, 74, 0.16);
-
-    --color-action-bg: #D7EFE5;
-    --color-action-text: #04342C;
-
-    --shadow-card: none;
-
-    --color-hover-strong: #33322D;
-    --color-avatar-bg: #14395C;
-    --color-avatar-text: #85B7EB;
-    --color-food-bg: rgba(239, 159, 39, 0.16);
-    --color-food-text: #FAC775;
-    --color-home-bg: rgba(127, 119, 221, 0.16);
-    --color-home-text: #AFA9EC;
-    --color-tab-bg: rgba(255, 255, 255, 0.04);
-    --color-tab-bg-hover: rgba(255, 255, 255, 0.09);
-
-    color-scheme: dark;
-}
-
 
 /* RESET & BASE */
 *,
@@ -107,13 +14,13 @@
 }
 
 body {
-    font-family: var(--font-main);
-    background: var(--color-bg);
-    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    background: var(--bg-canvas);
+    color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-    transition: background 0.25s ease, color 0.25s ease;
+    transition: background-color var(--duration-normal) var(--ease-standard), color var(--duration-normal) var(--ease-standard);
 }
 
 ul {
@@ -121,7 +28,7 @@ ul {
 }
 
 button {
-    font-family: var(--font-main);
+    font-family: var(--font-sans);
     cursor: pointer;
     border: none;
     background: none;
@@ -129,56 +36,44 @@ button {
 
 input,
 select {
-    font-family: var(--font-main);
+    font-family: var(--font-sans);
 }
 
 /* Por padrão (desktop): esconde elementos exclusivos do mobile */
-.topbar-mobile {
-    display: none;
-}
-
-.bottom-nav {
-    display: none;
-}
-
-.fab-mobile {
-    display: none;
-}
-
+.topbar-mobile,
+.bottom-nav,
+.fab-mobile,
 .account-tabs--mobile {
     display: none;
 }
 
+/* LAYOUT — rail lateral fixo (SidebarNav do design system) + conteúdo */
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    width: var(--sidebar-width);
     height: 100vh;
-    background: var(--color-brand);
-    display: flex;
-    flex-direction: column;
-    padding: 28px 16px;
-    z-index: 50;
+    height: 100dvh;
+    z-index: var(--z-sticky);
 }
 
 .main-content {
     margin-left: var(--sidebar-width);
     min-height: 100vh;
-    padding: 32px 40px 40px;
+    padding: var(--space-8) var(--space-10) var(--space-10);
     width: calc(100% - var(--sidebar-width));
     overflow-x: hidden;
 }
 
 /* Desktop: garante que as abas do page-header fiquem visíveis */
-@media (min-width: 769px) {
+@media (min-width: 1024px) {
     #tabsDesktop {
         display: flex;
     }
 }
 
-/* Mobile: redefine o layout e ativa os elementos exclusivos do mobile */
-@media (max-width: 768px) {
+/* Mobile (corte de 1024px do design system): rail sai, top bar e tab bar entram */
+@media (max-width: 1023.98px) {
     .sidebar {
         display: none;
     }
@@ -186,21 +81,12 @@ select {
     .main-content {
         width: 100%;
         margin-left: 0;
-        padding: calc(var(--topbar-h-mobile) + env(safe-area-inset-top) + 16px) 16px calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
+        padding: calc(var(--topbar-h-mobile) + env(safe-area-inset-top) + var(--space-4)) var(--pad-page-mobile) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4));
     }
 
-    .topbar-mobile {
-        display: flex;
-    }
-
-    .bottom-nav {
-        display: flex;
-    }
-
-    .fab-mobile {
-        display: flex;
-    }
-
+    .topbar-mobile,
+    .bottom-nav,
+    .fab-mobile,
     .account-tabs--mobile {
         display: flex;
     }
@@ -210,281 +96,141 @@ select {
     }
 }
 
-
-/* SIDEBAR */
+/* SIDEBAR — cabeçalho com logo + alternância de tema, rodapé com usuário */
 .sidebar-logo {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--color-brand-text);
-    margin-bottom: 36px;
-    padding-left: 4px;
+    gap: var(--space-2);
 }
 
-.sidebar-logo-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sidebar-logo-brand i {
-    font-size: 18px;
-    color: var(--color-brand-soft);
-}
-
-.sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--color-brand-soft);
-    transition: background var(--transition), color var(--transition);
-    text-align: left;
-    width: 100%;
-}
-
-.nav-item i {
-    width: 18px;
-    font-size: 15px;
-    flex-shrink: 0;
-}
-
-.nav-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-    color: var(--color-brand-text);
-}
-
-.nav-item.active {
-    background: var(--color-brand-strong);
-    color: var(--color-brand-text);
-    font-weight: 500;
-}
-
-.sidebar-footer {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    border-radius: var(--radius-sm);
-    border: 0.5px solid rgba(255, 255, 255, 0.14);
-    margin-top: auto;
-}
-
-.user-avatar-lg {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--color-avatar-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--color-avatar-text);
-    flex-shrink: 0;
+.sidebar-logo-img {
+    height: var(--space-6);
+    display: block;
 }
 
 /* min-width: 0 deixa o bloco de texto encolher dentro do flex; sem isso,
    um e-mail longo empurra o botão de sair e estoura o card */
-.sidebar-user-info {
-    flex: 1;
-    min-width: 0;
+.sidebar .ef-user-chip {
+    padding-right: 0;
 }
 
-.sidebar-user-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-brand-text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* BOTÃO DE ÍCONE DESTRUTIVO (sair, excluir) — modificador do app sobre o
+   IconButton do design system: o hover sinaliza a ação negativa */
+.icon-btn--destructive:hover:not(:disabled) {
+    background: var(--tone-negative-bg);
+    color: var(--text-negative);
 }
 
-.sidebar-user-sub {
-    font-size: 11px;
-    color: var(--color-brand-soft);
-    margin-top: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Na sidebar verde, o avatar e os botões usam a paleta da marca */
-.sidebar .user-avatar-lg {
-    background: var(--color-brand-soft);
-    color: var(--color-brand);
-}
-
-.sidebar .logout-btn {
-    color: var(--color-brand-soft);
-}
-
-.sidebar .logout-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #F09595;
-}
-
-
-/* TOPBAR MOBILE */
+/* TOPBAR MOBILE (TopBar compacta do design system, fixa no topo) */
 .topbar-mobile {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     height: calc(var(--topbar-h-mobile) + env(safe-area-inset-top));
-    background: var(--color-surface);
-    border-bottom: 0.5px solid var(--color-border);
-    align-items: center;
+    min-height: 0;
+    flex-wrap: nowrap;
     justify-content: space-between;
-    padding: env(safe-area-inset-top) 16px 0;
-    z-index: 40;
+    padding: env(safe-area-inset-top) var(--pad-page-mobile) 0;
+    z-index: var(--z-sticky);
 }
+
 .account-selector {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: var(--color-surface-alt);
-    border: 0.5px solid var(--color-border);
+    gap: var(--space-2);
+    min-width: 0;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-pill);
-    padding: 7px 14px;
+    padding: var(--space-1-5) var(--space-3-5);
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-    transition: background var(--transition);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+    transition: var(--transition-control);
 }
 
 .account-selector:hover {
-    background: var(--color-hover-strong);
+    background: var(--action-ghost-hover);
+}
+
+.account-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .account-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--color-account-dot);
+    width: var(--dot-md);
+    height: var(--dot-md);
+    border-radius: var(--radius-circle);
+    background: var(--tone-brand-accent);
     flex-shrink: 0;
-    transition: background var(--transition);
+    transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
 .chevron-icon {
-    font-size: 11px;
-    color: var(--color-text-muted);
+    font-size: var(--text-2xs);
+    color: var(--text-muted);
 }
 
 .topbar-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-2);
 }
 
-.topbar-icon-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--color-surface-alt);
-    border: 0.5px solid var(--color-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    transition: background var(--transition);
-}
-
-.topbar-icon-btn:hover {
-    background: var(--color-hover-strong);
-}
-
-.user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--color-avatar-bg);
-    border: 0.5px solid var(--color-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--color-avatar-text);
-    flex-shrink: 0;
-}
-
-
-/* BOTTOM NAV  */
+/* BOTTOM NAV (TabBar do design system, fixa na base) */
 .bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
-    background: var(--color-surface);
-    border-top: 0.5px solid var(--color-border);
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 40;
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+    z-index: var(--z-sticky);
 }
 
-.bottom-nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: 11px;
-    color: var(--color-text-muted);
-    transition: color var(--transition);
+.bottom-nav .ef-tabbar__pill i {
+    font-size: var(--text-md);
 }
 
-.bottom-nav-item i {
-    font-size: 20px;
-}
-
-.bottom-nav-item.active {
-    color: var(--color-text-primary);
-    font-weight: 500;
-}
-
-
-/* FAB MOBILE (botão flutuante)  */
+/* FAB MOBILE (botão flutuante — peça do app, sem equivalente no design system) */
 .fab-mobile {
     position: fixed;
-    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
-    right: 20px;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: var(--color-action-bg);
-    color: var(--color-action-text);
-    font-size: 20px;
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4));
+    right: var(--space-5);
+    width: var(--control-h-lg);
+    height: var(--control-h-lg);
+    border-radius: var(--radius-circle);
+    background: var(--action-primary);
+    color: var(--text-inverse);
+    font-size: var(--text-lg);
     align-items: center;
     justify-content: center;
-    z-index: 41;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-    transition: opacity var(--transition), transform var(--transition);
+    z-index: var(--z-sticky);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-control), transform var(--duration-fast) var(--ease-standard);
+}
+
+.fab-mobile:hover {
+    background: var(--action-primary-hover);
 }
 
 .fab-mobile:active {
-    transform: scale(0.94);
+    transform: scale(var(--press-scale));
+}
+
+.fab-mobile:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus), var(--shadow-lg);
 }
 
 .fab-mobile.hidden {
     display: none !important;
 }
-
 
 /* PÁGINAS  */
 .page {
@@ -495,277 +241,173 @@ select {
     display: block;
 }
 
-
 /* PAGE HEADER */
 .page-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
-    gap: 16px;
+    margin-bottom: var(--space-6);
+    gap: var(--space-4);
     flex-wrap: wrap;
     width: 100%;
 }
 
 .page-title {
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--color-text-primary);
+    font: var(--type-h3);
+    letter-spacing: var(--tracking-heading);
+    color: var(--text-primary);
 }
 
 .page-subtitle {
-    font-size: 13px;
-    color: var(--color-text-muted);
-    margin-top: 2px;
+    font: var(--type-body-sm);
+    color: var(--text-muted);
+    margin-top: var(--space-0-5);
 }
 
 /* Seletor de mês no cabeçalho do dashboard (‹ Julho 2026 ›) */
 .period-selector {
     display: flex;
     align-items: center;
-    gap: 2px;
-    margin-top: 2px;
-    margin-left: -6px;
+    gap: var(--space-0-5);
+    margin-top: var(--space-0-5);
+    margin-left: calc(var(--space-1-5) * -1);
 }
 
 .period-selector .page-subtitle {
     margin-top: 0;
     min-width: 100px;
     text-align: center;
+    font-family: var(--font-mono);
 }
 
-.period-arrow {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    color: var(--color-text-muted);
-    transition: background var(--transition), color var(--transition);
+/* No mobile, o botão do cabeçalho mostra só o ícone (o texto fica no FAB) */
+@media (max-width: 1023.98px) {
+    .page-header .ef-btn .btn-label {
+        display: none;
+    }
 }
 
-.period-arrow:hover {
-    background: var(--color-surface-alt);
-    color: var(--color-text-primary);
-}
-
-
-/* ABAS DE CONTA */
+/* ABAS DE CONTA (Tag do design system) */
 .account-tabs {
     display: flex;
-    gap: 6px;
+    flex-wrap: wrap;
+    gap: var(--space-1-5);
 }
 
 .account-tabs--mobile {
-    margin-top: 16px;
+    margin-top: var(--space-4);
 }
 
 /* No desktop, as abas do card de saldo ficam escondidas (a regra .account-tabs
    acima venceria o display:none do topo do arquivo, por vir depois) */
-@media (min-width: 769px) {
+@media (min-width: 1024px) {
     .account-tabs--mobile {
         display: none;
     }
 }
 
-.acc-tab {
-    padding: 6px 16px;
-    border-radius: var(--radius-pill);
-    font-size: 12px;
-    font-weight: 500;
-    border: 0.5px solid var(--color-border);
-    background: var(--color-tab-bg);
-    color: var(--color-text-secondary);
-    transition: background var(--transition), color var(--transition);
-}
-
-.acc-tab:hover {
-    background: var(--color-tab-bg-hover);
-}
-
-.acc-tab.active {
-    background: var(--color-action-bg);
-    color: var(--color-action-text);
-    border-color: transparent;
-}
-
-/* Dentro do card de saldo (verde), a aba ativa vira uma pílula clara */
-.summary-card--balance .acc-tab.active {
-    background: var(--color-brand-text);
-    color: var(--color-brand);
-}
-
-.summary-card--balance .acc-tab {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: var(--color-brand-soft);
-}
-
-
-/* SUMMARY GRID */
+/* RESUMO: card de saldo (Card com aurora) + card de fluxo */
 .summary-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 28px;
+    gap: var(--space-4);
+    margin-bottom: var(--space-7);
 }
 
-@media (max-width: 768px) {
-    .summary-grid {
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-7);
+}
+
+@media (max-width: 1023.98px) {
+
+    .summary-grid,
+    .charts-grid {
         grid-template-columns: 1fr;
     }
 }
 
-.summary-card {
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    border: 0.5px solid var(--color-border-md);
-    box-shadow: var(--shadow-card);
-}
-
-/* Card de saldo: verde-cédula com arcos concêntricos ao fundo (padrão de nota) */
-.summary-card--balance {
-    background: var(--color-brand) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='220' viewBox='0 0 420 220'%3E%3Cg fill='none' stroke='%235DCAA5' stroke-opacity='0.14'%3E%3Ccircle cx='420' cy='0' r='40'/%3E%3Ccircle cx='420' cy='0' r='80'/%3E%3Ccircle cx='420' cy='0' r='120'/%3E%3Ccircle cx='420' cy='0' r='160'/%3E%3Ccircle cx='420' cy='0' r='200'/%3E%3Ccircle cx='420' cy='0' r='240'/%3E%3C/g%3E%3C/svg%3E") no-repeat right top;
-    color: var(--color-brand-text);
-    border-color: transparent;
-}
-
-.summary-card--flow {
-    background: var(--color-surface);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 16px;
-}
-
 .summary-label {
-    font-size: 11px;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--color-brand-soft);
-    margin-bottom: 10px;
+    margin-bottom: var(--space-2-5);
 }
 
 .balance-value {
-    font-size: 36px;
-    font-weight: 500;
+    font: var(--type-numeric-xl);
+    font-size: var(--text-2xl);
     letter-spacing: -0.03em;
-    font-family: var(--font-mono);
-    line-height: 1;
+    color: var(--text-primary);
 }
 
 .balance-cents {
-    font-size: 22px;
-    opacity: 0.6;
+    font-size: var(--text-lg);
+    color: var(--text-muted);
 }
 
 @media (min-width: 1100px) {
     .balance-value {
-        font-size: 42px;
+        font-size: var(--text-3xl);
     }
 }
 
-.flow-block {
-    width: 100%;
+.summary-card--flow {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-4);
 }
 
 .flow-top {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 12px;
-}
-
-.flow-track {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--color-surface-alt);
-    overflow: hidden;
-    margin-top: 8px;
-}
-
-.flow-bar {
-    height: 100%;
-    border-radius: 3px;
-    width: 0;
-    transition: width 0.45s ease;
-}
-
-.flow-bar--in {
-    background: var(--color-income-dot);
-}
-
-.flow-bar--out {
-    background: var(--color-expense-dot);
+    gap: var(--space-3);
 }
 
 .flow-label {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--color-text-muted);
-    letter-spacing: 0.07em;
+    gap: var(--space-1-5);
+    font: var(--type-mono-label);
+    letter-spacing: var(--tracking-mono-label);
     text-transform: uppercase;
+    color: var(--text-muted);
 }
 
 .flow-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
+    width: var(--dot-sm);
+    height: var(--dot-sm);
+    border-radius: var(--radius-circle);
     flex-shrink: 0;
 }
 
 .flow-dot--in {
-    background: var(--color-income-dot);
+    background: var(--tone-positive-accent);
 }
 
 .flow-dot--out {
-    background: var(--color-expense-dot);
+    background: var(--tone-negative-accent);
 }
 
 .flow-value {
-    font-size: 20px;
-    font-weight: 500;
-    font-family: var(--font-mono);
+    font: var(--type-numeric-lg);
+    font-size: var(--text-lg);
     letter-spacing: -0.01em;
 }
 
 .flow-value--in {
-    color: var(--color-income);
+    color: var(--text-positive);
 }
 
 .flow-value--out {
-    color: var(--color-expense);
+    color: var(--text-negative);
 }
 
-
-/* GRÁFICOS */
-.charts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 28px;
-}
-
-@media (max-width: 768px) {
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.chart-card {
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 0.5px solid var(--color-border-md);
-    box-shadow: var(--shadow-card);
-    padding: 20px 24px 24px;
-}
-
-.chart-card .section-title {
-    margin-bottom: 16px;
+/* GRÁFICOS (Chart.js dentro de Card) */
+.chart-card .ef-mono-label {
+    display: block;
+    margin-bottom: var(--space-4);
 }
 
 .chart-canvas-wrap {
@@ -779,8 +421,8 @@ select {
     display: none;
     align-items: center;
     justify-content: center;
-    color: var(--color-text-muted);
-    font-size: 13px;
+    color: var(--text-muted);
+    font: var(--type-body-sm);
     text-align: center;
 }
 
@@ -788,70 +430,24 @@ select {
     display: flex;
 }
 
-
-/* TRANSACTIONS PANEL */
-.transactions-panel {
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 0.5px solid var(--color-border-md);
-    overflow: hidden;
-    box-shadow: var(--shadow-card);
-}
-
+/* PAINEL DE MOVIMENTAÇÕES (Card sem padding + ListRow) */
 .transactions-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px 16px;
-    border-bottom: 0.5px solid var(--color-border);
-}
-
-.section-title {
-    font-size: 11px;
-    color: var(--color-text-muted);
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-}
-
-/* botão "Nova movimentação" no desktop */
-.fab-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 18px;
-    border-radius: var(--radius-pill);
-    background: var(--color-action-bg);
-    color: var(--color-action-text);
-    font-size: 13px;
-    font-weight: 500;
-    transition: opacity var(--transition), transform var(--transition);
-}
-
-.fab-button:hover {
-    opacity: 0.88;
-}
-
-.fab-button:active {
-    transform: scale(0.97);
+    gap: var(--space-4);
+    padding: var(--space-5) var(--pad-card) var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 /* esconde o botão dentro do panel no mobile (usa o FAB flutuante) */
-@media (max-width: 768px) {
-    .transactions-header .fab-button {
+@media (max-width: 1023.98px) {
+    .transactions-header .ef-btn {
         display: none;
     }
 
     .transactions-header {
-        padding: 16px 16px 12px;
-    }
-
-    .page-header .fab-button span {
-        display: none;
-    }
-
-    .page-header .fab-button {
-        padding: 9px 14px;
-        border-radius: var(--radius-md);
+        padding: var(--space-4) var(--pad-card-compact) var(--space-3);
     }
 }
 
@@ -859,66 +455,36 @@ select {
 .filter-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 14px 24px;
-    border-bottom: 0.5px solid var(--color-border);
+    gap: var(--space-2);
+    padding: var(--space-3-5) var(--pad-card);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
-.filter-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: var(--radius-pill);
-    border: 0.5px solid var(--color-border);
-    background: var(--color-surface-alt);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    flex-shrink: 0;
-    transition: background var(--transition), color var(--transition), border-color var(--transition);
-}
-
-.filter-chip:hover {
-    background: var(--color-hover-strong);
-}
-
-.filter-chip.active {
-    background: var(--color-action-bg);
-    color: var(--color-action-text);
-    border-color: transparent;
-}
-
-@media (max-width: 768px) {
+@media (max-width: 1023.98px) {
     .filter-row {
-        padding: 12px 16px;
+        padding: var(--space-3) var(--pad-card-compact);
         flex-wrap: nowrap;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
 }
 
-.transactions-list {
-    padding: 0 24px;
+/* As linhas (ListRow) alinham com o padding do card */
+.transactions-list .ef-list-row {
+    padding-left: var(--pad-card);
+    padding-right: var(--pad-card);
+    animation: fadeSlideIn var(--duration-normal) var(--ease-out) both;
 }
 
-@media (max-width: 768px) {
-    .transactions-list {
-        padding: 0 16px;
-    }
-}
-
-.tx-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: 0.5px solid var(--color-border);
-    animation: fadeSlideIn 0.22s ease both;
-}
-
-.tx-item:last-child {
+.transactions-list .ef-list-row:last-child {
     border-bottom: none;
+}
+
+@media (max-width: 1023.98px) {
+    .transactions-list .ef-list-row {
+        padding-left: var(--pad-card-compact);
+        padding-right: var(--pad-card-compact);
+    }
 }
 
 @keyframes fadeSlideIn {
@@ -933,98 +499,39 @@ select {
     }
 }
 
-.tx-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
+.ef-list-row__value.tx-amount--in {
+    color: var(--text-positive);
 }
 
-/* cores padrão de ícone — cartões usam cor customizada via JS */
-.tx-icon--income {
-    background: var(--color-income-bg);
-    color: var(--color-income);
-}
-
-.tx-icon--expense {
-    background: var(--color-expense-bg);
-    color: var(--color-expense);
-}
-
-.tx-icon--food {
-    background: var(--color-food-bg);
-    color: var(--color-food-text);
-}
-
-.tx-icon--home {
-    background: var(--color-home-bg);
-    color: var(--color-home-text);
-}
-
-.tx-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.tx-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.tx-meta {
-    font-size: 12px;
-    color: var(--color-text-muted);
-    margin-top: 2px;
-}
-
-.tx-amount {
-    font-size: 14px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-    flex-shrink: 0;
-}
-
-.tx-amount--in {
-    color: var(--color-income);
-}
-
-.tx-amount--out {
-    color: var(--color-expense);
+.ef-list-row__value.tx-amount--out {
+    color: var(--text-negative);
 }
 
 
-/* TELA DE CARTÕES */
+/* TELA DE CARTÕES E CONTAS */
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+    gap: var(--space-4);
 }
 
-/* Cada cartão cadastrado vira um "cartão físico": a cor escolhida é o fundo,
-   com chip decorativo e o gasto do mês em fonte mono */
+/* Cada cartão cadastrado vira um "cartão físico": a cor escolhida pelo usuário
+   (paleta --swatch-*) é o fundo, com chip decorativo e o gasto do mês em mono.*/
 .card-item {
     border-radius: var(--radius-lg);
-    padding: 20px;
+    padding: var(--space-5);
     aspect-ratio: 8 / 5;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    animation: fadeSlideIn 0.22s ease both;
+    animation: fadeSlideIn var(--duration-normal) var(--ease-out) both;
     box-shadow: var(--shadow-card);
-    transition: transform var(--transition), box-shadow var(--transition);
+    transition: var(--transition-surface);
 }
 
 .card-item:hover {
     transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(26, 25, 23, 0.06), 0 12px 24px rgba(26, 25, 23, 0.10);
+    box-shadow: var(--shadow-lg);
 }
 
 .card-item-top {
@@ -1036,8 +543,8 @@ select {
 .card-chip {
     width: 36px;
     height: 26px;
-    border-radius: 6px;
-    border: 1.5px solid currentColor;
+    border-radius: var(--radius-xs);
+    border: 1.5px solid currentcolor;
     opacity: 0.5;
     position: relative;
 }
@@ -1045,206 +552,94 @@ select {
 .card-chip::after {
     content: '';
     position: absolute;
-    inset: 6px 4px;
-    border-radius: 3px;
-    border: 1px solid currentColor;
+    inset: var(--space-1-5) var(--space-1);
+    border-radius: var(--radius-xs);
+    border: 1px solid currentcolor;
 }
 
 .card-item-name {
-    font-size: 16px;
-    font-weight: 500;
+    font: var(--type-body);
+    font-weight: var(--weight-semibold);
 }
 
 .card-item-total {
-    font-size: 10px;
-    letter-spacing: 0.08em;
+    font: var(--type-mono-label);
+    font-size: var(--text-micro);
+    letter-spacing: var(--tracking-label);
     text-transform: uppercase;
     opacity: 0.65;
-    margin-top: 6px;
+    margin-top: var(--space-1-5);
 }
 
 .card-item-amount {
-    font-size: 20px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-    margin-top: 2px;
-}
-
-.card-item .item-delete-btn {
-    color: currentColor;
-    opacity: 0.5;
-}
-
-.card-item .item-delete-btn:hover {
-    background: rgba(0, 0, 0, 0.08);
-    color: currentColor;
-    opacity: 1;
+    font: var(--type-numeric-lg);
+    font-size: var(--text-lg);
+    margin-top: var(--space-0-5);
 }
 
 .card-item-actions {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
-.card-item .item-edit-btn {
-    color: currentColor;
-    opacity: 0.5;
+/* Sobre a cor do cartão, os IconButtons herdam a cor do texto do cartão */
+.card-item .ef-icon-btn {
+    color: currentcolor;
+    opacity: 0.55;
 }
 
-.card-item .item-edit-btn:hover {
-    background: rgba(0, 0, 0, 0.08);
-    color: currentColor;
+.card-item .ef-icon-btn:hover {
+    background: color-mix(in oklab, currentcolor 12%, transparent);
+    color: currentcolor;
     opacity: 1;
 }
 
-.card-empty {
+.cards-grid>.ef-empty {
     grid-column: 1 / -1;
-    text-align: center;
-    padding: 48px 0;
-    color: var(--color-text-muted);
-    font-size: 14px;
 }
 
-.card-empty i {
-    display: block;
-    font-size: 32px;
-    margin-bottom: 12px;
-    opacity: 0.4;
-}
-
-
-/* MODAIS */
-.modal-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.40);
-    align-items: flex-end;
-    justify-content: center;
-    z-index: 200;
-}
-
-.modal-backdrop.open {
-    display: flex;
-}
-
-/* No desktop, modal aparece centralizado */
-@media (min-width: 769px) {
-    .modal-backdrop {
-        align-items: center;
-    }
-
-    .modal-sheet {
-        border-radius: var(--radius-xl) !important;
-        max-width: 440px;
-        animation: fadeUp 0.22s ease both !important;
-    }
-
-    .modal-handle {
-        display: none !important;
-    }
-}
-
-@keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.modal-sheet {
-    background: var(--color-surface);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    padding: 20px 24px 36px;
-    width: 100%;
-    max-width: 500px;
-    animation: slideUp 0.26s ease both;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(100%);
-    }
-
-    to {
-        transform: translateY(0);
-    }
-}
-
-.modal-handle {
-    width: 36px;
-    height: 4px;
-    background: var(--color-border-md);
-    border-radius: 2px;
-    margin: 0 auto 20px;
-}
-
-.modal-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-    margin-bottom: 20px;
-}
-
+/* MODAIS (Dialog do design system, placement "auto": sheet no mobile) */
 .type-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
+    gap: var(--space-2-5);
 }
 
+/* Entrada/Saída: par de alternância do app (colorido por tom de status) */
 .type-btn {
-    padding: 12px;
-    border-radius: var(--radius-sm);
-    border: 0.5px solid var(--color-border);
-    background: var(--color-surface-alt);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
+    padding: var(--space-3);
+    border-radius: var(--radius-control);
+    border: 1px solid var(--border-default);
+    background: var(--surface-sunken);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    transition: background var(--transition), color var(--transition), border-color var(--transition);
+    gap: var(--space-1-5);
+    transition: var(--transition-control);
+}
+
+.type-btn:hover {
+    background: var(--action-ghost-hover);
+}
+
+.type-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
 }
 
 .type-btn.active-in {
-    background: var(--color-income-bg);
-    border-color: var(--color-income-dot);
-    color: var(--color-income);
+    background: var(--tone-positive-bg);
+    border-color: var(--tone-positive-accent);
+    color: var(--text-positive);
 }
 
 .type-btn.active-out {
-    background: var(--color-expense-bg);
-    border-color: var(--color-expense-dot);
-    color: var(--color-expense);
-}
-
-.modal-input {
-    width: 100%;
-    padding: 11px 14px;
-    border: 0.5px solid var(--color-border-md);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-alt);
-    font-size: 14px;
-    color: var(--color-text-primary);
-    margin-bottom: 12px;
-    transition: border-color var(--transition);
-    appearance: none;
-}
-
-.modal-input:focus {
-    outline: none;
-    border-color: var(--color-text-secondary);
-}
-
-.modal-input::placeholder {
-    color: var(--color-text-muted);
+    background: var(--tone-negative-bg);
+    border-color: var(--tone-negative-accent);
+    color: var(--text-negative);
 }
 
 .card-row {
@@ -1255,58 +650,33 @@ select {
     display: block;
 }
 
-.modal-confirm {
-    width: 100%;
-    height: 50px;
-    border-radius: var(--radius-sm);
-    background: var(--color-action-bg);
-    color: var(--color-action-text);
-    font-size: 14px;
-    font-weight: 500;
-    margin-top: 4px;
-    transition: opacity var(--transition), transform var(--transition);
-}
-
-.modal-confirm:hover {
-    opacity: 0.88;
-}
-
-.modal-confirm:active {
-    transform: scale(0.98);
-}
-
 .modal-warning {
-    font-size: 13px;
-    color: var(--color-expense);
+    font: var(--type-body-sm);
+    color: var(--text-negative);
     text-align: center;
-    line-height: 1.5;
-    margin-bottom: 16px;
 }
 
-
-/* COLOR PICKER */
+/* COLOR PICKER (paleta do usuário para cartões e contas) */
 .color-picker-label {
-    font-size: 12px;
-    color: var(--color-text-muted);
-    letter-spacing: 0.06em;
+    font: var(--type-mono-label);
+    letter-spacing: var(--tracking-mono-label);
     text-transform: uppercase;
-    margin-bottom: 12px;
+    color: var(--text-muted);
 }
 
 .color-picker {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: var(--space-2-5);
 }
 
 .color-swatch {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+    width: var(--icon-btn-sm);
+    height: var(--icon-btn-sm);
+    border-radius: var(--radius-circle);
     cursor: pointer;
     border: 2px solid transparent;
-    transition: transform var(--transition), border-color var(--transition);
+    transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
     flex-shrink: 0;
 }
 
@@ -1315,20 +685,21 @@ select {
 }
 
 .color-swatch.selected {
-    border-color: var(--color-text-primary);
+    border-color: var(--text-primary);
     transform: scale(1.1);
 }
-
 
 /* LOADING OVERLAY */
 .loading-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: var(--surface-overlay);
+    backdrop-filter: var(--blur-scrim);
+    -webkit-backdrop-filter: var(--blur-scrim);
     align-items: center;
     justify-content: center;
-    z-index: 500;
+    z-index: var(--z-toast);
 }
 
 .loading-overlay.active {
@@ -1336,260 +707,134 @@ select {
 }
 
 .spinner {
-    width: 36px;
-    height: 36px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #FFFFFF;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
+    width: var(--space-10);
+    height: var(--space-10);
+    border: 3px solid var(--border-inverse);
+    border-top-color: var(--text-inverse);
+    border-radius: var(--radius-circle);
+    animation: ef-spin 700ms linear infinite;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-
-/* TELAS DE AUTENTICAÇÃO (login/cadastro) */
+/* TELAS DE AUTENTICAÇÃO (login/cadastro/redefinir senha) */
 .auth-page {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
-    background: var(--color-bg);
+    padding: calc(var(--space-6) + env(safe-area-inset-top)) calc(var(--space-6) + env(safe-area-inset-right)) calc(var(--space-6) + env(safe-area-inset-bottom)) calc(var(--space-6) + env(safe-area-inset-left));
+    background: var(--bg-canvas);
 }
 
 .auth-card {
-    background: var(--color-surface);
-    border-radius: var(--radius-xl);
-    border: 0.5px solid var(--color-border-md);
-    padding: 32px 28px;
     width: 100%;
-    max-width: 360px;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
 }
 
 .auth-logo {
     display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 10px;
-    font-size: 18px;
-    font-weight: 500;
-    margin-bottom: 24px;
-    color: var(--color-text-primary);
+    margin-bottom: var(--space-3);
 }
 
-.auth-logo i {
-    color: var(--color-income);
+.auth-logo img {
+    height: var(--space-10);
+    display: block;
 }
 
 .auth-link {
-    font-size: 13px;
-    color: var(--color-text-secondary);
+    font: var(--type-body-sm);
+    color: var(--text-secondary);
     text-align: center;
-    margin-top: 16px;
+    margin-top: var(--space-1);
 }
 
 .auth-link a {
-    color: var(--color-text-primary);
-    font-weight: 500;
+    color: var(--text-link);
+    font-weight: var(--weight-semibold);
     text-decoration: none;
 }
 
 .forgot-password-link {
     display: block;
     text-align: right;
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    margin: -6px 0 16px;
+    font: var(--type-caption);
+    color: var(--text-secondary);
     text-decoration: none;
 }
 
 .forgot-password-link:hover {
-    color: var(--color-text-primary);
+    color: var(--text-link);
 }
 
 .auth-help-text {
-    font-size: 13px;
-    color: var(--color-text-secondary);
+    font: var(--type-body-sm);
+    color: var(--text-secondary);
     text-align: center;
-    line-height: 1.5;
-    margin-bottom: 20px;
+}
+
+#formEsqueciSenha,
+#formRedefinirSenha {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
 }
 
 .auth-feedback {
     display: none;
     text-align: center;
-    padding: 8px 0 4px;
+    padding: var(--space-2) 0 var(--space-1);
 }
 
 .auth-feedback i {
-    font-size: 32px;
-    margin-bottom: 12px;
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-3);
 }
 
 .auth-feedback--success i {
-    color: var(--color-income);
+    color: var(--text-positive);
 }
 
 .auth-feedback--error i {
-    color: var(--color-expense);
+    color: var(--text-negative);
 }
 
 .auth-feedback p {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
+    font: var(--type-body-sm);
+    color: var(--text-secondary);
 }
 
 .auth-feedback a {
     display: inline-block;
-    margin-top: 12px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-text-primary);
+    margin-top: var(--space-3);
+    font: var(--type-body-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--text-link);
 }
 
-
-/* SELETOR DE CATEGORIA (chips) */
+/* SELETOR DE CATEGORIA (Tags do design system) */
 .categoria-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: var(--space-2);
 }
 
-.categoria-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: var(--radius-pill);
-    border: 0.5px solid var(--color-border);
-    background: var(--color-surface-alt);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    transition: background var(--transition), color var(--transition), border-color var(--transition);
-}
-
-.categoria-chip.active {
-    background: var(--color-action-bg);
-    color: var(--color-action-text);
-    border-color: transparent;
-}
-
-
-/* BOTÃO DE LOGOUT */
-.logout-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-muted);
-    font-size: 14px;
-    transition: background var(--transition), color var(--transition);
-}
-
-.logout-btn:hover {
-    background: var(--color-surface-alt);
-    color: var(--color-expense);
-}
-
-/* Na sidebar (desktop): ícone discreto ao lado do logo */
-.sidebar .theme-toggle {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-brand-soft);
-    font-size: 14px;
-    transition: background var(--transition), color var(--transition);
-}
-
-.sidebar .theme-toggle:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-brand-text);
-}
-
-/* No login/cadastro: botão flutuante no canto superior direito */
+/* ALTERNÂNCIA DE TEMA nas telas de autenticação: IconButton fixo no canto */
 .theme-toggle--auth {
     position: fixed;
-    top: 16px;
-    right: 16px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--color-surface);
-    border: 0.5px solid var(--color-border-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
-    font-size: 15px;
-    z-index: 60;
-    transition: background var(--transition), color var(--transition);
+    top: calc(var(--space-4) + env(safe-area-inset-top));
+    right: var(--space-4);
+    z-index: var(--z-sticky);
 }
 
-.theme-toggle--auth:hover {
-    background: var(--color-surface-alt);
-    color: var(--color-text-primary);
-}
-
-
-/* BOTÃO DE EXCLUIR (cartões e transações) */
-.item-delete-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-muted);
-    font-size: 12px;
-    flex-shrink: 0;
-    transition: background var(--transition), color var(--transition);
-}
-
-.item-delete-btn:hover {
-    background: var(--color-expense-bg);
-    color: var(--color-expense);
-}
-
-.item-edit-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-muted);
-    font-size: 12px;
-    flex-shrink: 0;
-    transition: background var(--transition), color var(--transition);
-}
-
-.item-edit-btn:hover {
-    background: var(--color-hover-strong);
-    color: var(--color-text-primary);
-}
-
-
-/* ICONE "OUTRO" (categoria sem classe específica) E LISTA VAZIA */
-.tx-icon--outro {
-    background: var(--color-surface-alt);
-    color: var(--color-text-muted);
-}
-
-.tx-empty {
-    text-align: center;
-    padding: 32px 0;
-    color: var(--color-text-muted);
-    font-size: 13px;
+/* LOGOTIPO EM SUPERFÍCIE ESCURA — o lockup não tem versão monocromática aprovada:
+   no tema escuro ele vai dentro de uma cápsula branca (DESIGN.md → Marca) */
+[data-theme="dark"] .sidebar-logo-img,
+[data-theme="dark"] .auth-logo img {
+    background: var(--neutral-0);
+    border-radius: var(--radius-pill);
+    padding: var(--space-1) var(--space-2-5);
+    box-sizing: content-box;
 }

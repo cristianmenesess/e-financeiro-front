@@ -1,0 +1,18 @@
+{
+  // Só typecheck (noEmit): o projeto não tem build. Cobre o design system,
+  // que é escrito em JS com tipos JSDoc (// @ts-check em cada arquivo).
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true
+  },
+  "include": ["design-system/**/*.js"]
+}

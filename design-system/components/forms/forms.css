@@ -1,0 +1,115 @@
+/* ── Formulários: Field · Input · SearchField · Select · Switch · Checkbox ──
+   Porte de components/forms/*.jsx do dump. Estados:
+   :hover/.is-hover · :focus-within/.is-focus · [aria-invalid="true"]/.is-invalid (erro) ·
+   :disabled/.is-disabled · :checked/[aria-checked] (selecionado) · :indeterminate. */
+
+/* Field */
+.ef-field{display:flex;flex-direction:column;gap:var(--space-1-5)}
+.ef-field__label{font:var(--type-mono-label);letter-spacing:var(--tracking-mono-label);text-transform:uppercase;color:var(--text-muted)}
+.ef-field__required{color:var(--text-negative);margin-left:var(--space-1)}
+.ef-field__message{font:var(--type-caption);color:var(--text-muted)}
+.ef-field__message--error{color:var(--text-negative)}
+
+/* Input — .ef-input é a caixa; pode ser o próprio <input> ou um wrapper com
+   .ef-input__control dentro (quando há prefixo, sufixo ou ícone). */
+.ef-input{
+  display:flex;align-items:center;gap:var(--space-2);width:100%;
+  height:var(--field-h-md);padding:0 var(--space-3-5);
+  background:var(--surface-card);color:var(--text-primary);
+  border:1px solid var(--border-default);border-radius:var(--radius-control);
+  box-shadow:var(--shadow-xs);transition:var(--transition-control);
+  font-family:var(--font-sans);font-size:var(--text-sm);font-weight:var(--weight-medium);
+}
+input.ef-input,textarea.ef-input{appearance:none;outline:none}
+.ef-input--sm{height:var(--field-h-sm)}
+.ef-input--lg{height:var(--field-h-lg)}
+.ef-input--mono,.ef-input--mono .ef-input__control{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.ef-input:hover:not(:focus,:focus-within,.is-disabled,:disabled),.ef-input.is-hover{border-color:var(--border-strong)}
+.ef-input:focus,.ef-input:focus-within,.ef-input.is-focus{border-color:var(--border-focus);box-shadow:var(--shadow-focus);outline:none}
+.ef-input[aria-invalid="true"],.ef-input.is-invalid{border-color:var(--border-invalid)}
+.ef-input:disabled,.ef-input.is-disabled{background:var(--surface-sunken);opacity:.6;cursor:not-allowed}
+.ef-input__control{
+  flex:1;min-width:0;height:100%;border:none;outline:none;background:transparent;padding:0;
+  font-family:var(--font-sans);font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--text-primary);
+}
+.ef-input::placeholder,.ef-input__control::placeholder{color:var(--text-faint)}
+.ef-input__control:disabled{cursor:not-allowed}
+.ef-input__affix{font:var(--type-numeric);color:var(--text-muted);flex:0 0 auto}
+.ef-input__icon{display:flex;color:var(--text-faint);flex:0 0 auto}
+
+/* SearchField */
+.ef-search{
+  display:flex;align-items:center;gap:var(--space-2-5);height:var(--space-10);padding:0 var(--space-3) 0 var(--space-3-5);
+  background:var(--surface-sunken);border:1px solid var(--border-subtle);border-radius:var(--radius-pill);
+  transition:var(--transition-control);
+}
+.ef-search:hover:not(:focus-within),.ef-search.is-hover{border-color:var(--border-default)}
+.ef-search:focus-within,.ef-search.is-focus{border-color:var(--border-focus);box-shadow:var(--shadow-focus)}
+.ef-search__icon{display:flex;color:var(--text-faint);flex:0 0 auto}
+.ef-search__control{flex:1;min-width:0;border:none;outline:none;background:transparent;padding:0;font-size:var(--text-sm);color:var(--text-primary)}
+.ef-search__control::placeholder{color:var(--text-faint)}
+.ef-search__kbd{
+  font:var(--type-mono-label);color:var(--text-faint);background:var(--surface-card);
+  border:1px solid var(--border-subtle);border-radius:var(--radius-xs);padding:var(--space-0-5) var(--space-1-5);
+}
+.ef-search:focus-within .ef-search__kbd,.ef-search.is-focus .ef-search__kbd{display:none}
+
+/* Select — wrapper com o <select> nativo e o chevron desenhado pelo componente */
+.ef-select{position:relative;display:inline-flex;width:100%}
+.ef-select__control{
+  appearance:none;width:100%;height:var(--field-h-md);padding:0 var(--select-chevron-space) 0 var(--space-3-5);
+  background:var(--surface-card);color:var(--text-primary);
+  border:1px solid var(--border-default);border-radius:var(--radius-control);box-shadow:var(--shadow-xs);
+  font-family:var(--font-sans);font-size:var(--text-sm);font-weight:var(--weight-medium);
+  cursor:pointer;outline:none;transition:var(--transition-control);
+}
+.ef-select--sm .ef-select__control{height:var(--field-h-sm)}
+.ef-select--lg .ef-select__control{height:var(--field-h-lg)}
+.ef-select__control:hover:not(:focus,:disabled),.ef-select.is-hover .ef-select__control{border-color:var(--border-strong)}
+.ef-select__control:focus,.ef-select.is-focus .ef-select__control{border-color:var(--border-focus);box-shadow:var(--shadow-focus)}
+.ef-select__control[aria-invalid="true"],.ef-select.is-invalid .ef-select__control{border-color:var(--border-invalid)}
+.ef-select__control:disabled{background:var(--surface-sunken);cursor:not-allowed;opacity:.6}
+.ef-select__chevron{position:absolute;right:var(--space-3);top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-muted);display:flex}
+
+/* Switch */
+.ef-switch{display:inline-flex;align-items:center;gap:var(--space-3);cursor:pointer}
+.ef-switch--described{align-items:flex-start}
+.ef-switch__track{
+  width:var(--switch-w);height:var(--switch-h);flex:0 0 auto;padding:var(--switch-inset);border:none;display:flex;
+  border-radius:var(--radius-pill);background:var(--control-switch-off);cursor:pointer;
+  transition:background-color var(--duration-normal) var(--ease-out);
+}
+.ef-switch--described .ef-switch__track{margin-top:var(--space-0-5)}
+.ef-switch__thumb{
+  width:var(--switch-thumb);height:var(--switch-thumb);border-radius:var(--radius-circle);
+  background:var(--control-thumb);box-shadow:var(--shadow-xs);
+  transition:transform var(--duration-normal) var(--ease-out);
+}
+.ef-switch__track[aria-checked="true"]{background:var(--action-primary)}
+.ef-switch__track[aria-checked="true"] .ef-switch__thumb{transform:translateX(var(--switch-travel))}
+.ef-switch__track:hover:not(:disabled),.ef-switch.is-hover .ef-switch__track{filter:brightness(.96)}
+.ef-switch__track:focus-visible,.ef-switch.is-focus .ef-switch__track{outline:none;box-shadow:var(--shadow-focus)}
+.ef-switch.is-disabled,.ef-switch:has(.ef-switch__track:disabled){opacity:.5;cursor:not-allowed}
+.ef-switch__track:disabled{cursor:not-allowed}
+.ef-switch__text{display:flex;flex-direction:column;gap:var(--space-0-5)}
+.ef-switch__label{font:var(--type-body-sm);font-weight:var(--weight-semibold)}
+.ef-switch__description{font:var(--type-caption);font-weight:var(--weight-regular);color:var(--text-muted)}
+
+/* Checkbox — <input type="checkbox"> nativo, visualmente escondido, + caixa desenhada */
+.ef-checkbox{display:inline-flex;align-items:center;gap:var(--space-2-5);cursor:pointer;position:relative}
+.ef-checkbox__input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.ef-checkbox__box{
+  width:var(--checkbox-size);height:var(--checkbox-size);flex:0 0 auto;border-radius:var(--radius-xs);
+  border:var(--checkbox-border) solid var(--border-strong);background:var(--surface-card);
+  display:flex;align-items:center;justify-content:center;color:var(--text-inverse);
+  transition:var(--transition-control);
+}
+.ef-checkbox__check,.ef-checkbox__dash{display:none}
+.ef-checkbox__dash{width:9px;height:2px;background:currentcolor;border-radius:var(--radius-hairline)}
+.ef-checkbox__input:checked+.ef-checkbox__box,.ef-checkbox__input:indeterminate+.ef-checkbox__box{background:var(--action-primary);border-color:var(--action-primary)}
+.ef-checkbox__input:checked:not(:indeterminate)+.ef-checkbox__box .ef-checkbox__check{display:block}
+.ef-checkbox__input:indeterminate+.ef-checkbox__box .ef-checkbox__dash{display:block}
+.ef-checkbox:hover .ef-checkbox__input:not(:disabled,:checked,:indeterminate)+.ef-checkbox__box,.ef-checkbox.is-hover .ef-checkbox__box{border-color:var(--border-focus)}
+.ef-checkbox__input:focus-visible+.ef-checkbox__box,.ef-checkbox.is-focus .ef-checkbox__box{box-shadow:var(--shadow-focus)}
+.ef-checkbox:has(.ef-checkbox__input:disabled){opacity:.5;cursor:not-allowed}
+.ef-checkbox__label{font:var(--type-body-sm)}

@@ -1,0 +1,90 @@
+/* ── Ações: Button · IconButton · SegmentedControl ───────────────────
+   Porte de components/actions/*.jsx do dump. Estados:
+   :hover/.is-hover · :active/.is-active · :focus-visible/.is-focus ·
+   :disabled · [aria-busy="true"] (loading) · [aria-pressed]/[aria-selected] (selecionado). */
+
+@keyframes ef-spin{to{transform:rotate(360deg)}}
+
+/* Button */
+.ef-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);
+  height:var(--control-h-md);padding:0 var(--control-pad-x-md);
+  font:var(--type-body-sm);font-size:var(--text-sm);font-weight:var(--weight-semibold);letter-spacing:-0.005em;
+  border:1px solid transparent;border-radius:var(--radius-control);
+  background:var(--action-primary);color:var(--text-inverse);
+  cursor:pointer;white-space:nowrap;text-decoration:none;
+  transition:var(--transition-control),transform var(--duration-fast) var(--ease-standard);
+}
+.ef-btn--sm{height:var(--control-h-sm);padding:0 var(--control-pad-x-sm);gap:var(--space-1-5);font-size:var(--text-xs);border-radius:var(--radius-sm)}
+.ef-btn--lg{height:var(--control-h-lg);padding:0 var(--control-pad-x-lg);gap:var(--space-2-5);font-size:var(--text-base)}
+.ef-btn--block{width:100%}
+
+.ef-btn--primary{background:var(--action-primary);color:var(--text-inverse)}
+.ef-btn--dark{background:var(--action-dark);color:var(--text-inverse)}
+.ef-btn--success{background:var(--action-success);color:var(--control-success-text)}
+.ef-btn--secondary{background:var(--surface-card);color:var(--text-primary);border-color:var(--border-default);box-shadow:var(--shadow-xs)}
+.ef-btn--ghost{background:transparent;color:var(--text-secondary)}
+.ef-btn--danger{background:var(--action-danger);color:var(--text-inverse)}
+
+.ef-btn--primary:hover:not(:disabled,[aria-busy="true"]),.ef-btn--primary.is-hover{background:var(--action-primary-hover)}
+.ef-btn--dark:hover:not(:disabled,[aria-busy="true"]),.ef-btn--dark.is-hover{background:var(--action-dark-hover)}
+.ef-btn--success:hover:not(:disabled,[aria-busy="true"]),.ef-btn--success.is-hover{background:var(--control-success-hover)}
+.ef-btn--secondary:hover:not(:disabled,[aria-busy="true"]),.ef-btn--secondary.is-hover{background:var(--control-hover)}
+.ef-btn--ghost:hover:not(:disabled,[aria-busy="true"]),.ef-btn--ghost.is-hover{background:var(--action-ghost-hover)}
+.ef-btn--danger:hover:not(:disabled,[aria-busy="true"]),.ef-btn--danger.is-hover{background:var(--control-danger-hover)}
+
+/* Press: scale(.985) e um degrau a mais de escuro (DESIGN.md → Estados) */
+.ef-btn:active:not(:disabled,[aria-busy="true"]),.ef-btn.is-active{transform:scale(var(--press-scale))}
+.ef-btn--primary:active:not(:disabled,[aria-busy="true"]),.ef-btn--primary.is-active{background:var(--action-primary-active)}
+.ef-btn:focus-visible,.ef-btn.is-focus{outline:none;box-shadow:var(--shadow-focus)}
+.ef-btn:disabled,.ef-btn[aria-busy="true"]{opacity:.45;cursor:not-allowed}
+
+.ef-btn__spinner{
+  width:var(--space-3-5);height:var(--space-3-5);border-radius:var(--radius-circle);
+  border:2px solid currentcolor;border-top-color:transparent;display:inline-block;
+  animation:ef-spin 700ms linear infinite;
+}
+.ef-btn__icon{display:inline-flex;flex:0 0 auto}
+
+/* IconButton */
+.ef-icon-btn{
+  width:var(--icon-btn-md);height:var(--icon-btn-md);flex:0 0 auto;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid transparent;border-radius:var(--radius-icon-tile);
+  background:transparent;color:var(--text-secondary);
+  cursor:pointer;transition:var(--transition-control);
+}
+.ef-icon-btn--sm{width:var(--icon-btn-sm);height:var(--icon-btn-sm);border-radius:var(--radius-sm)}
+.ef-icon-btn--lg{width:var(--icon-btn-lg);height:var(--icon-btn-lg);border-radius:var(--radius-control)}
+.ef-icon-btn--surface{background:var(--surface-card);border-color:var(--border-default)}
+.ef-icon-btn--brand{background:var(--surface-brand-soft);color:var(--text-brand)}
+.ef-icon-btn--inverse{background:var(--control-inverse-bg);color:var(--text-inverse)}
+
+.ef-icon-btn--neutral:hover:not(:disabled),.ef-icon-btn--neutral.is-hover{background:var(--action-ghost-hover)}
+.ef-icon-btn--surface:hover:not(:disabled),.ef-icon-btn--surface.is-hover{background:var(--control-hover)}
+.ef-icon-btn--brand:hover:not(:disabled),.ef-icon-btn--brand.is-hover{background:var(--control-brand-hover)}
+.ef-icon-btn--inverse:hover:not(:disabled),.ef-icon-btn--inverse.is-hover{background:var(--control-inverse-hover)}
+.ef-icon-btn:active:not(:disabled),.ef-icon-btn.is-active{transform:scale(var(--press-scale))}
+.ef-icon-btn:focus-visible,.ef-icon-btn.is-focus{outline:none;box-shadow:var(--shadow-focus)}
+/* Selecionado: tile teal suave persistente */
+.ef-icon-btn[aria-pressed="true"]{background:var(--surface-brand-soft);color:var(--text-brand)}
+.ef-icon-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* SegmentedControl */
+.ef-segmented{
+  display:inline-flex;align-items:center;gap:var(--space-0-5);padding:var(--segmented-inset);
+  background:var(--surface-sunken);border:1px solid var(--border-subtle);border-radius:var(--radius-pill);
+}
+.ef-segmented--block{display:flex;width:100%}
+.ef-segmented__item{
+  flex:0 0 auto;height:var(--segmented-h-md);padding:0 var(--space-3-5);border:none;cursor:pointer;
+  border-radius:var(--radius-pill);background:transparent;color:var(--text-muted);
+  font-family:var(--font-mono);font-size:var(--text-xs);font-weight:var(--weight-medium);letter-spacing:var(--tracking-wide);
+  transition:var(--transition-control);
+}
+.ef-segmented--sm .ef-segmented__item{height:var(--segmented-h-sm)}
+.ef-segmented--block .ef-segmented__item{flex:1}
+.ef-segmented__item:hover:not([aria-selected="true"],:disabled),.ef-segmented__item.is-hover{color:var(--text-secondary)}
+.ef-segmented__item:focus-visible,.ef-segmented__item.is-focus{outline:none;box-shadow:var(--shadow-focus)}
+.ef-segmented__item[aria-selected="true"]{background:var(--surface-card);color:var(--text-primary);font-weight:var(--weight-semibold);box-shadow:var(--shadow-xs)}
+.ef-segmented__item:disabled{opacity:.45;cursor:not-allowed}
