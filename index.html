@@ -63,15 +63,23 @@
                     <span class="ef-nav-item__label">Recorrências</span>
                 </button>
             </li>
+            <li>
+                <button class="ef-nav-item nav-item" data-page="categorias">
+                    <span class="ef-nav-item__icon"><i data-lucide="tags" class="ef-icon ef-icon--md"></i></span>
+                    <span class="ef-nav-item__label">Categorias</span>
+                </button>
+            </li>
         </ul>
 
         <div class="ef-sidebar__footer">
-            <div class="ef-user-chip">
-                <span class="ef-avatar" id="sidebarAvatar">--</span>
-                <span class="ef-user-chip__text">
-                    <span class="ef-user-chip__name" id="sidebarUserName">Carregando...</span>
-                    <span class="ef-user-chip__meta" id="sidebarUserEmail"></span>
-                </span>
+            <div class="sidebar-user">
+                <button type="button" class="ef-user-chip" id="btnOpenProfile" title="Meu perfil" aria-label="Abrir meu perfil">
+                    <span class="ef-avatar" id="sidebarAvatar">--</span>
+                    <span class="ef-user-chip__text">
+                        <span class="ef-user-chip__name" id="sidebarUserName">Carregando...</span>
+                        <span class="ef-user-chip__meta" id="sidebarUserEmail"></span>
+                    </span>
+                </button>
                 <button class="ef-icon-btn ef-icon-btn--sm icon-btn--destructive" id="btnLogoutDesktop" title="Sair" aria-label="Sair">
                     <i data-lucide="log-out" class="ef-icon ef-icon--sm"></i>
                 </button>
@@ -97,7 +105,9 @@
                 <button class="ef-icon-btn ef-icon-btn--surface ef-icon-btn--sm topbar-icon-btn" data-page="cards" title="Cartões" aria-label="Cartões">
                     <i data-lucide="credit-card" class="ef-icon ef-icon--sm"></i>
                 </button>
-                <span class="ef-avatar ef-avatar--sm" id="mobileAvatar">--</span>
+                <button type="button" class="avatar-btn" id="btnOpenProfileMobile" title="Meu perfil" aria-label="Abrir meu perfil">
+                    <span class="ef-avatar ef-avatar--sm" id="mobileAvatar">--</span>
+                </button>
                 <button class="ef-icon-btn ef-icon-btn--sm icon-btn--destructive" id="btnLogoutMobile" title="Sair" aria-label="Sair">
                     <i data-lucide="log-out" class="ef-icon ef-icon--sm"></i>
                 </button>
@@ -260,6 +270,31 @@
             </section>
         </div>
 
+        <!-- CATEGORIAS -->
+        <div class="page" id="pageCategorias">
+
+            <div class="page-header">
+                <div class="page-header-text">
+                    <h1 class="page-title">Categorias</h1>
+                    <p class="page-subtitle">Organize suas entradas e saídas</p>
+                </div>
+                <button class="ef-btn ef-btn--primary ef-btn--sm" id="btnNewCategoria">
+                    <i data-lucide="plus" class="ef-icon ef-icon--sm"></i>
+                    <span class="btn-label">Nova categoria</span>
+                </button>
+            </div>
+
+            <section class="ef-card ef-card--pad-none categorias-grupo" aria-labelledby="tituloCategoriasEntrada">
+                <h2 class="categorias-grupo__titulo" id="tituloCategoriasEntrada">Entradas</h2>
+                <ul class="transactions-list" id="categoriasEntrada"></ul>
+            </section>
+
+            <section class="ef-card ef-card--pad-none categorias-grupo" aria-labelledby="tituloCategoriasSaida">
+                <h2 class="categorias-grupo__titulo" id="tituloCategoriasSaida">Saídas</h2>
+                <ul class="transactions-list" id="categoriasSaida"></ul>
+            </section>
+        </div>
+
         <button class="fab-mobile" id="btnFabMobile" aria-label="Nova movimentação">
             <i data-lucide="plus" class="ef-icon ef-icon--lg"></i>
         </button>
@@ -282,6 +317,10 @@
         <button class="ef-tabbar__item bottom-nav-item" data-page="recorrencias">
             <span class="ef-tabbar__pill"><i data-lucide="repeat" class="ef-icon ef-icon--lg"></i></span>
             <span class="ef-tabbar__label">Recorrências</span>
+        </button>
+        <button class="ef-tabbar__item bottom-nav-item" data-page="categorias">
+            <span class="ef-tabbar__pill"><i data-lucide="tags" class="ef-icon ef-icon--lg"></i></span>
+            <span class="ef-tabbar__label">Categorias</span>
         </button>
     </nav>
 
@@ -330,23 +369,7 @@
 
             <div class="ef-field" id="campoCategoria">
                 <span class="ef-field__label" id="rotuloCategoria">Categoria</span>
-                <div class="categoria-row" id="categoriaRow" role="group" aria-labelledby="rotuloCategoria">
-                    <button class="ef-tag categoria-chip" data-categoria="RENDA" type="button" aria-pressed="false">
-                        <i data-lucide="banknote" class="ef-icon ef-icon--xs"></i> Renda
-                    </button>
-                    <button class="ef-tag categoria-chip" data-categoria="DESPESA" type="button" aria-pressed="false">
-                        <i data-lucide="receipt" class="ef-icon ef-icon--xs"></i> Despesa
-                    </button>
-                    <button class="ef-tag categoria-chip" data-categoria="ALIMENTACAO" type="button" aria-pressed="false">
-                        <i data-lucide="shopping-bag" class="ef-icon ef-icon--xs"></i> Alimentação
-                    </button>
-                    <button class="ef-tag categoria-chip" data-categoria="MORADIA" type="button" aria-pressed="false">
-                        <i data-lucide="house" class="ef-icon ef-icon--xs"></i> Moradia
-                    </button>
-                    <button class="ef-tag categoria-chip" data-categoria="OUTRO" type="button" aria-pressed="false">
-                        <i data-lucide="ellipsis" class="ef-icon ef-icon--xs"></i> Outro
-                    </button>
-                </div>
+                <div class="categoria-row" id="categoriaRow" role="group" aria-labelledby="rotuloCategoria"></div>
             </div>
 
             <div class="card-row" id="cardRow">
@@ -437,6 +460,143 @@
         </div>
     </div>
 
+    <!-- MODAL: NOVA/EDITAR CATEGORIA -->
+    <div class="ef-dialog ef-dialog--auto" id="modalCategoria" role="dialog" aria-modal="true" aria-labelledby="modalCategoriaTitle" hidden>
+        <div class="ef-dialog__panel">
+            <span class="ef-dialog__handle" aria-hidden="true"></span>
+            <div class="ef-dialog__head">
+                <div class="ef-dialog__text">
+                    <h2 class="ef-dialog__title" id="modalCategoriaTitle">Nova categoria</h2>
+                </div>
+                <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
+            </div>
+
+            <div class="categoria-previa" aria-hidden="true">
+                <span class="ef-icon-tile" id="previaCategoriaTile"></span>
+                <span class="categoria-previa__nome" id="previaCategoriaNome">Nova categoria</span>
+            </div>
+
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputCategoriaNome">Nome</label>
+                <input class="ef-input" type="text" id="inputCategoriaNome" maxlength="40" autocomplete="off" placeholder="Ex.: Pet, Salário">
+            </div>
+
+            <div class="ef-field">
+                <label class="ef-field__label" for="inputCategoriaTipo">Tipo</label>
+                <div class="ef-select">
+                    <select class="ef-select__control" id="inputCategoriaTipo">
+                        <option value="SAIDA">Saída</option>
+                        <option value="ENTRADA">Entrada</option>
+                    </select>
+                    <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                </div>
+                <span class="ef-field__message" id="dicaCategoriaTipo" hidden>O tipo não muda depois de criada.</span>
+            </div>
+
+            <div class="ef-field">
+                <span class="ef-field__label" id="rotuloIconeCategoria">Ícone</span>
+                <div class="icone-picker" id="iconePickerCategoria" role="group" aria-labelledby="rotuloIconeCategoria"></div>
+            </div>
+
+            <div class="ef-field">
+                <span class="ef-field__label" id="rotuloTomCategoria">Cor</span>
+                <div class="color-picker" id="tomPickerCategoria" role="group" aria-labelledby="rotuloTomCategoria"></div>
+            </div>
+
+            <button type="button" class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmCategoria">Salvar categoria</button>
+        </div>
+    </div>
+
+    <!-- MODAL: MEU PERFIL -->
+    <div class="ef-dialog ef-dialog--auto" id="modalProfile" role="dialog" aria-modal="true" aria-labelledby="modalProfileTitle" hidden>
+        <div class="ef-dialog__panel">
+            <span class="ef-dialog__handle" aria-hidden="true"></span>
+            <div class="ef-dialog__head">
+                <div class="ef-dialog__text">
+                    <h2 class="ef-dialog__title" id="modalProfileTitle">Meu perfil</h2>
+                    <p class="ef-dialog__description">Seus dados de acesso e sua foto.</p>
+                </div>
+                <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
+            </div>
+
+            <section class="profile-photo" aria-label="Foto de perfil">
+                <span class="ef-avatar profile-photo__avatar" id="profileAvatar">--</span>
+                <div class="profile-photo__actions">
+                    <button type="button" class="ef-btn ef-btn--secondary ef-btn--sm" id="btnChangePhoto">Trocar foto</button>
+                    <button type="button" class="ef-btn ef-btn--ghost ef-btn--sm" id="btnRemovePhoto" hidden>Remover foto</button>
+                    <input type="file" id="inputProfilePhoto" accept="image/jpeg,image/png,image/webp" hidden>
+                    <span class="ef-field__message">JPG, PNG ou WEBP. A foto é recortada em quadrado.</span>
+                </div>
+            </section>
+
+            <section class="profile-section" aria-labelledby="profileDataTitle">
+                <h3 class="profile-section__title" id="profileDataTitle">Dados</h3>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputProfileName">Nome</label>
+                    <input class="ef-input" type="text" id="inputProfileName" autocomplete="name" maxlength="120">
+                </div>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputProfileEmail">E-mail</label>
+                    <input class="ef-input" type="email" id="inputProfileEmail" autocomplete="email" maxlength="160">
+                </div>
+
+                <div class="ef-field" id="fieldProfileEmailPassword" hidden>
+                    <label class="ef-field__label" for="inputProfileEmailPassword">Senha atual</label>
+                    <input class="ef-input" type="password" id="inputProfileEmailPassword" autocomplete="current-password">
+                    <span class="ef-field__message">Pra trocar o e-mail, confirme com sua senha. Os outros aparelhos serão desconectados.</span>
+                </div>
+
+                <button type="button" class="ef-btn ef-btn--primary ef-btn--block" id="btnConfirmProfileData">Salvar alterações</button>
+            </section>
+
+            <section class="profile-section" aria-labelledby="profilePasswordTitle">
+                <h3 class="profile-section__title" id="profilePasswordTitle">Senha</h3>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputProfileCurrentPassword">Senha atual</label>
+                    <input class="ef-input" type="password" id="inputProfileCurrentPassword" autocomplete="current-password">
+                </div>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputProfileNewPassword">Nova senha</label>
+                    <input class="ef-input" type="password" id="inputProfileNewPassword" autocomplete="new-password">
+                    <span class="ef-field__message">Mínimo de 8 caracteres.</span>
+                </div>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputProfileConfirmPassword">Confirme a nova senha</label>
+                    <input class="ef-input" type="password" id="inputProfileConfirmPassword" autocomplete="new-password">
+                </div>
+
+                <button type="button" class="ef-btn ef-btn--secondary ef-btn--block" id="btnConfirmProfilePassword">Alterar senha</button>
+            </section>
+
+            <section class="profile-section" aria-labelledby="profileDangerTitle">
+                <h3 class="profile-section__title" id="profileDangerTitle">Zona de perigo</h3>
+                <p class="profile-section__text">Excluir o cadastro apaga todos os seus dados do E-Financeiro.</p>
+
+                <button type="button" class="ef-btn ef-btn--danger" id="btnDeleteProfile">Excluir meu cadastro</button>
+
+                <div class="profile-danger-alert" id="alertDeleteProfile" role="group" aria-labelledby="alertDeleteProfileTitle" hidden>
+                    <p class="profile-danger-alert__title" id="alertDeleteProfileTitle">Tem certeza que quer excluir seu cadastro?</p>
+                    <p class="profile-danger-alert__text">Todos os seus dados (contas, cartões, movimentações, recorrências e foto) serão apagados permanentemente. Essa ação não pode ser desfeita.</p>
+
+                    <div class="ef-field">
+                        <label class="ef-field__label" for="inputDeleteProfilePassword">Sua senha</label>
+                        <input class="ef-input" type="password" id="inputDeleteProfilePassword" autocomplete="current-password">
+                    </div>
+
+                    <div class="profile-danger-alert__actions">
+                        <button type="button" class="ef-btn ef-btn--secondary" id="btnCancelDeleteProfile">Cancelar</button>
+                        <button type="button" class="ef-btn ef-btn--danger" id="btnConfirmDeleteProfile">Confirmar</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
     <!-- MODAL: NOVA RECORRÊNCIA -->
     <div class="ef-dialog ef-dialog--auto" id="modalRecorrencia" role="dialog" aria-modal="true" aria-labelledby="modalRecorrenciaTitle" hidden>
         <div class="ef-dialog__panel">
@@ -482,23 +642,7 @@
 
             <div class="ef-field" id="campoCategoriaRecorrencia">
                 <span class="ef-field__label" id="rotuloCategoriaRecorrencia">Categoria</span>
-                <div class="categoria-row" id="categoriaRowRecorrencia" role="group" aria-labelledby="rotuloCategoriaRecorrencia">
-                    <button class="ef-tag categoria-chip" data-categoria="RENDA" type="button" aria-pressed="false">
-                        <i data-lucide="banknote" class="ef-icon ef-icon--xs"></i> Renda
-                    </button>
-                    <button class="ef-tag categoria-chip" data-categoria="DESPESA" type="button" aria-pressed="false">
-                        <i data-lucide="receipt" class="ef-icon ef-icon--xs"></i> Despesa
-                    </button>
-                    <button class="ef-tag categoria-chip" data-categoria="ALIMENTACAO" type="button" aria-pressed="false">
-                        <i data-lucide="shopping-bag" class="ef-icon ef-icon--xs"></i> Alimentação
-                    </button>
-                    <button class="ef-tag categoria-chip" data-categoria="MORADIA" type="button" aria-pressed="false">
-                        <i data-lucide="house" class="ef-icon ef-icon--xs"></i> Moradia
-                    </button>
-                    <button class="ef-tag categoria-chip" data-categoria="OUTRO" type="button" aria-pressed="false">
-                        <i data-lucide="ellipsis" class="ef-icon ef-icon--xs"></i> Outro
-                    </button>
-                </div>
+                <div class="categoria-row" id="categoriaRowRecorrencia" role="group" aria-labelledby="rotuloCategoriaRecorrencia"></div>
             </div>
 
             <div class="card-row" id="cardRowRecorrencia">

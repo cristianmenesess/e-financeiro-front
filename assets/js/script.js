@@ -34,14 +34,6 @@ function Dashboard() {
 
     self.cardColors = self.lerPaletaDeCores();
 
-    self.categoriasDisponiveis = [
-        { valor: 'RENDA', nome: 'Renda' },
-        { valor: 'DESPESA', nome: 'Despesa' },
-        { valor: 'ALIMENTACAO', nome: 'Alimentação' },
-        { valor: 'MORADIA', nome: 'Moradia' },
-        { valor: 'OUTRO', nome: 'Outro' }
-    ];
-
     self.state = {
         currentPage: 'dashboard',
         currentView: 'all',
@@ -66,7 +58,12 @@ function Dashboard() {
         cards: [],
         contas: [],
         transactions: [],
-        recorrencias: []
+        recorrencias: [],
+        categorias: [],
+        opcoesCategoria: { icones: [], tons: [] },
+        editingCategoriaId: null,
+        categoriaIconeSelecionado: null,
+        categoriaTomSelecionado: null
     };
 
     self.obterToken = function () {
@@ -81,10 +78,37 @@ function Dashboard() {
         return localStorage.getItem('email');
     };
 
+    self.obterFotoUrl = function () {
+        return localStorage.getItem('fotoUrl');
+    };
+
+    /**
+     * Grava na sessão os dados que vêm da API de perfil. O token só é trocado quando a API manda
+     * um novo (troca de e-mail ou de senha).
+     *
+     * @param {object} perfil resposta de /api/perfil ({ nome, email, fotoUrl, token })
+     * @returns
+     */
+    self.salvarPerfilNaSessao = function (perfil) {
+        localStorage.setItem('nome', perfil.nome);
+        localStorage.setItem('email', perfil.email);
+
+        if (perfil.fotoUrl) {
+            localStorage.setItem('fotoUrl', perfil.fotoUrl);
+        } else {
+            localStorage.removeItem('fotoUrl');
+        }
+
+        if (perfil.token) {
+            localStorage.setItem('token', perfil.token);
+        }
+    };
+
     self.limparSessao = function () {
         localStorage.removeItem('token');
         localStorage.removeItem('nome');
         localStorage.removeItem('email');
+        localStorage.removeItem('fotoUrl');
     };
 
     self.cabecalhoAuth = function () {
@@ -92,18 +116,42 @@ function Dashboard() {
     };
 
     /**
-     * Exibe nome, e-mail e iniciais do usuário logado na sidebar e na topbar mobile.
+     * Mostra a foto do usuário num avatar, ou as iniciais do nome quando não houver foto
+     * (ou quando a foto não carregar).
+     *
+     * @param {jQuery} $avatar elemento .ef-avatar
+     * @param {string} nome nome do usuário
+     * @param {string|null} fotoUrl URL da foto, ou null
+     * @returns
+     */
+    self.renderizarAvatar = function ($avatar, nome, fotoUrl) {
+        var iniciais = (nome || '').split(' ').map(function (parte) { return parte.charAt(0); }).slice(0, 2).join('').toUpperCase();
+
+        if (!fotoUrl) {
+            $avatar.empty().text(iniciais || '--');
+            return;
+        }
+
+        var $foto = $('<img>', { class: 'ef-avatar__img', src: fotoUrl, alt: '' })
+            .on('error', function () {
+                $avatar.empty().text(iniciais || '--');
+            });
+
+        $avatar.empty().append($foto);
+    };
+
+    /**
+     * Exibe nome, e-mail e avatar (foto ou iniciais) do usuário logado na sidebar e na topbar mobile.
      *
      * @returns
      */
     self.exibirDadosUsuario = function () {
         var nome = self.obterNome() || '';
-        var iniciais = nome.split(' ').map(function (parte) { return parte.charAt(0); }).slice(0, 2).join('').toUpperCase();
 
         $('#sidebarUserName').text(nome).attr('title', nome);
         $('#sidebarUserEmail').text(self.obterEmail() || '').attr('title', self.obterEmail() || '');
-        $('#sidebarAvatar').text(iniciais);
-        $('#mobileAvatar').text(iniciais);
+        self.renderizarAvatar($('#sidebarAvatar'), nome, self.obterFotoUrl());
+        self.renderizarAvatar($('#mobileAvatar'), nome, self.obterFotoUrl());
     };
 
     /**
@@ -272,24 +320,29 @@ function Dashboard() {
         return dia + ' ' + mes;
     };
 
+    self.getCategoriaById = function (id) {
+        return self.state.categorias.find(function (categoria) { return categoria.id === id; }) || null;
+    };
+
     /**
-     * Tom do IconTile, cor de série (donut) e ícone de cada categoria. Os ícones
-     * são nomes Lucide. Categoria nula ou desconhecida (ex.: lançamentos
-     * antigos, sem categoria) cai em OUTRO, então toda linha tem ícone.
+     * Tom do IconTile, cor de série (donut) e ícone de uma categoria, a partir da lista carregada da
+     * API. Categoria desconhecida (ex.: excluída em outro aparelho) usa o visual de "Outro".
      *
-     * @param {string} categoria categoria da API (RENDA, DESPESA...)
+     * @param {number} categoriaId id da categoria
      * @returns {object} { classe, cor, icone }
      */
-    self.resolveIconeCategoria = function (categoria) {
-        var mapa = {
-            RENDA: { classe: 'ef-icon-tile--positive', cor: 'var(--tone-positive-accent)', icone: 'banknote' },
-            DESPESA: { classe: 'ef-icon-tile--negative', cor: 'var(--tone-negative-accent)', icone: 'receipt' },
-            ALIMENTACAO: { classe: 'ef-icon-tile--warning', cor: 'var(--tone-warning-accent)', icone: 'shopping-bag' },
-            MORADIA: { classe: 'ef-icon-tile--brand', cor: 'var(--tone-brand-accent)', icone: 'house' },
-            OUTRO: { classe: '', cor: 'var(--tone-neutral-accent)', icone: 'ellipsis' }
-        };
+    self.resolveIconeCategoria = function (categoriaId) {
+        var categoria = self.getCategoriaById(categoriaId);
 
-        return mapa[categoria] || mapa.OUTRO;
+        if (!categoria) {
+            return { classe: '', cor: 'var(--tone-neutral-accent)', icone: 'ellipsis' };
+        }
+
+        return {
+            classe: categoria.tom === 'neutral' ? '' : 'ef-icon-tile--' + categoria.tom,
+            cor: 'var(--tone-' + categoria.tom + '-accent)',
+            icone: categoria.icone
+        };
     };
 
     /**
@@ -330,11 +383,11 @@ function Dashboard() {
     /**
      * Monta o IconTile de uma categoria (tom + ícone).
      *
-     * @param {string} categoria categoria da API
+     * @param {number} categoriaId id da categoria
      * @returns {jQuery} tile pronto
      */
-    self.criarTileCategoria = function (categoria) {
-        var icone = self.resolveIconeCategoria(categoria);
+    self.criarTileCategoria = function (categoriaId) {
+        var icone = self.resolveIconeCategoria(categoriaId);
 
         return $('<span>', { class: 'ef-icon-tile ' + icone.classe, 'aria-hidden': 'true' }).append(icones.criar(icone.icone, 'sm'));
     };
@@ -379,7 +432,7 @@ function Dashboard() {
             $icon = $('<span>', { class: 'ef-icon-tile', 'aria-hidden': 'true' }).append(icones.criar('credit-card', 'sm'));
             $icon.css({ background: card.corFundo, color: card.corTexto });
         } else {
-            $icon = self.criarTileCategoria(tx.categoria);
+            $icon = self.criarTileCategoria(tx.categoriaId);
         }
 
         var $delete = self.criarBotaoIcone('trash-2', 'Excluir', true)
@@ -456,7 +509,7 @@ function Dashboard() {
             var noPeriodo = parseInt(partes[0], 10) === self.state.periodo.ano &&
                 parseInt(partes[1], 10) - 1 === self.state.periodo.mes;
             var naCategoria = self.state.categoriasFiltradas.length === 0 ||
-                self.state.categoriasFiltradas.indexOf(tx.categoria) !== -1;
+                self.state.categoriasFiltradas.indexOf(tx.categoriaId) !== -1;
 
             return noPeriodo && naCategoria;
         });
@@ -554,26 +607,42 @@ function Dashboard() {
     };
 
     /**
-     * Agrupa as saídas do mês selecionado por categoria, pro donut de
-     * "Gastos por categoria" (RENDA fica de fora — é sempre entrada). As fatias
-     * saem da maior pra menor, com a mesma cor do IconTile da categoria.
+     * Agrupa as saídas do mês selecionado por categoria, pro donut de "Gastos por categoria". As
+     * fatias saem da maior pra menor, com a mesma cor do IconTile da categoria.
      *
      * @returns {Array} fatias no formato do DonutChart ({ label, value, color })
      */
+    /**
+     * Id da categoria fixa "Outro" (SAIDA), usada quando uma transação aponta pra uma categoria que
+     * não existe mais (ex.: excluída em outro aparelho). Sem essa fixa carregada ainda, cai no id
+     * bruto da transação (função só chamada quando ele já é desconhecido de qualquer forma).
+     *
+     * @returns {number|null} id da categoria "Outro", ou null se as fixas ainda não carregaram
+     */
+    self.idCategoriaOutro = function () {
+        var outro = self.state.categorias.find(function (categoria) {
+            return categoria.fixa && categoria.tipo === 'SAIDA' && categoria.nome === 'Outro';
+        });
+
+        return outro ? outro.id : null;
+    };
+
     self.montarDadosCategorias = function () {
         var totais = {};
 
         self.obterTransacoesDoMes(self.state.periodo.mes, self.state.periodo.ano).forEach(function (tx) {
             if (tx.tipo === 'SAIDA') {
-                var categoria = tx.categoria && tx.categoria !== 'RENDA' ? tx.categoria : 'OUTRO';
-                totais[categoria] = (totais[categoria] || 0) + tx.valor;
+                var categoriaId = self.getCategoriaById(tx.categoriaId) ? tx.categoriaId : (self.idCategoriaOutro() || tx.categoriaId);
+                totais[categoriaId] = (totais[categoriaId] || 0) + tx.valor;
             }
         });
 
-        return self.categoriasDisponiveis
-            .filter(function (categoria) { return totais[categoria.valor]; })
-            .map(function (categoria) {
-                return { label: categoria.nome, value: totais[categoria.valor], color: self.resolveIconeCategoria(categoria.valor).cor };
+        return Object.keys(totais)
+            .map(function (chave) {
+                var categoriaId = parseInt(chave, 10);
+                var categoria = self.getCategoriaById(categoriaId);
+
+                return { label: categoria ? categoria.nome : 'Outro', value: totais[chave], color: self.resolveIconeCategoria(categoriaId).cor };
             })
             .sort(function (a, b) { return b.value - a.value; });
     };
@@ -730,10 +799,10 @@ function Dashboard() {
 
         $row.append($todas);
 
-        self.categoriasDisponiveis.forEach(function (categoria) {
-            var icone = self.resolveIconeCategoria(categoria.valor);
+        self.state.categorias.forEach(function (categoria) {
+            var icone = self.resolveIconeCategoria(categoria.id);
             var $chip = $('<button>', { type: 'button', class: 'ef-tag filter-chip' })
-                .attr({ 'data-categoria': categoria.valor, 'aria-pressed': String(self.state.categoriasFiltradas.indexOf(categoria.valor) !== -1) })
+                .attr({ 'data-categoria': categoria.id, 'aria-pressed': String(self.state.categoriasFiltradas.indexOf(categoria.id) !== -1) })
                 .append(icones.criar(icone.icone, 'xs'), ' ' + categoria.nome);
 
             $row.append($chip);
@@ -914,6 +983,300 @@ function Dashboard() {
                 self.renderContas();
                 self.buildAccountTabs();
                 self.populateAccountSelect();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Busca as categorias (fixas + do usuário) e atualiza tudo que depende delas: página
+     * Categorias, chips de filtro, lista de recorrências e, se já carregadas, as movimentações e
+     * gráficos.
+     *
+     * @returns
+     */
+    self.carregarCategorias = function () {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/categorias',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (resposta) {
+                self.state.categorias = resposta;
+                self.renderCategorias();
+                self.buildFilterRow();
+
+                if (self.state.recorrencias.length > 0) {
+                    self.renderRecorrencias();
+                }
+
+                if (self.state.transactions.length > 0) {
+                    self.aplicarFiltros();
+                }
+
+                // Modal aberto antes das categorias chegarem ficou sem chips
+                if (!$('#modalTransaction').prop('hidden')) {
+                    self.applyTypeStyle(self.state.currentType);
+                }
+
+                if (!$('#modalRecorrencia').prop('hidden')) {
+                    self.applyRecorrenciaTypeStyle(self.state.currentTypeRecorrencia);
+                }
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Busca os ícones e tons permitidos pra uma categoria (usados no modal de categoria).
+     *
+     * @returns
+     */
+    self.carregarOpcoesCategoria = function () {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/categorias/opcoes',
+            headers: self.cabecalhoAuth(),
+            success: function (resposta) {
+                self.state.opcoesCategoria = resposta;
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            }
+        });
+    };
+
+    /**
+     * Monta a linha de uma categoria: tile colorido + nome; fixas com cadeado, personalizadas com
+     * editar/excluir.
+     *
+     * @param {object} categoria categoria da API
+     * @returns {jQuery} elemento &lt;li&gt;
+     */
+    self.buildCategoriaItem = function (categoria) {
+        var $fim;
+
+        if (categoria.fixa) {
+            $fim = $('<span>', { class: 'categoria-fixa', title: 'Categoria do sistema', 'aria-label': 'Categoria do sistema' })
+                .append(icones.criar('lock', 'sm'));
+        } else {
+            var $editar = self.criarBotaoIcone('pencil', 'Editar', false)
+                .on('click', function () {
+                    self.abrirEdicaoCategoria(categoria);
+                });
+
+            var $excluir = self.criarBotaoIcone('trash-2', 'Excluir', true)
+                .on('click', function () {
+                    self.excluirCategoria(categoria);
+                });
+
+            $fim = $('<span>', { class: 'card-item-actions' }).append($editar, $excluir);
+        }
+
+        return $('<li>', { class: 'ef-list-row' }).append(
+            $('<span>', { class: 'ef-list-row__leading' }).append(self.criarTileCategoria(categoria.id)),
+            $('<span>', { class: 'ef-list-row__text' }).append(
+                $('<span>', { class: 'ef-list-row__title', text: categoria.nome }),
+                $('<span>', { class: 'ef-list-row__subtitle', text: categoria.fixa ? 'Do sistema' : 'Personalizada' })
+            ),
+            $fim
+        );
+    };
+
+    self.renderCategorias = function () {
+        var $entradas = $('#categoriasEntrada').empty();
+        var $saidas = $('#categoriasSaida').empty();
+
+        self.state.categorias.forEach(function (categoria) {
+            (categoria.tipo === 'ENTRADA' ? $entradas : $saidas).append(self.buildCategoriaItem(categoria));
+        });
+    };
+
+    /**
+     * Monta a grade de ícones e os tons do modal, marcando os selecionados.
+     *
+     * @returns
+     */
+    // Nomes em pt-BR dos tons pra leitor de tela e tooltip do seletor de cor (--tone-<tom>-accent
+    // no design-system/tokens/colors.css: brand=teal-500, positive=green-500, negative=red-500,
+    // warning=amber-500, ai=violet-500, neutral=neutral-400).
+    self.nomesTom = {
+        brand: 'Verde-azulado',
+        positive: 'Verde',
+        negative: 'Vermelho',
+        warning: 'Âmbar',
+        ai: 'Roxo',
+        neutral: 'Cinza'
+    };
+
+    self.montarSeletoresCategoria = function () {
+        var $icones = $('#iconePickerCategoria').empty();
+        var $tons = $('#tomPickerCategoria').empty();
+
+        self.state.opcoesCategoria.icones.forEach(function (nomeIcone) {
+            $icones.append($('<button>', { type: 'button', class: 'icone-opcao', 'aria-label': nomeIcone, title: nomeIcone })
+                .attr({ 'data-icone': nomeIcone, 'aria-pressed': String(nomeIcone === self.state.categoriaIconeSelecionado) })
+                .append(icones.criar(nomeIcone, 'sm')));
+        });
+
+        self.state.opcoesCategoria.tons.forEach(function (tom) {
+            var nomeTom = self.nomesTom[tom] || tom;
+
+            $tons.append($('<button>', { type: 'button', class: 'color-swatch' + (tom === self.state.categoriaTomSelecionado ? ' selected' : ''), 'aria-label': nomeTom, title: nomeTom })
+                .attr({ 'data-tom': tom, 'aria-pressed': String(tom === self.state.categoriaTomSelecionado) })
+                .css('background', 'var(--tone-' + tom + '-accent)'));
+        });
+
+        self.atualizarPreviaCategoria();
+    };
+
+    /**
+     * Atualiza a prévia do tile (ícone + tom) e do nome enquanto o usuário edita o modal.
+     *
+     * @returns
+     */
+    self.atualizarPreviaCategoria = function () {
+        var tom = self.state.categoriaTomSelecionado;
+
+        $('#previaCategoriaTile')
+            .attr('class', 'ef-icon-tile' + (tom && tom !== 'neutral' ? ' ef-icon-tile--' + tom : ''))
+            .empty()
+            .append(icones.criar(self.state.categoriaIconeSelecionado || 'ellipsis', 'sm'));
+        $('#previaCategoriaNome').text($('#inputCategoriaNome').val().trim() || 'Nova categoria');
+    };
+
+    self.abrirModalNovaCategoria = function () {
+        self.state.editingCategoriaId = null;
+        self.state.categoriaIconeSelecionado = self.state.opcoesCategoria.icones[5] || 'ellipsis';
+        self.state.categoriaTomSelecionado = 'brand';
+
+        $('#modalCategoriaTitle').text('Nova categoria');
+        $('#inputCategoriaNome').val('');
+        $('#inputCategoriaTipo').val('SAIDA').prop('disabled', false);
+        $('#dicaCategoriaTipo').prop('hidden', true);
+
+        self.montarSeletoresCategoria();
+        self.openModal('#modalCategoria');
+    };
+
+    self.abrirEdicaoCategoria = function (categoria) {
+        self.state.editingCategoriaId = categoria.id;
+        self.state.categoriaIconeSelecionado = categoria.icone;
+        self.state.categoriaTomSelecionado = categoria.tom;
+
+        $('#modalCategoriaTitle').text('Editar categoria');
+        $('#inputCategoriaNome').val(categoria.nome);
+        $('#inputCategoriaTipo').val(categoria.tipo).prop('disabled', true);
+        $('#dicaCategoriaTipo').prop('hidden', false);
+
+        self.montarSeletoresCategoria();
+        self.openModal('#modalCategoria');
+    };
+
+    /**
+     * Cria ou atualiza a categoria do modal. Depois recarrega categorias e movimentações (o nome
+     * da categoria aparece na lista do dashboard).
+     *
+     * @returns
+     */
+    self.salvarCategoria = function () {
+        feedback.limparErros('#modalCategoria');
+
+        var nome = $('#inputCategoriaNome').val().trim();
+
+        if (!nome) {
+            feedback.marcarErro('#inputCategoriaNome', 'Informe o nome da categoria');
+            feedback.focarPrimeiroErro('#modalCategoria');
+            return;
+        }
+
+        var editando = self.state.editingCategoriaId !== null;
+        var corpo = { nome: nome, icone: self.state.categoriaIconeSelecionado, tom: self.state.categoriaTomSelecionado };
+
+        if (!editando) {
+            corpo.tipo = $('#inputCategoriaTipo').val();
+        }
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/categorias' + (editando ? '/' + self.state.editingCategoriaId : ''),
+            method: editando ? 'PUT' : 'POST',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify(corpo),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.closeModal('#modalCategoria');
+                self.carregarCategorias();
+                self.carregarTransacoes();
+                feedback.exibirSucesso(editando ? 'Categoria atualizada' : 'Categoria criada');
+            },
+            error: function (jqXHR) {
+                var nomeRepetido = feedback.mensagemDaApi(jqXHR, 409);
+
+                if (nomeRepetido) {
+                    feedback.marcarErro('#inputCategoriaNome', nomeRepetido);
+                    feedback.focarPrimeiroErro('#modalCategoria');
+                } else {
+                    self.tratarErroRequisicao(jqXHR);
+                }
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Pede confirmação e exclui uma categoria personalizada. O aviso diz quantas movimentações e
+     * recorrências vão pra "Outro"/"Renda" (contadas nos dados já carregados).
+     *
+     * @param {object} categoria categoria da API
+     * @returns
+     */
+    self.excluirCategoria = function (categoria) {
+        var destino = categoria.tipo === 'ENTRADA' ? 'Renda' : 'Outro';
+        var emUso = self.state.transactions.filter(function (tx) { return tx.categoriaId === categoria.id; }).length
+            + self.state.recorrencias.filter(function (recorrencia) { return recorrencia.categoriaId === categoria.id; }).length;
+        var aviso = emUso > 0
+            ? emUso + (emUso === 1 ? ' movimentação/recorrência vai' : ' movimentações/recorrências vão') + ' para "' + destino + '".'
+            : 'Nenhuma movimentação usa essa categoria.';
+
+        feedback.confirmar({
+            titulo: 'Excluir categoria',
+            descricao: '"' + categoria.nome + '" será excluída. ' + aviso,
+            rotuloConfirmar: 'Excluir categoria',
+            aoConfirmar: function () {
+                self.executarExclusaoCategoria(categoria.id);
+            }
+        });
+    };
+
+    self.executarExclusaoCategoria = function (id) {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/categorias/' + id,
+            method: 'DELETE',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (resposta) {
+                self.state.categoriasFiltradas = self.state.categoriasFiltradas.filter(function (filtrada) { return filtrada !== id; });
+                self.carregarCategorias();
+                self.carregarTransacoes();
+                self.carregarRecorrencias();
+                feedback.exibirSucesso('Categoria excluída', resposta.movidas > 0 ? resposta.movidas + ' lançamento(s) movido(s).' : '');
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1156,7 +1519,7 @@ function Dashboard() {
     };
 
     self.buildRecorrenciaItem = function (recorrencia) {
-        var $icon = self.criarTileCategoria(recorrencia.categoria);
+        var $icon = self.criarTileCategoria(recorrencia.categoriaId);
 
         var decorridas = recorrencia.totalParcelas - recorrencia.parcelasRestantes;
         var metaCartao = recorrencia.nomeCartao ? ' · ' + recorrencia.nomeCartao : '';
@@ -1170,9 +1533,9 @@ function Dashboard() {
                 self.abrirModalEditarValorRecorrencia(recorrencia);
             });
 
-        var $cancelar = self.criarBotaoIcone('trash-2', 'Cancelar parcelas futuras', true)
+        var $excluir = self.criarBotaoIcone('trash-2', 'Excluir recorrência', true)
             .on('click', function () {
-                self.cancelarRecorrenciaFuturas(recorrencia);
+                self.excluirRecorrencia(recorrencia);
             });
 
         return $('<li>', { class: 'ef-list-row' }).append(
@@ -1184,7 +1547,7 @@ function Dashboard() {
             $('<span>', { class: 'ef-list-row__end' }).append(
                 $('<span>', { class: 'ef-list-row__value ' + amountClass, text: prefix + self.formatCurrency(recorrencia.valor) })
             ),
-            $('<span>', { class: 'card-item-actions' }).append($editar, $cancelar)
+            $('<span>', { class: 'card-item-actions' }).append($editar, $excluir)
         );
     };
 
@@ -1224,11 +1587,11 @@ function Dashboard() {
         $('#btnRecorrenciaTypeOut').toggleClass('active-out', !isIn).removeClass('active-in');
         $('#cardRowRecorrencia').toggleClass('visible', !isIn);
 
-        $('#categoriaRowRecorrencia .categoria-chip').attr('aria-pressed', 'false');
-        self.state.currentCategoriaRecorrencia = isIn ? 'RENDA' : null;
+        var tipo = isIn ? 'ENTRADA' : 'SAIDA';
+
+        self.state.currentCategoriaRecorrencia = self.categoriaPadraoDoTipo(tipo);
         feedback.limparErro('#categoriaRowRecorrencia');
-        $('#campoCategoriaRecorrencia').css('display', isIn ? 'none' : 'flex');
-        $('#categoriaRowRecorrencia .categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
+        self.montarChipsCategoria('#categoriaRowRecorrencia', tipo, self.state.currentCategoriaRecorrencia);
     };
 
     self.resetRecorrenciaModal = function () {
@@ -1309,7 +1672,7 @@ function Dashboard() {
             descricao: description,
             valor: value,
             tipo: self.state.currentTypeRecorrencia === 'in' ? 'ENTRADA' : 'SAIDA',
-            categoria: self.state.currentCategoriaRecorrencia,
+            categoriaId: self.state.currentCategoriaRecorrencia,
             contaId: contaId,
             cartaoId: cardId,
             totalParcelas: totalParcelas
@@ -1384,29 +1747,30 @@ function Dashboard() {
     };
 
     /**
-     * Pede confirmação (Dialog) e cancela as parcelas futuras de uma recorrência.
+     * Pede confirmação (Dialog) e exclui uma recorrência com todas as parcelas dela.
      *
      * @param {object} recorrencia recorrência retornada pela API
      * @returns
      */
-    self.cancelarRecorrenciaFuturas = function (recorrencia) {
+    self.excluirRecorrencia = function (recorrencia) {
         feedback.confirmar({
-            titulo: 'Cancelar parcelas futuras',
-            descricao: 'As próximas parcelas de "' + recorrencia.descricao + '" serão apagadas. As que já passaram continuam no histórico.',
-            rotuloConfirmar: 'Cancelar parcelas',
+            titulo: 'Excluir recorrência',
+            descricao: '"' + recorrencia.descricao + '" e todas as parcelas dela serão apagadas permanentemente, inclusive as que já passaram. O saldo será recalculado.',
+            rotuloConfirmar: 'Excluir recorrência',
             aoConfirmar: function () {
-                self.executarCancelamentoRecorrencia(recorrencia.id);
+                self.executarExclusaoRecorrencia(recorrencia.id);
             }
         });
     };
 
     /**
-     * Cancela as parcelas futuras de uma recorrência via API.
+     * Exclui uma recorrência via API e atualiza recorrências, cartões (o gasto do mês pode
+     * mudar) e transações.
      *
      * @param {number} id id da recorrência
      * @returns
      */
-    self.executarCancelamentoRecorrencia = function (id) {
+    self.executarExclusaoRecorrencia = function (id) {
         $.ajax({
             url: self.apiBaseUrl + '/api/recorrencias/' + id,
             method: 'DELETE',
@@ -1416,8 +1780,9 @@ function Dashboard() {
             },
             success: function () {
                 self.carregarRecorrencias();
+                self.carregarCartoes();
                 self.carregarTransacoes();
-                feedback.exibirSucesso('Parcelas futuras canceladas');
+                feedback.exibirSucesso('Recorrência excluída');
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1556,6 +1921,44 @@ function Dashboard() {
         self.applyTypeStyle('in');
     };
 
+    /**
+     * Monta os chips de categoria de um modal com as categorias do tipo informado.
+     *
+     * @param {string} seletorFileira fileira de chips (#categoriaRow ou #categoriaRowRecorrencia)
+     * @param {string} tipo ENTRADA ou SAIDA
+     * @param {number|null} categoriaSelecionadaId categoria que já vem marcada
+     * @returns
+     */
+    self.montarChipsCategoria = function (seletorFileira, tipo, categoriaSelecionadaId) {
+        var $fileira = $(seletorFileira).empty();
+
+        self.state.categorias
+            .filter(function (categoria) { return categoria.tipo === tipo; })
+            .forEach(function (categoria) {
+                var icone = self.resolveIconeCategoria(categoria.id);
+
+                $fileira.append($('<button>', { type: 'button', class: 'ef-tag categoria-chip' })
+                    .attr({ 'data-categoria': categoria.id, 'aria-pressed': String(categoria.id === categoriaSelecionadaId) })
+                    .append(icones.criar(icone.icone, 'xs'), ' ' + categoria.nome));
+            });
+    };
+
+    /**
+     * Categoria que já vem marcada ao abrir o modal: na entrada, a fixa "Renda"; na saída, nenhuma
+     * (a escolha é obrigatória).
+     *
+     * @param {string} tipo ENTRADA ou SAIDA
+     * @returns {number|null} id da categoria, ou null
+     */
+    self.categoriaPadraoDoTipo = function (tipo) {
+        if (tipo !== 'ENTRADA') {
+            return null;
+        }
+
+        var renda = self.state.categorias.find(function (categoria) { return categoria.fixa && categoria.tipo === 'ENTRADA'; });
+        return renda ? renda.id : null;
+    };
+
     self.applyTypeStyle = function (type) {
         var isIn = type === 'in';
 
@@ -1563,14 +1966,11 @@ function Dashboard() {
         $('#btnTypeOut').toggleClass('active-out', !isIn).removeClass('active-in');
         $('#cardRow').toggleClass('visible', !isIn);
 
-        // Categorias só fazem sentido pra saída: na entrada os chips somem e a
-        // categoria vai como RENDA automaticamente; na saída o chip "Renda"
-        // fica de fora
-        $('#categoriaRow .categoria-chip').attr('aria-pressed', 'false');
-        self.state.currentCategoria = isIn ? 'RENDA' : null;
+        var tipo = isIn ? 'ENTRADA' : 'SAIDA';
+
+        self.state.currentCategoria = self.categoriaPadraoDoTipo(tipo);
         feedback.limparErro('#categoriaRow');
-        $('#campoCategoria').css('display', isIn ? 'none' : 'flex');
-        $('#categoriaRow .categoria-chip[data-categoria="RENDA"]').css('display', isIn ? '' : 'none');
+        self.montarChipsCategoria('#categoriaRow', tipo, self.state.currentCategoria);
     };
 
     /**
@@ -1633,7 +2033,7 @@ function Dashboard() {
                 valor: value,
                 tipo: self.state.currentType === 'in' ? 'ENTRADA' : 'SAIDA',
                 contaId: contaId,
-                categoria: self.state.currentCategoria,
+                categoriaId: self.state.currentCategoria,
                 cartaoId: cardId
             }),
             beforeSend: function () {
@@ -1724,6 +2124,424 @@ function Dashboard() {
         });
     };
 
+    /**
+     * Busca o perfil na API e atualiza a sessão e a tela — nome, e-mail e foto podem ter mudado
+     * em outro aparelho.
+     *
+     * @returns
+     */
+    self.carregarPerfil = function () {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/perfil',
+            headers: self.cabecalhoAuth(),
+            success: function (perfil) {
+                self.salvarPerfilNaSessao(perfil);
+                self.exibirDadosUsuario();
+                self.exibirSaudacao();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            }
+        });
+    };
+
+    /**
+     * Abre o modal "Meu perfil" preenchido com os dados da sessão e com os blocos de senha e de
+     * exclusão limpos.
+     *
+     * @returns
+     */
+    self.abrirModalPerfil = function () {
+        $('#inputProfileName').val(self.obterNome() || '');
+        $('#inputProfileEmail').val(self.obterEmail() || '');
+        $('#inputProfileEmailPassword, #inputProfileCurrentPassword, #inputProfileNewPassword, #inputProfileConfirmPassword').val('');
+        $('#fieldProfileEmailPassword').prop('hidden', true);
+
+        self.esconderAlertaExclusao();
+        self.renderizarFotoPerfil();
+        self.openModal('#modalProfile');
+    };
+
+    /**
+     * Mostra a foto (ou iniciais) no avatar do modal e o botão "Remover foto" só quando existe foto.
+     *
+     * @returns
+     */
+    self.renderizarFotoPerfil = function () {
+        self.renderizarAvatar($('#profileAvatar'), self.obterNome(), self.obterFotoUrl());
+        $('#btnRemovePhoto').prop('hidden', !self.obterFotoUrl());
+    };
+
+    /**
+     * Mostra o campo "Senha atual" do bloco de dados só quando o e-mail digitado é diferente do atual.
+     *
+     * @returns
+     */
+    self.atualizarCampoSenhaEmail = function () {
+        var emailDigitado = $('#inputProfileEmail').val().trim().toLowerCase();
+        $('#fieldProfileEmailPassword').prop('hidden', emailDigitado === (self.obterEmail() || ''));
+    };
+
+    /**
+     * Valida o bloco de dados do perfil (nome, e-mail e, se o e-mail mudou, a senha atual).
+     *
+     * @returns {boolean} true se pode enviar
+     */
+    self.validarDadosPerfil = function () {
+        feedback.limparErros('#modalProfile');
+
+        var nome = $('#inputProfileName').val().trim();
+        var email = $('#inputProfileEmail').val().trim();
+        var trocandoEmail = !$('#fieldProfileEmailPassword').prop('hidden');
+
+        if (!nome) {
+            feedback.marcarErro('#inputProfileName', 'Informe seu nome');
+        }
+
+        if (!email || email.indexOf('@') < 1) {
+            feedback.marcarErro('#inputProfileEmail', 'Informe um e-mail válido');
+        }
+
+        if (trocandoEmail && !$('#inputProfileEmailPassword').val()) {
+            feedback.marcarErro('#inputProfileEmailPassword', 'Informe sua senha para trocar o e-mail');
+        }
+
+        if ($('#modalProfile [aria-invalid="true"]').length > 0) {
+            feedback.focarPrimeiroErro('#modalProfile');
+            return false;
+        }
+
+        return true;
+    };
+
+    /**
+     * Salva nome e e-mail. Se o e-mail mudou, a API devolve um token novo, que substitui o da sessão.
+     *
+     * @returns
+     */
+    self.salvarDadosPerfil = function () {
+        if (!self.validarDadosPerfil()) {
+            return;
+        }
+
+        var trocandoEmail = !$('#fieldProfileEmailPassword').prop('hidden');
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/perfil',
+            method: 'PUT',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify({
+                nome: $('#inputProfileName').val().trim(),
+                email: $('#inputProfileEmail').val().trim(),
+                senhaAtual: trocandoEmail ? $('#inputProfileEmailPassword').val() : null
+            }),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (perfil) {
+                self.salvarPerfilNaSessao(perfil);
+                self.exibirDadosUsuario();
+                self.exibirSaudacao();
+                self.renderizarFotoPerfil();
+                $('#inputProfileEmailPassword').val('');
+                $('#fieldProfileEmailPassword').prop('hidden', true);
+                feedback.exibirSucesso('Dados atualizados', trocandoEmail ? 'Os outros aparelhos foram desconectados.' : '');
+            },
+            error: function (jqXHR) {
+                var senhaIncorreta = feedback.mensagemDaApi(jqXHR, 401);
+                var emailEmUso = feedback.mensagemDaApi(jqXHR, 409);
+
+                if (senhaIncorreta) {
+                    $('#inputProfileEmailPassword').val('');
+                    feedback.marcarErro('#inputProfileEmailPassword', senhaIncorreta);
+                    feedback.focarPrimeiroErro('#modalProfile');
+                } else if (emailEmUso) {
+                    feedback.marcarErro('#inputProfileEmail', emailEmUso);
+                    feedback.focarPrimeiroErro('#modalProfile');
+                } else {
+                    self.tratarErroRequisicao(jqXHR);
+                }
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Troca a senha. A API devolve um token novo (os outros aparelhos são desconectados).
+     *
+     * @returns
+     */
+    self.alterarSenhaPerfil = function () {
+        feedback.limparErros('#modalProfile');
+
+        var senhaAtual = $('#inputProfileCurrentPassword').val();
+        var novaSenha = $('#inputProfileNewPassword').val();
+
+        if (!senhaAtual) {
+            feedback.marcarErro('#inputProfileCurrentPassword', 'Informe sua senha atual');
+        }
+
+        if (novaSenha.length < 8) {
+            feedback.marcarErro('#inputProfileNewPassword', 'A nova senha deve ter no mínimo 8 caracteres');
+        } else if (novaSenha !== $('#inputProfileConfirmPassword').val()) {
+            feedback.marcarErro('#inputProfileConfirmPassword', 'As senhas não conferem');
+        }
+
+        if ($('#modalProfile [aria-invalid="true"]').length > 0) {
+            feedback.focarPrimeiroErro('#modalProfile');
+            return;
+        }
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/perfil/senha',
+            method: 'PUT',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify({ senhaAtual: senhaAtual, novaSenha: novaSenha }),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (perfil) {
+                self.salvarPerfilNaSessao(perfil);
+                $('#inputProfileCurrentPassword, #inputProfileNewPassword, #inputProfileConfirmPassword').val('');
+                feedback.exibirSucesso('Senha alterada', 'Os outros aparelhos foram desconectados.');
+            },
+            error: function (jqXHR) {
+                var senhaIncorreta = feedback.mensagemDaApi(jqXHR, 401);
+
+                $('#inputProfileCurrentPassword').val('');
+
+                if (senhaIncorreta) {
+                    feedback.marcarErro('#inputProfileCurrentPassword', senhaIncorreta);
+                    feedback.focarPrimeiroErro('#modalProfile');
+                } else {
+                    self.tratarErroRequisicao(jqXHR);
+                }
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Recorta a imagem num quadrado central de 512x512 e converte pra JPEG. Uma foto de 10 MB do
+     * celular vira ~50 KB antes de ir pra API.
+     *
+     * @param {File} arquivo imagem escolhida pelo usuário
+     * @returns {Promise<Blob>} imagem recortada
+     */
+    self.recortarFoto = function (arquivo) {
+        return new Promise(function (resolve, reject) {
+            var endereco = URL.createObjectURL(arquivo);
+            var imagem = new Image();
+
+            imagem.onload = function () {
+                var lado = Math.min(imagem.naturalWidth, imagem.naturalHeight);
+                var canvas = document.createElement('canvas');
+                var contexto = canvas.getContext('2d');
+
+                URL.revokeObjectURL(endereco);
+
+                if (!contexto) {
+                    reject(new Error('Canvas indisponível'));
+                    return;
+                }
+
+                canvas.width = 512;
+                canvas.height = 512;
+                contexto.drawImage(imagem,
+                    (imagem.naturalWidth - lado) / 2, (imagem.naturalHeight - lado) / 2, lado, lado,
+                    0, 0, 512, 512);
+
+                canvas.toBlob(function (recorte) {
+                    if (recorte) {
+                        resolve(recorte);
+                    } else {
+                        reject(new Error('Falha ao gerar a imagem'));
+                    }
+                }, 'image/jpeg', 0.85);
+            };
+
+            imagem.onerror = function () {
+                URL.revokeObjectURL(endereco);
+                reject(new Error('Arquivo não é uma imagem'));
+            };
+
+            imagem.src = endereco;
+        });
+    };
+
+    /**
+     * Valida a imagem escolhida, recorta no navegador, mostra a prévia e envia pra API. Se o envio
+     * falhar, volta a mostrar a foto anterior.
+     *
+     * @returns
+     */
+    self.enviarFotoPerfil = function () {
+        var arquivo = $('#inputProfilePhoto')[0].files[0];
+        var enderecoPrevia = null;
+
+        $('#inputProfilePhoto').val('');
+
+        if (!arquivo) {
+            return;
+        }
+
+        if (['image/jpeg', 'image/png', 'image/webp'].indexOf(arquivo.type) === -1) {
+            feedback.exibirToast('negative', 'Formato não aceito', 'Escolha uma foto JPG, PNG ou WEBP.');
+            return;
+        }
+
+        self.recortarFoto(arquivo)
+            .then(function (recorte) {
+                var dados = new FormData();
+                dados.append('foto', recorte, 'foto.jpg');
+
+                enderecoPrevia = URL.createObjectURL(recorte);
+                self.renderizarAvatar($('#profileAvatar'), self.obterNome(), enderecoPrevia);
+                self.mostrarCarregando();
+
+                return $.ajax({
+                    url: self.apiBaseUrl + '/api/perfil/foto',
+                    method: 'PUT',
+                    headers: self.cabecalhoAuth(),
+                    data: dados,
+                    processData: false,
+                    contentType: false
+                });
+            })
+            .then(function (perfil) {
+                self.salvarPerfilNaSessao(perfil);
+                self.exibirDadosUsuario();
+                self.renderizarFotoPerfil();
+                feedback.exibirSucesso('Foto atualizada');
+            })
+            .catch(function (erro) {
+                self.renderizarFotoPerfil();
+
+                if (erro && erro.status !== undefined) {
+                    self.tratarErroRequisicao(erro);
+                } else {
+                    feedback.exibirToast('negative', 'Não foi possível usar essa imagem', 'Tente outra foto.');
+                }
+            })
+            .finally(function () {
+                self.esconderCarregando();
+
+                if (enderecoPrevia) {
+                    URL.revokeObjectURL(enderecoPrevia);
+                }
+            });
+    };
+
+    /**
+     * Remove a foto de perfil (volta a exibir as iniciais).
+     *
+     * @returns
+     */
+    self.removerFotoPerfil = function () {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/perfil/foto',
+            method: 'DELETE',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (perfil) {
+                self.salvarPerfilNaSessao(perfil);
+                self.exibirDadosUsuario();
+                self.renderizarFotoPerfil();
+                feedback.exibirSucesso('Foto removida');
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Mostra o alerta de exclusão do cadastro dentro do modal de perfil (não abre outro modal).
+     *
+     * @returns
+     */
+    self.mostrarAlertaExclusao = function () {
+        $('#btnDeleteProfile').prop('hidden', true);
+        $('#alertDeleteProfile').prop('hidden', false);
+        $('#inputDeleteProfilePassword').val('').trigger('focus');
+    };
+
+    /**
+     * Fecha o alerta de exclusão (botão Cancelar ou reabertura do modal) e limpa a senha digitada.
+     *
+     * @returns
+     */
+    self.esconderAlertaExclusao = function () {
+        $('#inputDeleteProfilePassword').val('');
+        $('#alertDeleteProfile').prop('hidden', true);
+        $('#btnDeleteProfile').prop('hidden', false);
+    };
+
+    /**
+     * Exclui o cadastro e todos os dados do usuário, depois da senha confirmada no alerta. Sucesso
+     * limpa a sessão e volta pro login.
+     *
+     * @returns
+     */
+    self.excluirCadastro = function () {
+        feedback.limparErros('#alertDeleteProfile');
+
+        var senha = $('#inputDeleteProfilePassword').val();
+
+        if (!senha) {
+            feedback.marcarErro('#inputDeleteProfilePassword', 'Informe sua senha');
+            feedback.focarPrimeiroErro('#alertDeleteProfile');
+            return;
+        }
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/perfil',
+            method: 'DELETE',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify({ senha: senha }),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.limparSessao();
+                feedback.exibirSucesso('Cadastro excluído', 'Seus dados foram apagados.');
+
+                // Overlay de carregando fica em cima até sair da página, pra evitar um segundo
+                // clique em "Confirmar" (mandaria Bearer null)
+                setTimeout(function () {
+                    window.location.replace('login.html');
+                }, 1500);
+            },
+            error: function (jqXHR) {
+                self.esconderCarregando();
+
+                // Senha errada volta 401 com mensagem: o erro vai no próprio campo, sem deslogar
+                var senhaIncorreta = feedback.mensagemDaApi(jqXHR, 401);
+
+                $('#inputDeleteProfilePassword').val('');
+
+                if (senhaIncorreta) {
+                    feedback.marcarErro('#inputDeleteProfilePassword', senhaIncorreta);
+                    feedback.focarPrimeiroErro('#alertDeleteProfile');
+                } else {
+                    self.tratarErroRequisicao(jqXHR);
+                }
+            }
+        });
+    };
+
     self.openModal = function (selector) {
         feedback.limparErros(selector);
         $(selector).prop('hidden', false);
@@ -1808,15 +2626,16 @@ function Dashboard() {
             });
 
             $(document).on('click', '.filter-chip', function () {
-                var categoria = $(this).attr('data-categoria');
+                var atributo = $(this).attr('data-categoria');
 
-                if (!categoria) {
+                if (!atributo) {
                     self.state.categoriasFiltradas = [];
                 } else {
-                    var indice = self.state.categoriasFiltradas.indexOf(categoria);
+                    var categoriaId = parseInt(atributo, 10);
+                    var indice = self.state.categoriasFiltradas.indexOf(categoriaId);
 
                     if (indice === -1) {
-                        self.state.categoriasFiltradas.push(categoria);
+                        self.state.categoriasFiltradas.push(categoriaId);
                     } else {
                         self.state.categoriasFiltradas.splice(indice, 1);
                     }
@@ -1950,6 +2769,52 @@ function Dashboard() {
 
             $('#btnConfirmEditRecorrenciaValue').on('click', self.atualizarValorRecorrencia);
 
+            $('#btnOpenProfile, #btnOpenProfileMobile').on('click', self.abrirModalPerfil);
+
+            $('#modalProfile').on('click', function (e) {
+                if ($(e.target).is('#modalProfile')) {
+                    self.closeModal('#modalProfile');
+                }
+            });
+
+            $('#inputProfileEmail').on('input', self.atualizarCampoSenhaEmail);
+            $('#btnConfirmProfileData').on('click', self.salvarDadosPerfil);
+            $('#btnConfirmProfilePassword').on('click', self.alterarSenhaPerfil);
+
+            $('#btnChangePhoto').on('click', function () {
+                $('#inputProfilePhoto').trigger('click');
+            });
+            $('#inputProfilePhoto').on('change', self.enviarFotoPerfil);
+            $('#btnRemovePhoto').on('click', self.removerFotoPerfil);
+
+            $('#btnDeleteProfile').on('click', self.mostrarAlertaExclusao);
+            $('#btnCancelDeleteProfile').on('click', self.esconderAlertaExclusao);
+            $('#btnConfirmDeleteProfile').on('click', self.excluirCadastro);
+
+            $('#btnNewCategoria').on('click', self.abrirModalNovaCategoria);
+            $('#btnConfirmCategoria').on('click', self.salvarCategoria);
+            $('#inputCategoriaNome').on('input', self.atualizarPreviaCategoria);
+
+            $('#modalCategoria').on('click', function (e) {
+                if ($(e.target).is('#modalCategoria')) {
+                    self.closeModal('#modalCategoria');
+                }
+            });
+
+            $(document).on('click', '#iconePickerCategoria .icone-opcao', function () {
+                self.state.categoriaIconeSelecionado = $(this).attr('data-icone');
+                $('#iconePickerCategoria .icone-opcao').attr('aria-pressed', 'false');
+                $(this).attr('aria-pressed', 'true');
+                self.atualizarPreviaCategoria();
+            });
+
+            $(document).on('click', '#tomPickerCategoria .color-swatch', function () {
+                self.state.categoriaTomSelecionado = $(this).attr('data-tom');
+                $('#tomPickerCategoria .color-swatch').removeClass('selected').attr('aria-pressed', 'false');
+                $(this).addClass('selected').attr('aria-pressed', 'true');
+                self.atualizarPreviaCategoria();
+            });
+
             self.exibirDadosUsuario();
             self.exibirSaudacao();
             self.renderizarPeriodo();
@@ -1958,9 +2823,12 @@ function Dashboard() {
             self.updateAccountSelector('all');
             self.carregarDesignSystem();
             self.carregarContas();
+            self.carregarCategorias();
+            self.carregarOpcoesCategoria();
             self.carregarCartoes();
             self.carregarTransacoes();
             self.carregarRecorrencias();
+            self.carregarPerfil();
         } else {
             window.location.href = 'login.html';
         }

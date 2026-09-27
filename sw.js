@@ -1,7 +1,6 @@
-// v4: ícones em Lucide (icones.js), avisos com Toast/Dialog (feedback.js) e
-// campos com rótulo. Trocar a versão descarta o cache antigo, que serviria o
-// CSS/JS anterior (cache-first).
-const CACHE_NAME = 'e-financeiro-shell-v4';
+// v6: categorias dinâmicas (seção Categorias, chips e gráfico vindos da API).
+// Trocar a versão escarta o cache antigo, que serviria o CSS/JS anterior (cache-first).
+const CACHE_NAME = 'e-financeiro-shell-v6';
 
 const APP_SHELL = [
     'index.html',

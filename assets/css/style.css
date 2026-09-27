@@ -863,3 +863,178 @@ select {
     padding: var(--space-1) var(--space-2-5);
     box-sizing: content-box;
 }
+
+/* ===== Meu perfil ===== */
+
+/* Bloco do usuário na sidebar: o chip abre o perfil, o botão de sair fica ao lado */
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+/* Avatar da topbar mobile clicável */
+.avatar-btn {
+    display: inline-flex;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-circle);
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.avatar-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+#modalProfile {
+    --dialog-width: 560px;
+}
+
+#modalProfile [hidden] {
+    display: none;
+}
+
+.profile-photo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.profile-photo__avatar {
+    width: 88px;
+    height: 88px;
+    font-size: var(--text-2xl);
+}
+
+.profile-photo__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.profile-photo__actions .ef-field__message {
+    flex-basis: 100%;
+}
+
+.profile-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.profile-section__title {
+    margin: 0;
+    font: var(--type-body);
+    font-weight: var(--weight-semibold);
+}
+
+.profile-section__text {
+    margin: 0;
+    font: var(--type-body-sm);
+    color: var(--text-muted);
+}
+
+.profile-section .ef-btn--danger {
+    align-self: flex-start;
+}
+
+/* Alerta de exclusão do cadastro: aparece dentro do modal, não é um segundo modal */
+.profile-danger-alert {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--border-invalid);
+    border-radius: var(--radius-md);
+    background-color: var(--tone-negative-bg);
+}
+
+.profile-danger-alert__title {
+    margin: 0;
+    font: var(--type-body);
+    font-weight: var(--weight-semibold);
+    color: var(--tone-negative-fg);
+}
+
+.profile-danger-alert__text {
+    margin: 0;
+    font: var(--type-body-sm);
+    color: var(--text-primary);
+}
+
+.profile-danger-alert__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+/* ===== Categorias ===== */
+
+.categorias-grupo + .categorias-grupo {
+    margin-top: var(--space-4);
+}
+
+.categorias-grupo__titulo {
+    margin: 0;
+    padding: var(--space-4) var(--space-5) var(--space-2);
+    font: var(--type-caption);
+    font-weight: var(--weight-semibold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.categoria-fixa {
+    display: inline-flex;
+    color: var(--text-faint);
+}
+
+.categoria-previa {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.categoria-previa__nome {
+    font: var(--type-body);
+    font-weight: var(--weight-semibold);
+}
+
+.icone-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--icon-btn-sm), 1fr));
+    gap: var(--space-2);
+}
+
+.icone-opcao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--icon-btn-sm);
+    padding: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--surface-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.icone-opcao[aria-pressed="true"] {
+    border-color: var(--border-brand);
+    background-color: var(--surface-sunken);
+    color: var(--text-primary);
+}
+
+.icone-opcao:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+#modalCategoria [hidden] {
+    display: none;
+}

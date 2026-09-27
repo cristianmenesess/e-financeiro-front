@@ -17,6 +17,12 @@ function TelaCadastro() {
         localStorage.setItem('token', dados.token);
         localStorage.setItem('nome', dados.nome);
         localStorage.setItem('email', dados.email);
+
+        if (dados.fotoUrl) {
+            localStorage.setItem('fotoUrl', dados.fotoUrl);
+        } else {
+            localStorage.removeItem('fotoUrl');
+        }
     };
 
     self.mostrarCarregando = function () {
