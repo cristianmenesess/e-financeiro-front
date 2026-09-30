@@ -157,9 +157,14 @@ function TelaLogin() {
      * @returns
      */
     self.exibirAvisoPendente = function () {
-        if (sessionStorage.getItem('avisoLogin') === 'senha-redefinida') {
-            sessionStorage.removeItem('avisoLogin');
+        var aviso = sessionStorage.getItem('avisoLogin');
+
+        sessionStorage.removeItem('avisoLogin');
+
+        if (aviso === 'senha-redefinida') {
             feedback.exibirSucesso('Senha redefinida', 'Entre com a nova senha.');
+        } else if (aviso === 'cadastro-excluido') {
+            feedback.exibirSucesso('Cadastro excluído', 'Seus dados foram apagados.');
         }
     };
 

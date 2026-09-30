@@ -1,6 +1,6 @@
-// v6: categorias dinâmicas (seção Categorias, chips e gráfico vindos da API).
+// v7: importação e exportação de planilha CSV.
 // Trocar a versão escarta o cache antigo, que serviria o CSS/JS anterior (cache-first).
-const CACHE_NAME = 'e-financeiro-shell-v6';
+const CACHE_NAME = 'e-financeiro-shell-v7';
 
 const APP_SHELL = [
     'index.html',

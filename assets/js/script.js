@@ -63,7 +63,8 @@ function Dashboard() {
         opcoesCategoria: { icones: [], tons: [] },
         editingCategoriaId: null,
         categoriaIconeSelecionado: null,
-        categoriaTomSelecionado: null
+        categoriaTomSelecionado: null,
+        previaImportacao: null
     };
 
     self.obterToken = function () {
@@ -2344,6 +2345,7 @@ function Dashboard() {
                 var canvas = document.createElement('canvas');
                 var contexto = canvas.getContext('2d');
 
+                // A imagem já está decodificada em memória: o endereço temporário não é mais usado
                 URL.revokeObjectURL(endereco);
 
                 if (!contexto) {
@@ -2516,13 +2518,12 @@ function Dashboard() {
             },
             success: function () {
                 self.limparSessao();
-                feedback.exibirSucesso('Cadastro excluído', 'Seus dados foram apagados.');
 
+                // O Toast não sobrevive ao redirecionamento: a tela de login mostra o aviso.
                 // Overlay de carregando fica em cima até sair da página, pra evitar um segundo
                 // clique em "Confirmar" (mandaria Bearer null)
-                setTimeout(function () {
-                    window.location.replace('login.html');
-                }, 1500);
+                sessionStorage.setItem('avisoLogin', 'cadastro-excluido');
+                window.location.replace('login.html');
             },
             error: function (jqXHR) {
                 self.esconderCarregando();
@@ -2538,6 +2539,223 @@ function Dashboard() {
                 } else {
                     self.tratarErroRequisicao(jqXHR);
                 }
+            }
+        });
+    };
+
+    /**
+     * Baixa um arquivo de uma rota autenticada (o token vai no cabeçalho) usando o nome enviado pela API.
+     *
+     * @param {string} rota rota da API
+     * @param {string} nomePadrao nome usado se a API não informar
+     * @returns
+     */
+    self.baixarArquivo = function (rota, nomePadrao) {
+        $.ajax({
+            url: self.apiBaseUrl + rota,
+            headers: self.cabecalhoAuth(),
+            xhrFields: { responseType: 'blob' },
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (arquivo, status, jqXHR) {
+                var disposicao = jqXHR.getResponseHeader('Content-Disposition') || '';
+                var nome = /filename="([^"]+)"/.exec(disposicao);
+                var endereco = URL.createObjectURL(arquivo);
+                var link = document.createElement('a');
+
+                link.href = endereco;
+                link.download = nome ? nome[1] : nomePadrao;
+                document.body.append(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(endereco);
+            },
+            error: function (jqXHR) {
+                if (jqXHR.status > 0 && jqXHR.status !== 401) {
+                    feedback.exibirToast('negative', 'Não foi possível baixar o arquivo', 'Tente de novo em instantes.');
+                } else {
+                    self.tratarErroRequisicao(jqXHR);
+                }
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    self.abrirModalPlanilha = function () {
+        var $conta = $('#inputImportAccount').empty();
+
+        self.state.contas.forEach(function (conta) {
+            $conta.append($('<option>', { value: conta.id, text: conta.nome }));
+        });
+
+        if (self.state.currentView !== 'all') {
+            $conta.val(self.state.currentView);
+        }
+
+        $('#inputImportFile').val('');
+        self.state.previaImportacao = null;
+        $('#importPreview').prop('hidden', true);
+        self.openModal('#modalSpreadsheet');
+    };
+
+    /**
+     * Monta o FormData com o arquivo escolhido e a conta padrão.
+     *
+     * @returns {FormData|null} dados do envio, ou null se faltar arquivo
+     */
+    self.montarEnvioPlanilha = function () {
+        if (!$('#inputImportAccount').val()) {
+            feedback.marcarErro('#inputImportAccount', 'Crie uma conta antes de importar');
+            feedback.focarPrimeiroErro('#modalSpreadsheet');
+            return null;
+        }
+
+        var arquivo = $('#inputImportFile')[0].files[0];
+
+        if (!arquivo) {
+            feedback.marcarErro('#inputImportFile', 'Escolha um arquivo CSV');
+            feedback.focarPrimeiroErro('#modalSpreadsheet');
+            return null;
+        }
+
+        var dados = new FormData();
+        dados.append('arquivo', arquivo);
+        dados.append('contaPadraoId', $('#inputImportAccount').val());
+        return dados;
+    };
+
+    self.analisarPlanilha = function () {
+        feedback.limparErros('#modalSpreadsheet');
+        var dados = self.montarEnvioPlanilha();
+
+        if (!dados) {
+            return;
+        }
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/planilhas/previa',
+            method: 'POST',
+            headers: self.cabecalhoAuth(),
+            data: dados,
+            processData: false,
+            contentType: false,
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (previa) {
+                self.state.previaImportacao = previa;
+                self.renderizarPrevia(previa.erros);
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Mostra o resumo da prévia, os erros (linha · coluna: motivo) e os possíveis duplicados.
+     *
+     * @param {Array} erros erros da prévia ou da tentativa de importação
+     * @returns
+     */
+    self.renderizarPrevia = function (erros) {
+        var previa = self.state.previaImportacao;
+        var partes = [];
+
+        if (previa) {
+            partes.push(previa.lancamentosAvulsos + ' lançamento(s) avulso(s)');
+            partes.push(previa.recorrencias + ' compra(s) parcelada(s)/recorrência(s)');
+
+            if (previa.novasCategorias.length) {
+                partes.push('novas categorias: ' + previa.novasCategorias.join(', '));
+            }
+
+            if (previa.novasContas.length) {
+                partes.push('novas contas: ' + previa.novasContas.join(', '));
+            }
+
+            if (previa.novosCartoes.length) {
+                partes.push('novos cartões: ' + previa.novosCartoes.join(', '));
+            }
+        }
+
+        $('#importSummary').text(partes.join(' · '));
+
+        var $erros = $('#importErrors').empty();
+        erros.forEach(function (erro) {
+            var onde = erro.linha === 0 ? 'Arquivo' : 'Linha ' + erro.linha;
+            $erros.append($('<li>', { text: onde + (erro.coluna ? ' · ' + erro.coluna : '') + ': ' + erro.mensagem }));
+        });
+        $('#importErrorsBox').prop('hidden', erros.length === 0);
+
+        var duplicadas = previa ? previa.linhas.filter(function (linha) { return linha.possivelDuplicado; }) : [];
+        var $duplicadas = $('#importDuplicates').empty();
+
+        duplicadas.forEach(function (linha) {
+            var texto = 'Linha ' + linha.linha + ': ' + self.formatarData(linha.data) + ' · ' + linha.descricao + ' · ' + self.formatCurrency(linha.valor);
+            $duplicadas.append($('<li>').append($('<label>').append(
+                $('<input>', { type: 'checkbox', 'data-linha': linha.linha }),
+                $('<span>', { text: texto })
+            )));
+        });
+        $('#importDuplicatesBox').prop('hidden', duplicadas.length === 0 || erros.length > 0);
+
+        $('#btnConfirmImport').prop('disabled', erros.length > 0);
+        $('#importPreview').prop('hidden', false);
+    };
+
+    self.confirmarImportacao = function () {
+        var dados = self.montarEnvioPlanilha();
+
+        if (!dados) {
+            return;
+        }
+
+        $('#importDuplicates input:checked').each(function () {
+            dados.append('linhasDuplicadasIncluidas', $(this).attr('data-linha'));
+        });
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/planilhas/importar',
+            method: 'POST',
+            headers: self.cabecalhoAuth(),
+            data: dados,
+            processData: false,
+            contentType: false,
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (resultado) {
+                self.closeModal('#modalSpreadsheet');
+                self.carregarContas();
+                self.carregarCartoes();
+                self.carregarCategorias();
+                self.carregarTransacoes();
+                self.carregarRecorrencias();
+
+                var partes = [resultado.lancamentosAvulsos + ' lançamento(s)', resultado.recorrencias + ' recorrência(s)'];
+
+                if (resultado.duplicadosPulados > 0) {
+                    partes.push(resultado.duplicadosPulados + ' duplicado(s) pulado(s)');
+                }
+
+                feedback.exibirSucesso('Planilha importada', partes.join(' · ') + '.');
+            },
+            error: function (jqXHR) {
+                if (jqXHR.status === 400 && jqXHR.responseJSON && jqXHR.responseJSON.erros) {
+                    self.renderizarPrevia(jqXHR.responseJSON.erros);
+                } else {
+                    self.tratarErroRequisicao(jqXHR);
+                }
+            },
+            complete: function () {
+                self.esconderCarregando();
             }
         });
     };
@@ -2768,6 +2986,26 @@ function Dashboard() {
             });
 
             $('#btnConfirmEditRecorrenciaValue').on('click', self.atualizarValorRecorrencia);
+
+            $('#btnOpenSpreadsheet').on('click', self.abrirModalPlanilha);
+            $('#btnExportSpreadsheet').on('click', function () {
+                self.baixarArquivo('/api/planilhas/exportar', 'e-financeiro-movimentacoes.csv');
+            });
+            $('#btnDownloadTemplate').on('click', function () {
+                self.baixarArquivo('/api/planilhas/modelo', 'modelo-importacao.csv');
+            });
+            $('#btnPreviewImport').on('click', self.analisarPlanilha);
+            $('#btnConfirmImport').on('click', self.confirmarImportacao);
+            $('#inputImportFile, #inputImportAccount').on('change', function () {
+                self.state.previaImportacao = null;
+                $('#importPreview').prop('hidden', true);
+            });
+
+            $('#modalSpreadsheet').on('click', function (e) {
+                if ($(e.target).is('#modalSpreadsheet')) {
+                    self.closeModal('#modalSpreadsheet');
+                }
+            });
 
             $('#btnOpenProfile, #btnOpenProfileMobile').on('click', self.abrirModalPerfil);
 

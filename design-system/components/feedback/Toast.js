@@ -59,7 +59,17 @@ export function exibirToast(props, duracaoMs) {
     }
 
     var toast = Toast(Object.assign({}, props, { onClose: function () { toast.remove(); } }));
+
+    // O tempo de vida é uma animação CSS (ef-toast-out, com atraso de `duracaoMs`): o toast sai
+    // quando ela termina, e o CSS pode pausá-la enquanto o ponteiro ou o foco estiver nele
+    toast.classList.add('ef-toast--auto');
+    toast.style.setProperty('--ef-toast-duration', (duracaoMs || 4000) + 'ms');
+    toast.addEventListener('animationend', function (evento) {
+        if (evento.target === toast && evento.animationName === 'ef-toast-out') {
+            toast.remove();
+        }
+    });
+
     regiao.append(toast);
-    window.setTimeout(function () { toast.remove(); }, duracaoMs || 4000);
     return toast;
 }

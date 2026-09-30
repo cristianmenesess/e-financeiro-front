@@ -130,7 +130,13 @@
                         </button>
                     </div>
                 </div>
-                <nav class="account-tabs" id="tabsDesktop"></nav>
+                <div class="page-header-actions">
+                    <nav class="account-tabs" id="tabsDesktop"></nav>
+                    <button class="ef-btn ef-btn--secondary ef-btn--sm" id="btnOpenSpreadsheet" aria-label="Importar ou exportar planilha" title="Importar ou exportar planilha">
+                        <i data-lucide="file-spreadsheet" class="ef-icon ef-icon--sm"></i>
+                        <span class="btn-label">Importar / Exportar</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Resumo: saldo + entradas/saídas -->
@@ -504,6 +510,67 @@
             </div>
 
             <button type="button" class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmCategoria">Salvar categoria</button>
+        </div>
+    </div>
+
+    <!-- MODAL: IMPORTAR / EXPORTAR PLANILHA -->
+    <div class="ef-dialog ef-dialog--auto" id="modalSpreadsheet" role="dialog" aria-modal="true" aria-labelledby="modalSpreadsheetTitle" hidden>
+        <div class="ef-dialog__panel">
+            <span class="ef-dialog__handle" aria-hidden="true"></span>
+            <div class="ef-dialog__head">
+                <div class="ef-dialog__text">
+                    <h2 class="ef-dialog__title" id="modalSpreadsheetTitle">Importar / Exportar</h2>
+                    <p class="ef-dialog__description">Planilha CSV no modelo do E-Financeiro.</p>
+                </div>
+                <button type="button" class="ef-dialog__close" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg></button>
+            </div>
+
+            <section class="spreadsheet-section" aria-labelledby="spreadsheetExportTitle">
+                <h3 class="spreadsheet-section__title" id="spreadsheetExportTitle">Exportar</h3>
+                <p class="spreadsheet-section__text">Baixe todas as suas movimentações num CSV no mesmo formato da importação.</p>
+                <button type="button" class="ef-btn ef-btn--secondary" id="btnExportSpreadsheet">Baixar minhas movimentações</button>
+            </section>
+
+            <section class="spreadsheet-section" aria-labelledby="spreadsheetImportTitle">
+                <h3 class="spreadsheet-section__title" id="spreadsheetImportTitle">Importar</h3>
+                <p class="spreadsheet-section__text">
+                    Use o modelo para montar sua planilha. Categorias, contas e cartões que ainda não existem são criados na importação.
+                </p>
+                <button type="button" class="ef-btn ef-btn--ghost ef-btn--sm spreadsheet-template" id="btnDownloadTemplate">
+                    <i data-lucide="download" class="ef-icon ef-icon--sm"></i> Baixar modelo
+                </button>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputImportAccount">Conta das linhas sem conta</label>
+                    <div class="ef-select">
+                        <select class="ef-select__control" id="inputImportAccount"></select>
+                        <span class="ef-select__chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                    </div>
+                </div>
+
+                <div class="ef-field">
+                    <label class="ef-field__label" for="inputImportFile">Arquivo CSV</label>
+                    <input class="ef-input" type="file" id="inputImportFile" accept=".csv,text/csv">
+                </div>
+
+                <button type="button" class="ef-btn ef-btn--primary ef-btn--block" id="btnPreviewImport">Analisar planilha</button>
+            </section>
+
+            <section class="spreadsheet-preview" id="importPreview" aria-live="polite" hidden>
+                <p class="spreadsheet-preview__summary" id="importSummary"></p>
+
+                <div class="spreadsheet-errors" id="importErrorsBox" hidden>
+                    <p class="spreadsheet-errors__title">Corrija a planilha e analise de novo. Nada foi importado.</p>
+                    <ul class="spreadsheet-errors__list" id="importErrors"></ul>
+                </div>
+
+                <div class="spreadsheet-duplicates" id="importDuplicatesBox" hidden>
+                    <p class="spreadsheet-section__text">Possíveis duplicados (já existe um lançamento igual). Marque os que quer importar mesmo assim:</p>
+                    <ul class="spreadsheet-duplicates__list" id="importDuplicates"></ul>
+                </div>
+
+                <button type="button" class="ef-btn ef-btn--primary ef-btn--lg ef-btn--block" id="btnConfirmImport">Importar</button>
+            </section>
         </div>
     </div>
 

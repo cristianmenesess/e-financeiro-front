@@ -6,6 +6,7 @@
 @keyframes ef-fade{from{opacity:0}to{opacity:1}}
 @keyframes ef-rise{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes ef-sheet-up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes ef-toast-out{to{opacity:0}}
 
 /* ProgressBar */
 .ef-progress{display:flex;flex-direction:column;gap:var(--space-2);--ef-progress-color:var(--tone-brand-accent)}
@@ -79,6 +80,14 @@
   animation:ef-rise var(--duration-normal) var(--ease-entrance);
   --ef-toast-accent:var(--tone-neutral-accent);
 }
+/* Toast com tempo de vida (exibirToast): some após --ef-toast-duration e é removido no animationend */
+.ef-toast--auto{
+  animation:ef-rise var(--duration-normal) var(--ease-entrance),
+    ef-toast-out var(--duration-normal) var(--ease-standard) var(--ef-toast-duration,4000ms) forwards;
+}
+.ef-toast--auto:focus-within{animation-play-state:paused}
+/* Só onde há ponteiro de verdade: no toque o :hover "gruda" e o toast não sairia mais */
+@media (hover:hover){.ef-toast--auto:hover{animation-play-state:paused}}
 .ef-toast--positive{--ef-toast-accent:var(--tone-positive-accent)}
 .ef-toast--negative{--ef-toast-accent:var(--tone-negative-accent)}
 .ef-toast--warning{--ef-toast-accent:var(--tone-warning-accent)}
