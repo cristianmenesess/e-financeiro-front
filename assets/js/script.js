@@ -42,10 +42,13 @@ function Dashboard() {
         selectedColor: self.cardColors[0],
         selectedContaColor: self.cardColors[0],
         editingContaId: null,
+        editingCardId: null,
         excludingContaId: null,
         currentTypeRecorrencia: 'in',
         currentCategoriaRecorrencia: null,
-        editingValorRecorrenciaId: null,
+        editingRecorrenciaId: null,
+        editingAssinaturaId: null,
+        currentCategoriaAssinatura: null,
 
         // Filtros do dashboard: mês/ano exibido e categorias marcadas
         // (lista vazia = todas as categorias)
@@ -59,6 +62,7 @@ function Dashboard() {
         contas: [],
         transactions: [],
         recorrencias: [],
+        assinaturas: [],
         categorias: [],
         opcoesCategoria: { icones: [], tons: [] },
         editingCategoriaId: null,
@@ -394,13 +398,18 @@ function Dashboard() {
     };
 
     /**
-     * Badge "3/10" das movimentações geradas por uma recorrência. A API só manda
-     * numeroParcela/totalParcelas nas parcelas; lançamento avulso não tem badge.
+     * Badge "3/10" das movimentações geradas por uma recorrência, ou o ícone de assinatura nas
+     * cobranças de assinatura. Lançamento avulso não tem badge.
      *
      * @param {object} tx transação retornada pela API
-     * @returns {jQuery|null} badge, ou null quando não é parcela
+     * @returns {jQuery|null} badge, ou null quando não é parcela nem cobrança de assinatura
      */
     self.criarBadgeParcela = function (tx) {
+        if (tx.assinaturaId) {
+            return $('<span>', { class: 'ef-badge ef-badge--sm ef-badge--mono parcela-badge', title: 'Cobrança de assinatura', 'aria-label': 'Cobrança de assinatura' })
+                .append(icones.criar('calendar-clock', 'xs'));
+        }
+
         if (!tx.numeroParcela || !tx.totalParcelas) {
             return null;
         }
@@ -424,7 +433,9 @@ function Dashboard() {
         var amountClass = tx.tipo === 'ENTRADA' ? 'tx-amount--in' : 'tx-amount--out';
         var prefix = tx.tipo === 'ENTRADA' ? '+' : '−';
         var metaCard = card ? ' · ' + card.nome : '';
-        var metaText = self.formatarData(tx.dataTransacao) + ' · ' + tx.nomeConta + metaCard;
+        // No cartão, a data da lista é o vencimento da fatura; a da compra vai junto
+        var metaCompra = tx.dataCompra ? ' · compra em ' + self.formatarData(tx.dataCompra) : '';
+        var metaText = self.formatarData(tx.dataTransacao) + ' · ' + tx.nomeConta + metaCard + metaCompra;
 
         var $icon;
 
@@ -921,26 +932,33 @@ function Dashboard() {
 
     /**
      * Monta o elemento de um cartão na grade com aparência de cartão físico:
-     * a cor escolhida vira o fundo, com chip decorativo e o gasto do mês
-     * (já calculado pela API) na base.
+     * a cor escolhida vira o fundo, com chip decorativo e a fatura atual
+     * (já calculada pela API) na base, junto do ciclo do cartão.
      *
      * @param {object} card cartão retornado pela API
      * @returns {jQuery} elemento pronto pra inserir na grade de cartões
      */
     self.buildCardItem = function (card) {
+        var $editar = self.criarBotaoIcone('pencil', 'Editar', false).on('click', function () {
+                self.abrirModalCartao(card);
+            });
+
         var $delete = self.criarBotaoIcone('trash-2', 'Excluir', true).on('click', function () {
                 self.excluirCartao(card);
             });
 
+        var ciclo = 'Fecha dia ' + card.diaFechamento + ' · vence ' + self.formatarData(card.vencimentoFaturaAtual);
+
         return $('<div>', { class: 'card-item' }).css({ background: card.corFundo, color: card.corTexto }).append(
             $('<div>', { class: 'card-item-top' }).append(
                 $('<div>', { class: 'card-chip' }),
-                $delete
+                $('<span>', { class: 'card-item-actions' }).append($editar, $delete)
             ),
             $('<div>').append(
                 $('<p>', { class: 'card-item-name', text: card.nome }),
-                $('<p>', { class: 'card-item-total', text: 'Gasto no mês' }),
-                $('<p>', { class: 'card-item-amount', text: self.formatCurrency(card.gastoNoMes) })
+                $('<p>', { class: 'card-item-total', text: 'Fatura atual' }),
+                $('<p>', { class: 'card-item-amount', text: self.formatCurrency(card.faturaAtual) }),
+                $('<p>', { class: 'card-item-cycle', text: ciclo })
             )
         );
     };
@@ -1028,6 +1046,10 @@ function Dashboard() {
 
                 if (!$('#modalRecorrencia').prop('hidden')) {
                     self.applyRecorrenciaTypeStyle(self.state.currentTypeRecorrencia);
+                }
+
+                if (!$('#modalAssinatura').prop('hidden')) {
+                    self.montarChipsCategoria('#categoriaRowAssinatura', 'SAIDA', self.state.currentCategoriaAssinatura);
                 }
             },
             error: function (jqXHR) {
@@ -1277,6 +1299,7 @@ function Dashboard() {
                 self.carregarCategorias();
                 self.carregarTransacoes();
                 self.carregarRecorrencias();
+                self.carregarAssinaturas();
                 feedback.exibirSucesso('Categoria excluída', resposta.movidas > 0 ? resposta.movidas + ' lançamento(s) movido(s).' : '');
             },
             error: function (jqXHR) {
@@ -1473,7 +1496,9 @@ function Dashboard() {
 
                 self.carregarContas();
                 self.carregarTransacoes();
-                feedback.exibirSucesso('Conta excluída', 'As movimentações e recorrências dela também foram apagadas.');
+                self.carregarRecorrencias();
+                self.carregarAssinaturas();
+                feedback.exibirSucesso('Conta excluída', 'As movimentações, recorrências e assinaturas dela também foram apagadas.');
             },
             error: function (jqXHR) {
                 // Senha errada volta 401 com mensagem: o erro vai no próprio campo
@@ -1529,9 +1554,9 @@ function Dashboard() {
         var amountClass = recorrencia.tipo === 'ENTRADA' ? 'tx-amount--in' : 'tx-amount--out';
         var prefix = recorrencia.tipo === 'ENTRADA' ? '+' : '−';
 
-        var $editar = self.criarBotaoIcone('pencil', 'Editar valor', false)
+        var $editar = self.criarBotaoIcone('pencil', 'Editar recorrência', false)
             .on('click', function () {
-                self.abrirModalEditarValorRecorrencia(recorrencia);
+                self.abrirEdicaoRecorrencia(recorrencia);
             });
 
         var $excluir = self.criarBotaoIcone('trash-2', 'Excluir recorrência', true)
@@ -1593,9 +1618,27 @@ function Dashboard() {
         self.state.currentCategoriaRecorrencia = self.categoriaPadraoDoTipo(tipo);
         feedback.limparErro('#categoriaRowRecorrencia');
         self.montarChipsCategoria('#categoriaRowRecorrencia', tipo, self.state.currentCategoriaRecorrencia);
+        self.atualizarCampoDataRecorrencia();
+    };
+
+    /**
+     * Com cartão (só na saída), a data informada é a da compra e as parcelas seguem as faturas;
+     * sem cartão, é a data da primeira parcela.
+     *
+     * @returns
+     */
+    self.atualizarCampoDataRecorrencia = function () {
+        var comCartao = self.state.currentTypeRecorrencia === 'out' && !!$('#inputRecorrenciaCard').val();
+
+        $('#rotuloRecorrenciaDataInicio').text(comCartao ? 'Data da compra' : 'Primeira parcela');
+        $('#dicaRecorrenciaCartao').prop('hidden', !comCartao);
     };
 
     self.resetRecorrenciaModal = function () {
+        self.state.editingRecorrenciaId = null;
+        $('#modalRecorrenciaTitle').text('Nova recorrência');
+        self.selecionarAlcance('#campoAlcanceRecorrencia', 'FUTURAS');
+        $('#campoAlcanceRecorrencia').prop('hidden', true);
         self.state.currentTypeRecorrencia = 'in';
         $('#inputRecorrenciaDescription').val('');
         $('#inputRecorrenciaValue').val('');
@@ -1609,6 +1652,52 @@ function Dashboard() {
         $('#inputRecorrenciaAccount').val(contaPadrao);
 
         self.applyRecorrenciaTypeStyle('in');
+    };
+
+    /**
+     * Abre o modal de recorrência preenchido com os dados de uma recorrência existente, com a
+     * escolha de aplicar a mudança só nas próximas parcelas ou em todas.
+     *
+     * @param {object} recorrencia recorrência retornada pela API
+     * @returns
+     */
+    self.abrirEdicaoRecorrencia = function (recorrencia) {
+        self.openModal('#modalRecorrencia');
+        self.resetRecorrenciaModal();
+
+        self.state.editingRecorrenciaId = recorrencia.id;
+        $('#modalRecorrenciaTitle').text('Editar recorrência');
+        $('#campoAlcanceRecorrencia').prop('hidden', false);
+
+        self.state.currentTypeRecorrencia = recorrencia.tipo === 'ENTRADA' ? 'in' : 'out';
+        $('#inputRecorrenciaCard').val(recorrencia.cartaoId ? String(recorrencia.cartaoId) : '');
+        self.applyRecorrenciaTypeStyle(self.state.currentTypeRecorrencia);
+
+        self.state.currentCategoriaRecorrencia = recorrencia.categoriaId;
+        self.montarChipsCategoria('#categoriaRowRecorrencia', recorrencia.tipo, recorrencia.categoriaId);
+
+        $('#inputRecorrenciaDescription').val(recorrencia.descricao);
+        $('#inputRecorrenciaValue').val(self.valorParaCampo(recorrencia.valor));
+        $('#inputRecorrenciaAccount').val(String(recorrencia.contaId));
+        $('#inputRecorrenciaParcelas').val(recorrencia.totalParcelas);
+        $('#inputRecorrenciaDataInicio').val(recorrencia.dataInicio);
+    };
+
+    /**
+     * Marca uma das opções "só as próximas" / "todas" de um campo de alcance.
+     *
+     * @param {string} seletorCampo campo de alcance (#campoAlcanceRecorrencia ou #campoAlcanceAssinatura)
+     * @param {string} alcance FUTURAS ou TODAS
+     * @returns
+     */
+    self.selecionarAlcance = function (seletorCampo, alcance) {
+        $(seletorCampo).find('.alcance-opcao').each(function () {
+            $(this).attr('aria-pressed', String($(this).attr('data-alcance') === alcance));
+        });
+    };
+
+    self.alcanceSelecionado = function (seletorCampo) {
+        return $(seletorCampo).find('.alcance-opcao[aria-pressed="true"]').attr('data-alcance') || 'FUTURAS';
     };
 
     /**
@@ -1657,8 +1746,8 @@ function Dashboard() {
     };
 
     /**
-     * Cria uma nova recorrência via API (o backend já gera todas as parcelas) e atualiza
-     * recorrências, cartões (o gasto do mês pode mudar) e transações.
+     * Cria (ou, no modo de edição, atualiza) uma recorrência via API — o backend gera ou refaz as
+     * parcelas — e atualiza recorrências, cartões (a fatura atual pode mudar) e transações.
      *
      * @param {string} description descrição
      * @param {number} value valor por parcela
@@ -1683,9 +1772,15 @@ function Dashboard() {
             corpo.dataInicio = dataInicio;
         }
 
+        var editando = self.state.editingRecorrenciaId !== null;
+
+        if (editando) {
+            corpo.alcance = self.alcanceSelecionado('#campoAlcanceRecorrencia');
+        }
+
         $.ajax({
-            url: self.apiBaseUrl + '/api/recorrencias',
-            method: 'POST',
+            url: self.apiBaseUrl + '/api/recorrencias' + (editando ? '/' + self.state.editingRecorrenciaId : ''),
+            method: editando ? 'PUT' : 'POST',
             contentType: 'application/json',
             headers: self.cabecalhoAuth(),
             data: JSON.stringify(corpo),
@@ -1697,46 +1792,12 @@ function Dashboard() {
                 self.carregarRecorrencias();
                 self.carregarCartoes();
                 self.carregarTransacoes();
-                feedback.exibirSucesso('Recorrência criada', totalParcelas + (totalParcelas === 1 ? ' parcela de ' : ' parcelas de ') + self.formatCurrency(value) + '.');
-            },
-            error: function (jqXHR) {
-                self.tratarErroRequisicao(jqXHR);
-            },
-            complete: function () {
-                self.esconderCarregando();
-            }
-        });
-    };
 
-    self.abrirModalEditarValorRecorrencia = function (recorrencia) {
-        self.state.editingValorRecorrenciaId = recorrencia.id;
-        $('#inputRecorrenciaNewValue').val(self.valorParaCampo(recorrencia.valor));
-        self.openModal('#modalEditRecorrenciaValue');
-    };
-
-    self.atualizarValorRecorrencia = function () {
-        var novoValor = self.lerValor($('#inputRecorrenciaNewValue').val());
-
-        if (isNaN(novoValor) || novoValor <= 0) {
-            feedback.marcarErro('#inputRecorrenciaNewValue', 'Informe um valor maior que zero');
-            feedback.focarPrimeiroErro('#modalEditRecorrenciaValue');
-            return;
-        }
-
-        $.ajax({
-            url: self.apiBaseUrl + '/api/recorrencias/' + self.state.editingValorRecorrenciaId + '/valor',
-            method: 'PUT',
-            contentType: 'application/json',
-            headers: self.cabecalhoAuth(),
-            data: JSON.stringify({ valor: novoValor }),
-            beforeSend: function () {
-                self.mostrarCarregando();
-            },
-            success: function () {
-                self.closeModal('#modalEditRecorrenciaValue');
-                self.carregarRecorrencias();
-                self.carregarTransacoes();
-                feedback.exibirSucesso('Valor atualizado', 'As próximas parcelas passam a ' + self.formatCurrency(novoValor) + '.');
+                if (editando) {
+                    feedback.exibirSucesso('Recorrência atualizada', description);
+                } else {
+                    feedback.exibirSucesso('Recorrência criada', totalParcelas + (totalParcelas === 1 ? ' parcela de ' : ' parcelas de ') + self.formatCurrency(value) + '.');
+                }
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1765,7 +1826,7 @@ function Dashboard() {
     };
 
     /**
-     * Exclui uma recorrência via API e atualiza recorrências, cartões (o gasto do mês pode
+     * Exclui uma recorrência via API e atualiza recorrências, cartões (a fatura atual pode
      * mudar) e transações.
      *
      * @param {number} id id da recorrência
@@ -1784,6 +1845,298 @@ function Dashboard() {
                 self.carregarCartoes();
                 self.carregarTransacoes();
                 feedback.exibirSucesso('Recorrência excluída');
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Busca as assinaturas do usuário e atualiza a lista.
+     *
+     * @returns
+     */
+    self.carregarAssinaturas = function () {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/assinaturas',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (resposta) {
+                self.state.assinaturas = resposta;
+                self.renderAssinaturas();
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Monta a linha de uma assinatura: ativa tem editar, cancelar e excluir; cancelada só excluir.
+     *
+     * @param {object} assinatura assinatura retornada pela API
+     * @returns {jQuery} elemento &lt;li&gt; pronto pra inserir na lista
+     */
+    self.buildAssinaturaItem = function (assinatura) {
+        var cancelada = !!assinatura.canceladaEm;
+        var anual = assinatura.periodicidade === 'ANUAL';
+
+        var meta = cancelada
+            ? [(anual ? 'Anual' : 'Mensal'), 'cancelada em ' + self.formatarData(assinatura.canceladaEm)]
+            : [anual ? 'Anual' : 'Mensal', 'próxima ' + self.formatarData(assinatura.proximaCobranca)];
+
+        meta.push(assinatura.nomeConta);
+
+        if (assinatura.nomeCartao) {
+            meta.push(assinatura.nomeCartao);
+        }
+
+        var $acoes = $('<span>', { class: 'card-item-actions' });
+
+        if (!cancelada) {
+            $acoes.append(
+                self.criarBotaoIcone('pencil', 'Editar assinatura', false).on('click', function () {
+                    self.abrirModalAssinatura(assinatura);
+                }),
+                self.criarBotaoIcone('ban', 'Cancelar assinatura', true).on('click', function () {
+                    self.cancelarAssinatura(assinatura);
+                })
+            );
+        }
+
+        $acoes.append(self.criarBotaoIcone('trash-2', 'Excluir assinatura', true).on('click', function () {
+            self.excluirAssinatura(assinatura);
+        }));
+
+        return $('<li>', { class: 'ef-list-row' + (cancelada ? ' assinatura--cancelada' : '') }).append(
+            $('<span>', { class: 'ef-list-row__leading' }).append(self.criarTileCategoria(assinatura.categoriaId)),
+            $('<span>', { class: 'ef-list-row__text' }).append(
+                $('<span>', { class: 'ef-list-row__title', text: assinatura.descricao }),
+                $('<span>', { class: 'ef-list-row__subtitle', text: meta.join(' · ') })
+            ),
+            $('<span>', { class: 'ef-list-row__end' }).append(
+                $('<span>', { class: 'ef-list-row__value tx-amount--out', text: '−' + self.formatCurrency(assinatura.valor) })
+            ),
+            $acoes
+        );
+    };
+
+    /**
+     * Mostra a lista de assinaturas e, no subtítulo, quanto as ativas custam por mês (anual
+     * entra dividida por 12).
+     *
+     * @returns
+     */
+    self.renderAssinaturas = function () {
+        var $lista = $('#assinaturasLista').empty();
+        var ativas = self.state.assinaturas.filter(function (assinatura) { return !assinatura.canceladaEm; });
+
+        if (self.state.assinaturas.length === 0) {
+            $lista.append(self.criarEstadoVazio('li', 'Nenhuma assinatura cadastrada ainda.', 'calendar-clock'));
+        } else {
+            self.state.assinaturas.forEach(function (assinatura) {
+                $lista.append(self.buildAssinaturaItem(assinatura));
+            });
+        }
+
+        var porMes = ativas.reduce(function (total, assinatura) {
+            return total + (assinatura.periodicidade === 'ANUAL' ? assinatura.valor / 12 : assinatura.valor);
+        }, 0);
+
+        $('#assinaturasResumo').text(ativas.length === 0
+            ? 'Cobranças mensais ou anuais, até você cancelar'
+            : self.formatCurrency(porMes) + ' por mês em ' + ativas.length + (ativas.length === 1 ? ' assinatura ativa' : ' assinaturas ativas'));
+    };
+
+    /**
+     * Abre o modal de assinatura: vazio pra criar, ou preenchido pra editar (com a escolha de
+     * aplicar a mudança só nas próximas cobranças ou em todas).
+     *
+     * @param {object|null} assinatura assinatura retornada pela API, quando é edição
+     * @returns
+     */
+    self.abrirModalAssinatura = function (assinatura) {
+        var $conta = $('#inputAssinaturaAccount').empty();
+        var $cartao = $('#inputAssinaturaCard').empty().append($('<option>', { value: '', text: 'Sem cartão (débito / dinheiro)' }));
+
+        self.state.contas.forEach(function (conta) {
+            $conta.append($('<option>', { value: conta.id, text: conta.nome }));
+        });
+
+        self.state.cards.forEach(function (card) {
+            $cartao.append($('<option>', { value: card.id, text: card.nome }));
+        });
+
+        var contaPadrao = self.state.currentView !== 'all' ? self.state.currentView : (self.state.contas[0] ? self.state.contas[0].id : '');
+        var periodicidade = assinatura ? assinatura.periodicidade : 'MENSAL';
+
+        self.state.editingAssinaturaId = assinatura ? assinatura.id : null;
+        self.state.currentCategoriaAssinatura = assinatura ? assinatura.categoriaId : null;
+
+        $('#modalAssinaturaTitle').text(assinatura ? 'Editar assinatura' : 'Nova assinatura');
+        $('#inputAssinaturaDescription').val(assinatura ? assinatura.descricao : '');
+        $('#inputAssinaturaValue').val(assinatura ? self.valorParaCampo(assinatura.valor) : '');
+        $conta.val(String(assinatura ? assinatura.contaId : contaPadrao));
+        $cartao.val(assinatura && assinatura.cartaoId ? String(assinatura.cartaoId) : '');
+        $('#inputAssinaturaDataInicio').val(assinatura ? assinatura.dataInicio : '');
+        $('#periodicidadeAssinatura .periodicidade-opcao').each(function () {
+            $(this).attr('aria-pressed', String($(this).attr('data-periodicidade') === periodicidade));
+        });
+
+        self.montarChipsCategoria('#categoriaRowAssinatura', 'SAIDA', self.state.currentCategoriaAssinatura);
+        self.selecionarAlcance('#campoAlcanceAssinatura', 'FUTURAS');
+        $('#campoAlcanceAssinatura').prop('hidden', !assinatura);
+
+        self.openModal('#modalAssinatura');
+    };
+
+    /**
+     * Valida o modal de assinatura e cria ou atualiza a assinatura via API. As cobranças viram
+     * movimentações, por isso recarrega transações e cartões junto.
+     *
+     * @returns
+     */
+    self.salvarAssinatura = function () {
+        feedback.limparErros('#modalAssinatura');
+
+        var descricao = $.trim($('#inputAssinaturaDescription').val());
+        var valor = self.lerValor($('#inputAssinaturaValue').val());
+        var contaId = parseInt($('#inputAssinaturaAccount').val());
+        var valido = true;
+
+        if (!descricao) {
+            feedback.marcarErro('#inputAssinaturaDescription', 'Informe uma descrição');
+            valido = false;
+        }
+
+        if (isNaN(valor) || valor <= 0) {
+            feedback.marcarErro('#inputAssinaturaValue', 'Informe um valor maior que zero');
+            valido = false;
+        }
+
+        if (!contaId) {
+            feedback.marcarErro('#inputAssinaturaAccount', 'Crie uma conta antes de lançar');
+            valido = false;
+        }
+
+        if (!self.state.currentCategoriaAssinatura) {
+            feedback.marcarErro('#categoriaRowAssinatura', 'Escolha uma categoria');
+            valido = false;
+        }
+
+        if (!valido) {
+            feedback.focarPrimeiroErro('#modalAssinatura');
+            return;
+        }
+
+        var editando = self.state.editingAssinaturaId !== null;
+        var corpo = {
+            descricao: descricao,
+            valor: valor,
+            periodicidade: $('#periodicidadeAssinatura .periodicidade-opcao[aria-pressed="true"]').attr('data-periodicidade'),
+            categoriaId: self.state.currentCategoriaAssinatura,
+            contaId: contaId,
+            cartaoId: parseInt($('#inputAssinaturaCard').val()) || null
+        };
+
+        if ($('#inputAssinaturaDataInicio').val()) {
+            corpo.dataInicio = $('#inputAssinaturaDataInicio').val();
+        }
+
+        if (editando) {
+            corpo.alcance = self.alcanceSelecionado('#campoAlcanceAssinatura');
+        }
+
+        $.ajax({
+            url: self.apiBaseUrl + '/api/assinaturas' + (editando ? '/' + self.state.editingAssinaturaId : ''),
+            method: editando ? 'PUT' : 'POST',
+            contentType: 'application/json',
+            headers: self.cabecalhoAuth(),
+            data: JSON.stringify(corpo),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.closeModal('#modalAssinatura');
+                self.carregarAssinaturas();
+                self.carregarTransacoes();
+                self.carregarCartoes();
+                feedback.exibirSucesso(editando ? 'Assinatura atualizada' : 'Assinatura criada', descricao);
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Pede confirmação e cancela uma assinatura: as cobranças até hoje ficam, as próximas saem.
+     *
+     * @param {object} assinatura assinatura retornada pela API
+     * @returns
+     */
+    self.cancelarAssinatura = function (assinatura) {
+        feedback.confirmar({
+            titulo: 'Cancelar assinatura',
+            descricao: '"' + assinatura.descricao + '" deixa de ser cobrada. As cobranças até hoje continuam no histórico; as próximas são apagadas.',
+            rotuloConfirmar: 'Cancelar assinatura',
+            aoConfirmar: function () {
+                self.alterarAssinatura('POST', '/' + assinatura.id + '/cancelar', 'Assinatura cancelada', assinatura.descricao);
+            }
+        });
+    };
+
+    /**
+     * Pede confirmação e exclui uma assinatura com todas as cobranças, inclusive as passadas.
+     *
+     * @param {object} assinatura assinatura retornada pela API
+     * @returns
+     */
+    self.excluirAssinatura = function (assinatura) {
+        feedback.confirmar({
+            titulo: 'Excluir assinatura',
+            descricao: '"' + assinatura.descricao + '" e todas as cobranças dela, inclusive as passadas, serão apagadas permanentemente.',
+            rotuloConfirmar: 'Excluir assinatura',
+            aoConfirmar: function () {
+                self.alterarAssinatura('DELETE', '/' + assinatura.id, 'Assinatura excluída', assinatura.descricao);
+            }
+        });
+    };
+
+    /**
+     * Cancela ou exclui uma assinatura via API e recarrega o que depende das cobranças.
+     *
+     * @param {string} metodo POST (cancelar) ou DELETE (excluir)
+     * @param {string} caminho trecho da rota depois de /api/assinaturas
+     * @param {string} titulo título do aviso de sucesso
+     * @param {string} descricao texto do aviso de sucesso
+     * @returns
+     */
+    self.alterarAssinatura = function (metodo, caminho, titulo, descricao) {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/assinaturas' + caminho,
+            method: metodo,
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function () {
+                self.carregarAssinaturas();
+                self.carregarTransacoes();
+                self.carregarCartoes();
+                feedback.exibirSucesso(titulo, descricao);
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1828,22 +2181,80 @@ function Dashboard() {
     };
 
     /**
-     * Cria um novo cartão via API e atualiza a lista.
+     * Abre o modal de cartão: vazio pra criar, ou preenchido pra editar o cartão informado.
      *
-     * @param {string} name nome do cartão
-     * @param {object} colorObj cor escolhida ({ bg, color })
+     * @param {object} [card] cartão retornado pela API, quando é edição
      * @returns
      */
-    self.criarCartao = function (name, colorObj) {
+    self.abrirModalCartao = function (card) {
+        var corAtual = card ? self.cardColors.filter(function (c) { return c.color === card.corTexto; })[0] : null;
+
+        self.state.editingCardId = card ? card.id : null;
+        $('#inputCardName').val(card ? card.nome : '');
+        $('#inputCardClosingDay').val(card ? card.diaFechamento : '');
+        $('#inputCardDueDay').val(card ? card.diaVencimento : '');
+        self.state.selectedColor = card ? (corAtual || { bg: card.corFundo, color: card.corTexto }) : self.cardColors[0];
+        $('#modalCardTitle').text(card ? 'Editar cartão' : 'Novo cartão');
+        self.buildColorPicker();
+        self.openModal('#modalCard');
+    };
+
+    /**
+     * Lê um dia do mês (1 a 31) de um campo do modal de cartão, marcando erro se for inválido.
+     *
+     * @param {string} seletor campo do dia
+     * @param {string} mensagem erro exibido quando o dia é inválido
+     * @returns {number|null} o dia, ou null se inválido
+     */
+    self.lerDiaDoMes = function (seletor, mensagem) {
+        var texto = $.trim($(seletor).val());
+        var dia = /^\d{1,2}$/.test(texto) ? parseInt(texto, 10) : NaN;
+
+        if (isNaN(dia) || dia < 1 || dia > 31) {
+            feedback.marcarErro(seletor, mensagem);
+            return null;
+        }
+
+        return dia;
+    };
+
+    /**
+     * Valida o modal de cartão e cria ou atualiza o cartão via API. Mudar o fechamento ou o
+     * vencimento move as compras futuras para a nova fatura (a API cuida disso), por isso
+     * recarrega cartões e transações juntos.
+     *
+     * @returns
+     */
+    self.salvarCartao = function () {
+        feedback.limparErros('#modalCard');
+
+        var nome = $.trim($('#inputCardName').val());
+        var diaFechamento = self.lerDiaDoMes('#inputCardClosingDay', 'Informe um dia de 1 a 31');
+        var diaVencimento = self.lerDiaDoMes('#inputCardDueDay', 'Informe um dia de 1 a 31');
+
+        if (!nome) {
+            feedback.marcarErro('#inputCardName', 'Informe o nome do cartão');
+        }
+
+        if (!nome || diaFechamento === null || diaVencimento === null) {
+            feedback.focarPrimeiroErro('#modalCard');
+            return;
+        }
+
+        var editando = self.state.editingCardId !== null;
+        var colorObj = self.state.selectedColor;
+
         $.ajax({
-            url: self.apiBaseUrl + '/api/cartoes',
-            method: 'POST',
+            url: self.apiBaseUrl + '/api/cartoes' + (editando ? '/' + self.state.editingCardId : ''),
+            method: editando ? 'PUT' : 'POST',
             contentType: 'application/json',
             headers: self.cabecalhoAuth(),
             data: JSON.stringify({
-                nome: name,
+                nome: nome,
                 corFundo: colorObj.bg,
-                corTexto: colorObj.color
+                corTexto: colorObj.color,
+                diaFechamento: diaFechamento,
+                diaVencimento: diaVencimento
             }),
             beforeSend: function () {
                 self.mostrarCarregando();
@@ -1851,7 +2262,12 @@ function Dashboard() {
             success: function () {
                 self.closeModal('#modalCard');
                 self.carregarCartoes();
-                feedback.exibirSucesso('Cartão salvo', name);
+
+                if (editando) {
+                    self.carregarTransacoes();
+                }
+
+                feedback.exibirSucesso(editando ? 'Cartão atualizado' : 'Cartão salvo', nome);
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -1897,6 +2313,7 @@ function Dashboard() {
             success: function () {
                 self.carregarCartoes();
                 self.carregarTransacoes();
+                self.carregarAssinaturas();
                 feedback.exibirSucesso('Cartão excluído');
             },
             error: function (jqXHR) {
@@ -2015,7 +2432,7 @@ function Dashboard() {
 
     /**
      * Cria uma nova transação via API e atualiza transações e cartões (o cartão
-     * vinculado pode ter o gasto do mês alterado).
+     * vinculado pode ter a fatura atual alterada).
      *
      * @param {string} description descrição da transação
      * @param {number} value valor (já convertido pra número)
@@ -2063,7 +2480,8 @@ function Dashboard() {
      * @returns
      */
     self.excluirTransacao = function (tx) {
-        var parcela = tx.numeroParcela ? ' Só a parcela ' + tx.numeroParcela + '/' + tx.totalParcelas + ' sai; as outras continuam.' : '';
+        var parcela = tx.numeroParcela ? ' Só a parcela ' + tx.numeroParcela + '/' + tx.totalParcelas + ' sai; as outras continuam.'
+            : tx.assinaturaId ? ' Só esta cobrança sai; a assinatura continua.' : '';
 
         feedback.confirmar({
             titulo: 'Excluir movimentação',
@@ -2103,12 +2521,6 @@ function Dashboard() {
         });
     };
 
-    self.resetCardModal = function () {
-        $('#inputCardName').val('');
-        self.state.selectedColor = self.cardColors[0];
-        self.buildColorPicker();
-    };
-
     self.buildColorPicker = function () {
         var $picker = $('#colorPicker').empty();
 
@@ -2117,7 +2529,7 @@ function Dashboard() {
                 .css('background', colorObj.color)
                 .data('index', index);
 
-            if (index === 0) {
+            if (colorObj === self.state.selectedColor) {
                 $swatch.addClass('selected');
             }
 
@@ -2596,9 +3008,23 @@ function Dashboard() {
         }
 
         $('#inputImportFile').val('');
+        self.atualizarNomeArquivoImportacao();
         self.state.previaImportacao = null;
         $('#importPreview').prop('hidden', true);
         self.openModal('#modalSpreadsheet');
+    };
+
+    /**
+     * Mostra no seletor de arquivo o nome do CSV escolhido (ou o texto padrão quando não há arquivo).
+     *
+     * @returns
+     */
+    self.atualizarNomeArquivoImportacao = function () {
+        var arquivo = $('#inputImportFile')[0].files[0];
+
+        $('#importFileName').text(arquivo ? arquivo.name : 'Escolher arquivo');
+        $('#importFileHint').text(arquivo ? 'Clique para trocar o arquivo' : 'Clique para selecionar um .csv de até 2 MB');
+        $('.file-picker').toggleClass('file-picker--selecionado', !!arquivo);
     };
 
     /**
@@ -2694,6 +3120,8 @@ function Dashboard() {
         });
         $('#importErrorsBox').prop('hidden', erros.length === 0);
 
+        self.renderizarCartoesNovosDaPrevia(previa);
+
         var duplicadas = previa ? previa.linhas.filter(function (linha) { return linha.possivelDuplicado; }) : [];
         var $duplicadas = $('#importDuplicates').empty();
 
@@ -2710,12 +3138,90 @@ function Dashboard() {
         $('#importPreview').prop('hidden', false);
     };
 
+    /**
+     * Na prévia sem erros, mostra fechamento e vencimento a preencher pra cada cartão que a
+     * importação vai criar. Os dias já digitados continuam quando a lista é montada de novo.
+     *
+     * @param {object|null} previa prévia da importação
+     * @returns
+     */
+    self.renderizarCartoesNovosDaPrevia = function (previa) {
+        var cartoes = previa && previa.erros.length === 0 ? previa.novosCartoes : [];
+        var $lista = $('#importNewCards');
+        var digitados = {};
+
+        $lista.find('.spreadsheet-new-card').each(function () {
+            digitados[$(this).attr('data-nome')] = {
+                fechamento: $(this).find('[data-dia="fechamento"]').val(),
+                vencimento: $(this).find('[data-dia="vencimento"]').val()
+            };
+        });
+
+        $lista.empty();
+
+        cartoes.forEach(function (nome, indice) {
+            var anterior = digitados[nome] || { fechamento: '', vencimento: '' };
+
+            var criarCampo = function (tipo, rotulo, valor) {
+                var id = 'importCard' + indice + (tipo === 'fechamento' ? 'Closing' : 'Due');
+
+                return $('<div>', { class: 'ef-field' }).append(
+                    $('<label>', { class: 'ef-field__label', for: id, text: rotulo }),
+                    $('<input>', { class: 'ef-input ef-input--mono', type: 'number', id: id, min: 1, max: 31, inputmode: 'numeric', 'data-dia': tipo }).val(valor)
+                );
+            };
+
+            $lista.append($('<div>', { class: 'spreadsheet-new-card', 'data-nome': nome }).append(
+                $('<span>', { class: 'spreadsheet-new-card__name' }).append(icones.criar('credit-card', 'sm'), $('<span>', { text: nome })),
+                $('<div>', { class: 'field-grid' }).append(
+                    criarCampo('fechamento', 'Fecha no dia', anterior.fechamento),
+                    criarCampo('vencimento', 'Vence no dia', anterior.vencimento)
+                )
+            ));
+        });
+
+        $('#importNewCardsBox').prop('hidden', cartoes.length === 0);
+    };
+
+    /**
+     * Lê fechamento e vencimento dos cartões novos da prévia, marcando os campos inválidos.
+     *
+     * @returns {Array|null} lista { nome, diaFechamento, diaVencimento }, ou null se algum dia for inválido
+     */
+    self.lerCartoesNovosDaPrevia = function () {
+        var cartoes = [];
+        var valido = true;
+
+        $('#importNewCards .spreadsheet-new-card').each(function () {
+            var diaFechamento = self.lerDiaDoMes('#' + $(this).find('[data-dia="fechamento"]').attr('id'), 'Informe um dia de 1 a 31');
+            var diaVencimento = self.lerDiaDoMes('#' + $(this).find('[data-dia="vencimento"]').attr('id'), 'Informe um dia de 1 a 31');
+
+            if (diaFechamento === null || diaVencimento === null) {
+                valido = false;
+            }
+
+            cartoes.push({ nome: $(this).attr('data-nome'), diaFechamento: diaFechamento, diaVencimento: diaVencimento });
+        });
+
+        if (!valido) {
+            feedback.focarPrimeiroErro('#importNewCards');
+            return null;
+        }
+
+        return cartoes;
+    };
+
     self.confirmarImportacao = function () {
-        var dados = self.montarEnvioPlanilha();
+        feedback.limparErros('#importNewCards');
+        var cartoesNovos = self.lerCartoesNovosDaPrevia();
+        var dados = cartoesNovos ? self.montarEnvioPlanilha() : null;
 
         if (!dados) {
             return;
         }
+
+        // Parte JSON: o backend lê como lista de objetos
+        dados.append('cartoesNovos', new Blob([JSON.stringify(cartoesNovos)], { type: 'application/json' }));
 
         $('#importDuplicates input:checked').each(function () {
             dados.append('linhasDuplicadasIncluidas', $(this).attr('data-linha'));
@@ -2872,7 +3378,8 @@ function Dashboard() {
                 var description = $.trim($('#inputDescription').val());
                 var value = self.lerValor($('#inputValue').val());
                 var contaId = parseInt($('#inputAccount').val());
-                var cardId = parseInt($('#inputCard').val()) || null;
+                // O campo de cartão some na entrada, mas guarda a última escolha
+                var cardId = self.state.currentType === 'out' ? parseInt($('#inputCard').val()) || null : null;
 
                 if (self.validateTransaction(description, value, contaId)) {
                     self.criarTransacao(description, value, contaId, cardId);
@@ -2880,8 +3387,7 @@ function Dashboard() {
             });
 
             $('#btnNewCard').on('click', function () {
-                self.openModal('#modalCard');
-                self.resetCardModal();
+                self.abrirModalCartao(null);
             });
 
             $('#modalCard').on('click', function (e) {
@@ -2906,16 +3412,7 @@ function Dashboard() {
                 $(this).addClass('selected');
             });
 
-            $('#btnConfirmCard').on('click', function () {
-                var name = $.trim($('#inputCardName').val());
-
-                if (name) {
-                    self.criarCartao(name, self.state.selectedColor);
-                } else {
-                    feedback.marcarErro('#inputCardName', 'Informe o nome do cartão');
-                    feedback.focarPrimeiroErro('#modalCard');
-                }
-            });
+            $('#btnConfirmCard').on('click', self.salvarCartao);
 
             $('#btnNewConta').on('click', function () {
                 self.abrirModalConta();
@@ -2966,11 +3463,13 @@ function Dashboard() {
                 self.applyRecorrenciaTypeStyle(self.state.currentTypeRecorrencia);
             });
 
+            $('#inputRecorrenciaCard').on('change', self.atualizarCampoDataRecorrencia);
+
             $('#btnConfirmRecorrencia').on('click', function () {
                 var description = $.trim($('#inputRecorrenciaDescription').val());
                 var value = self.lerValor($('#inputRecorrenciaValue').val());
                 var contaId = parseInt($('#inputRecorrenciaAccount').val());
-                var cardId = parseInt($('#inputRecorrenciaCard').val()) || null;
+                var cardId = self.state.currentTypeRecorrencia === 'out' ? parseInt($('#inputRecorrenciaCard').val()) || null : null;
                 var totalParcelas = parseInt($('#inputRecorrenciaParcelas').val());
                 var dataInicio = $('#inputRecorrenciaDataInicio').val();
 
@@ -2979,13 +3478,33 @@ function Dashboard() {
                 }
             });
 
-            $('#modalEditRecorrenciaValue').on('click', function (e) {
-                if ($(e.target).is('#modalEditRecorrenciaValue')) {
-                    self.closeModal('#modalEditRecorrenciaValue');
+            $(document).on('click', '.alcance-opcao', function () {
+                self.selecionarAlcance($(this).closest('.alcance-field'), $(this).attr('data-alcance'));
+            });
+
+            $('#btnNewAssinatura').on('click', function () {
+                self.abrirModalAssinatura(null);
+            });
+
+            $('#modalAssinatura').on('click', function (e) {
+                if ($(e.target).is('#modalAssinatura')) {
+                    self.closeModal('#modalAssinatura');
                 }
             });
 
-            $('#btnConfirmEditRecorrenciaValue').on('click', self.atualizarValorRecorrencia);
+            $('#periodicidadeAssinatura .periodicidade-opcao').on('click', function () {
+                $('#periodicidadeAssinatura .periodicidade-opcao').attr('aria-pressed', 'false');
+                $(this).attr('aria-pressed', 'true');
+            });
+
+            $(document).on('click', '#categoriaRowAssinatura .categoria-chip', function () {
+                self.state.currentCategoriaAssinatura = $(this).data('categoria');
+                $('#categoriaRowAssinatura .categoria-chip').attr('aria-pressed', 'false');
+                $(this).attr('aria-pressed', 'true');
+                feedback.limparErro('#categoriaRowAssinatura');
+            });
+
+            $('#btnConfirmAssinatura').on('click', self.salvarAssinatura);
 
             $('#btnOpenSpreadsheet').on('click', self.abrirModalPlanilha);
             $('#btnExportSpreadsheet').on('click', function () {
@@ -3000,6 +3519,7 @@ function Dashboard() {
                 self.state.previaImportacao = null;
                 $('#importPreview').prop('hidden', true);
             });
+            $('#inputImportFile').on('change', self.atualizarNomeArquivoImportacao);
 
             $('#modalSpreadsheet').on('click', function (e) {
                 if ($(e.target).is('#modalSpreadsheet')) {
@@ -3066,6 +3586,7 @@ function Dashboard() {
             self.carregarCartoes();
             self.carregarTransacoes();
             self.carregarRecorrencias();
+            self.carregarAssinaturas();
             self.carregarPerfil();
         } else {
             window.location.href = 'login.html';
