@@ -1,6 +1,6 @@
-// v9: assinaturas e edição completa de recorrências.
+// v10: edição de movimentação, fatura do cartão, busca e filtros, gráfico por dia/mês/ano.
 // Trocar a versão escarta o cache antigo, que serviria o CSS/JS anterior (cache-first).
-const CACHE_NAME = 'e-financeiro-shell-v9';
+const CACHE_NAME = 'e-financeiro-shell-v10';
 
 const APP_SHELL = [
     'index.html',
@@ -62,10 +62,12 @@ const APP_SHELL = [
     'design-system/components/feedback/Toast.js',
     'design-system/components/feedback/EmptyState.js',
     'design-system/assets/logo-lockup.png',
+    'design-system/assets/logo-lockup-dark.png',
     'design-system/assets/logo-mark.png',
     'assets/js/theme.js',
     'assets/js/icones.js',
     'assets/js/feedback.js',
+    'assets/js/senha.js',
     'assets/js/script.js',
     'assets/js/login.js',
     'assets/js/cadastro.js',

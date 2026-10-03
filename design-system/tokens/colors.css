@@ -111,6 +111,22 @@
 --tone-ai-bg:var(--violet-50);--tone-ai-fg:var(--violet-600);--tone-ai-icon:var(--violet-500);--tone-ai-accent:var(--violet-500);
 --tone-solid-bg:var(--navy-700);--tone-solid-fg:var(--text-inverse);
 
+/* ── Integração · paleta de categorias ───────────────────────────────
+   Tons extras que o usuário escolhe pra uma categoria (além dos de status
+   acima). Escolhidos por distância perceptual (OKLab): nenhum par, contando
+   os 6 tons de status, fica abaixo de ΔE 13,9 — o gráfico de categorias não
+   repete cor. O fundo tonal sai da própria cor. */
+--category-blue:#106BC6;--category-indigo:#1212E2;--category-purple:#8725B1;--category-magenta:#ED26D9;
+--category-wine:#9B3B58;--category-pink:#CF81B8;--category-brown:#9B753B;
+--category-tint:14%;
+--tone-blue-bg:color-mix(in oklab,var(--category-blue) var(--category-tint),transparent);--tone-blue-icon:var(--category-blue);--tone-blue-accent:var(--category-blue);
+--tone-indigo-bg:color-mix(in oklab,var(--category-indigo) var(--category-tint),transparent);--tone-indigo-icon:var(--category-indigo);--tone-indigo-accent:var(--category-indigo);
+--tone-purple-bg:color-mix(in oklab,var(--category-purple) var(--category-tint),transparent);--tone-purple-icon:var(--category-purple);--tone-purple-accent:var(--category-purple);
+--tone-magenta-bg:color-mix(in oklab,var(--category-magenta) var(--category-tint),transparent);--tone-magenta-icon:var(--category-magenta);--tone-magenta-accent:var(--category-magenta);
+--tone-wine-bg:color-mix(in oklab,var(--category-wine) var(--category-tint),transparent);--tone-wine-icon:var(--category-wine);--tone-wine-accent:var(--category-wine);
+--tone-pink-bg:color-mix(in oklab,var(--category-pink) var(--category-tint),transparent);--tone-pink-icon:var(--category-pink);--tone-pink-accent:var(--category-pink);
+--tone-brown-bg:color-mix(in oklab,var(--category-brown) var(--category-tint),transparent);--tone-brown-icon:var(--category-brown);--tone-brown-accent:var(--category-brown);
+
 /* ── Integração · controles ──────────────────────────────────────── */
 --control-hover:var(--neutral-50);          /* hover de Button secondary / IconButton surface */
 --control-brand-hover:var(--teal-100);      /* hover de IconButton brand */
@@ -211,6 +227,10 @@ color-scheme:dark;
 --tone-info-bg:rgba(75,155,245,.16);--tone-info-fg:var(--blue-400);--tone-info-icon:var(--blue-400);
 --tone-ai-bg:rgba(139,123,240,.18);--tone-ai-fg:var(--violet-400);--tone-ai-icon:var(--violet-400);
 --tone-solid-bg:var(--navy-600);
+
+/* Paleta de categorias no escuro: os tons mais fechados sobem um passo pra não sumir na superfície */
+--category-blue:#2B8AE8;--category-indigo:#3D3DF2;--category-purple:#9A3CC4;--category-wine:#A84463;
+--category-tint:22%;
 
 --control-hover:rgba(255,255,255,.05);
 --control-brand-hover:rgba(48,144,132,.3);

@@ -15,7 +15,7 @@ import globals from 'globals';
  * mapa cobre quem consome.
  */
 var COMPONENTES = {
-    AreaChart: { props: 'data|width|height|tone|xLabels|yTicks|formatY|grid', enums: { tone: 'positive|negative|brand|violet' } },
+    AreaChart: { props: 'data|width|height|tone|xLabels|yTicks|formatY|grid|minPointWidth|tooltipLabels|formatTooltip', enums: { tone: 'positive|negative|brand|violet' } },
     Avatar: { props: 'src|name|size|ring', enums: { size: 'xs|sm|md|lg' } },
     UserChip: { props: 'src|name|meta|trailing|onClick' },
     Badge: { props: 'children|tone|dot|mono|size', enums: { tone: 'neutral|brand|positive|negative|warning|info|ai|solid', size: 'sm|md' } },
@@ -31,7 +31,7 @@ var COMPONENTES = {
     EmptyState: { props: 'icon|title|description|action|compact' },
     Field: { props: 'label|hint|error|required|htmlFor|children' },
     IconButton: { props: 'children|label|tone|size|active|disabled|onClick', enums: { tone: 'neutral|surface|brand|inverse', size: 'sm|md|lg' } },
-    IconTile: { props: 'children|tone|size', enums: { tone: 'neutral|brand|positive|negative|warning|ai' } },
+    IconTile: { props: 'children|tone|size', enums: { tone: 'neutral|brand|positive|negative|warning|ai|blue|indigo|purple|magenta|wine|pink|brown' } },
     Input: { props: 'prefix|suffix|iconLeft|invalid|mono|size|disabled|id|name|type|value|placeholder|inputMode|autocomplete|required|readOnly|min|max|step|onInput|onChange', enums: { size: 'sm|md|lg' } },
     InsightCard: { props: 'label|title|body|confidence|actionLabel|onAction|tone', enums: { tone: 'ai|warning|positive' } },
     ListRow: { props: 'leading|title|subtitle|value|delta|tone|trailing|onClick|divider|selected|disabled', enums: { tone: 'positive|negative' } },

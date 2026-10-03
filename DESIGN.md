@@ -121,6 +121,14 @@ colors:
   series-4: "{colors.amber-500}"
   series-5: "{colors.teal-500}"
   series-6: "{colors.neutral-400}"
+  # Paleta de categorias: tons extras que o usuário escolhe pra uma categoria
+  category-blue: "#106BC6"
+  category-indigo: "#1212E2"
+  category-purple: "#8725B1"
+  category-magenta: "#ED26D9"
+  category-wine: "#9B3B58"
+  category-pink: "#CF81B8"
+  category-brown: "#9B753B"
   # Semânticos · tema escuro ([data-theme="dark"])
   dark-bg-canvas: "#0A1117"
   dark-surface-card: "#111B24"
@@ -134,6 +142,10 @@ colors:
   dark-text-positive: "{colors.green-400}"
   dark-text-negative: "{colors.red-400}"
   dark-action-primary-hover: "{colors.teal-400}"
+  dark-category-blue: "#2B8AE8"
+  dark-category-indigo: "#3D3DF2"
+  dark-category-purple: "#9A3CC4"
+  dark-category-wine: "#A84463"
   # Paleta do usuário (cor de cartões e contas; valores gravados no backend — não reformatar)
   swatch-1-bg: "#E1F5EE"
   swatch-1-fg: "#0F6E56"
@@ -653,9 +665,11 @@ Relatórios, Insights IA, Metas, Configurações e Mais.
 ### Marca
 
 `logo-lockup.png` (símbolo + wordmark) para o rail e cabeçalhos; `logo-mark.png` (só o
-símbolo) para mobile e favicon — ambos em `design-system/assets/`. Respiro mínimo =
-metade da altura do símbolo. Em superfície escura o lockup vai dentro de uma cápsula
-branca (não há versão monocromática aprovada). Nunca recolorir, distorcer ou recompor.
+símbolo) para mobile — ambos em `design-system/assets/`. Respiro mínimo = metade da
+altura do símbolo. Em superfície escura entram as versões de traço branco,
+`logo-lockup-dark.png` e `logo-mark-dark.png`. O favicon e os ícones do app
+(`assets/imagens/icons/`) usam o símbolo branco e verde sobre navy-900. Nunca recolorir,
+distorcer ou recompor.
 
 ## Do's and Don'ts
 

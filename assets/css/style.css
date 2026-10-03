@@ -105,7 +105,7 @@ select {
 }
 
 .sidebar-logo-img {
-    height: var(--space-6);
+    height: var(--space-8);
     display: block;
 }
 
@@ -528,22 +528,59 @@ select {
 /* TELA DE CARTÕES */
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
     gap: var(--space-4);
 }
 
-/* Cada cartão cadastrado vira um "cartão físico": a cor escolhida pelo usuário
-   (paleta --swatch-*) é o fundo, com chip decorativo e o gasto do mês em mono.*/
+/* Cada cartão cadastrado vira um "cartão físico". O JS entrega duas variáveis: --card-face (a
+   mais escura das cores escolhidas) e --card-ink (a mais clara). A face é um gradiente dessa
+   cor, com um brilho no canto e dois arcos decorativos; por cima vão o nome, o chip, o símbolo
+   de aproximação, o número mascarado, o titular e a fatura atual em mono. */
 .card-item {
-    border-radius: var(--radius-lg);
-    padding: var(--space-5);
-    aspect-ratio: 8 / 5;
+    --card-face: var(--tone-brand-accent);
+    --card-ink: var(--text-inverse);
+
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    animation: fadeSlideIn var(--duration-normal) var(--ease-out) both;
+    gap: var(--space-2);
+    aspect-ratio: 1.586;
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
+    color: var(--card-ink);
+    background:
+        radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--neutral-0) 26%, transparent), transparent 60%),
+        linear-gradient(135deg, color-mix(in oklab, var(--card-face) 86%, var(--neutral-0)), var(--card-face) 45%, color-mix(in oklab, var(--card-face) 62%, var(--navy-900)));
     box-shadow: var(--shadow-card);
+    animation: fadeSlideIn var(--duration-normal) var(--ease-out) both;
     transition: var(--transition-surface);
+}
+
+/* Arcos decorativos no canto, como a estampa dos cartões */
+.card-item::before,
+.card-item::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    border-radius: var(--radius-circle);
+    border: 1px solid color-mix(in oklab, var(--card-ink) 16%, transparent);
+    pointer-events: none;
+}
+
+.card-item::before {
+    inset: auto -22% -58% auto;
+    width: 78%;
+    aspect-ratio: 1;
+}
+
+.card-item::after {
+    inset: auto -34% -74% auto;
+    width: 78%;
+    aspect-ratio: 1;
+    background: color-mix(in oklab, var(--card-ink) 6%, transparent);
 }
 
 .card-item:hover {
@@ -553,30 +590,96 @@ select {
 
 .card-item-top {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-}
-
-.card-chip {
-    width: 36px;
-    height: 26px;
-    border-radius: var(--radius-xs);
-    border: 1.5px solid currentcolor;
-    opacity: 0.5;
-    position: relative;
-}
-
-.card-chip::after {
-    content: '';
-    position: absolute;
-    inset: var(--space-1-5) var(--space-1);
-    border-radius: var(--radius-xs);
-    border: 1px solid currentcolor;
+    gap: var(--space-2);
+    min-height: var(--touch-target-sm, var(--space-8));
 }
 
 .card-item-name {
+    min-width: 0;
+    overflow: hidden;
     font: var(--type-body);
-    font-weight: var(--weight-semibold);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-wide);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card-item-chip-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5);
+    opacity: 0.9;
+}
+
+/* Chip metálico: dourado em gradiente com as trilhas dos contatos */
+.card-chip {
+    position: relative;
+    width: 38px;
+    height: 28px;
+    border-radius: var(--radius-xs);
+    background: linear-gradient(135deg, var(--amber-100), var(--amber-400) 55%, var(--amber-600));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--navy-900) 22%, transparent);
+}
+
+.card-chip::before,
+.card-chip::after {
+    content: '';
+    position: absolute;
+    border: 1px solid color-mix(in oklab, var(--navy-900) 30%, transparent);
+}
+
+.card-chip::before {
+    inset: 28% 0;
+    border-width: 1px 0;
+}
+
+.card-chip::after {
+    inset: 0 34%;
+    border-width: 0 1px;
+}
+
+.card-item-number {
+    font: var(--type-numeric);
+    letter-spacing: var(--tracking-mono-label);
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+.card-item-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.card-item-holder {
+    min-width: 0;
+}
+
+.card-item-holder-name {
+    overflow: hidden;
+    font: var(--type-mono-label);
+    letter-spacing: var(--tracking-label);
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.card-item-cycle {
+    overflow: hidden;
+    font: var(--type-mono-label);
+    font-size: var(--text-micro);
+    opacity: 0.7;
+    margin-top: var(--space-0-5);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card-item-invoice {
+    flex: 0 0 auto;
+    text-align: right;
 }
 
 .card-item-total {
@@ -584,21 +687,14 @@ select {
     font-size: var(--text-micro);
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
-    opacity: 0.65;
-    margin-top: var(--space-1-5);
+    opacity: 0.7;
 }
 
 .card-item-amount {
     font: var(--type-numeric-lg);
     font-size: var(--text-lg);
     margin-top: var(--space-0-5);
-}
-
-.card-item-cycle {
-    font: var(--type-mono-label);
-    font-size: var(--text-micro);
-    opacity: 0.65;
-    margin-top: var(--space-1);
+    white-space: nowrap;
 }
 
 .card-item-actions {
@@ -606,14 +702,14 @@ select {
     gap: var(--space-1);
 }
 
-/* Sobre a cor do cartão, os IconButtons herdam a cor do texto do cartão */
+/* Sobre a cor do cartão, os IconButtons herdam a tinta do cartão */
 .card-item .ef-icon-btn {
     color: currentcolor;
-    opacity: 0.55;
+    opacity: 0.7;
 }
 
 .card-item .ef-icon-btn:hover {
-    background: color-mix(in oklab, currentcolor 12%, transparent);
+    background: color-mix(in oklab, currentcolor 16%, transparent);
     color: currentcolor;
     opacity: 1;
 }
@@ -861,14 +957,11 @@ select {
     z-index: var(--z-sticky);
 }
 
-/* LOGOTIPO EM SUPERFÍCIE ESCURA — o lockup não tem versão monocromática aprovada:
-   no tema escuro ele vai dentro de uma cápsula branca (DESIGN.md → Marca) */
+/* LOGOTIPO EM SUPERFÍCIE ESCURA — no tema escuro entra o lockup de texto branco
+   (DESIGN.md → Marca); o <img> é o mesmo, só a imagem troca */
 [data-theme="dark"] .sidebar-logo-img,
 [data-theme="dark"] .auth-logo img {
-    background: var(--neutral-0);
-    border-radius: var(--radius-pill);
-    padding: var(--space-1) var(--space-2-5);
-    box-sizing: content-box;
+    content: url("../../design-system/assets/logo-lockup-dark.png");
 }
 
 /* ===== Meu perfil ===== */
@@ -1237,4 +1330,132 @@ select {
 .assinatura--cancelada .ef-list-row__text,
 .assinatura--cancelada .ef-list-row__end {
     opacity: 0.55;
+}
+
+/* Botão de mostrar/ocultar senha, dentro do Input (senha.js) */
+.ef-input__toggle {
+    display: flex;
+    flex: 0 0 auto;
+    padding: var(--space-1);
+    border: none;
+    border-radius: var(--radius-xs);
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition-control);
+}
+
+.ef-input__toggle:hover {
+    color: var(--text-primary);
+}
+
+.ef-input__toggle:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+/* Seletores do gráfico de tendência: granularidade (dia/mês/ano) e série */
+.chart-card-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+/* Busca e filtro por cartão acima da lista de movimentações */
+.transactions-tools {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3-5) var(--pad-card);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.transactions-search {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.transactions-card-filter {
+    flex: 0 0 200px;
+}
+
+@media (max-width: 1023.98px) {
+    .transactions-tools {
+        flex-direction: column;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--pad-card-compact);
+    }
+
+    .transactions-card-filter {
+        flex-basis: auto;
+    }
+}
+
+/* O cartão inteiro abre a fatura */
+.card-item {
+    cursor: pointer;
+}
+
+.card-item:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+/* Modal da fatura: navegação entre faturas, total e compras */
+.fatura-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.fatura-nav__texto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 0;
+    text-align: center;
+}
+
+.fatura-nav__total {
+    font: var(--type-numeric-lg);
+}
+
+.fatura-lista {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+/* Botão de página no topo do celular (Assinaturas), marcado quando a página está aberta */
+.topbar-icon-btn[aria-current="page"] {
+    color: var(--text-brand);
+    background: var(--surface-brand-soft);
+}
+
+/* No celular o lápis da movimentação some: a linha inteira abre a edição */
+@media (max-width: 1023.98px) {
+    .tx-edit-btn {
+        display: none;
+    }
+
+    .tx-row {
+        cursor: pointer;
+    }
+}
+
+/* Quantidade de meses/anos do gráfico de tendência; some no modo dia a dia */
+.chart-quantidade {
+    width: auto;
+}
+
+.chart-quantidade[hidden] {
+    display: none;
+}
+
+.chart-quantidade .ef-select__control {
+    height: var(--segmented-h-sm);
+    font-size: var(--text-xs);
 }

@@ -40,9 +40,10 @@ function TelaCadastro() {
      * @param {string} nome nome completo
      * @param {string} email e-mail
      * @param {string} senha senha
+     * @param {string} confirmacao senha digitada de novo
      * @returns {boolean} true se pode enviar
      */
-    self.validarFormulario = function (nome, email, senha) {
+    self.validarFormulario = function (nome, email, senha, confirmacao) {
         var valido = true;
 
         if (!nome) {
@@ -57,6 +58,11 @@ function TelaCadastro() {
 
         if (!senha || senha.length < 8) {
             feedback.marcarErro('#inputSenha', 'A senha precisa de pelo menos 8 caracteres');
+            valido = false;
+        }
+
+        if (senha !== confirmacao) {
+            feedback.marcarErro('#inputConfirmarSenha', 'As senhas não são iguais');
             valido = false;
         }
 
@@ -77,8 +83,9 @@ function TelaCadastro() {
         var nome = $.trim($('#inputNome').val());
         var email = $.trim($('#inputEmail').val());
         var senha = $('#inputSenha').val();
+        var confirmacao = $('#inputConfirmarSenha').val();
 
-        if (self.validarFormulario(nome, email, senha)) {
+        if (self.validarFormulario(nome, email, senha, confirmacao)) {
             $.ajax({
                 url: self.apiBaseUrl + '/api/autenticacao/cadastro',
                 method: 'POST',
@@ -121,7 +128,7 @@ function TelaCadastro() {
         } else {
             $('#btnCadastrar').on('click', self.efetuarCadastro);
 
-            $('#inputNome, #inputEmail, #inputSenha').on('keydown', function (e) {
+            $('#inputNome, #inputEmail, #inputSenha, #inputConfirmarSenha').on('keydown', function (e) {
                 if (e.key === 'Enter') {
                     self.efetuarCadastro();
                 }

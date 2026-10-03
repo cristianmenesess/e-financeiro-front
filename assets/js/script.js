@@ -58,6 +58,19 @@ function Dashboard() {
         // Série exibida no gráfico de tendência: resultado, entradas ou saidas
         serieTendencia: 'resultado',
 
+        // Eixo do gráfico de tendência: dia (dias do mês), mes (12 meses) ou ano (5 anos)
+        granularidadeTendencia: 'mes',
+
+        // Quantos meses ou anos o gráfico mostra (de 2 a 12), por granularidade
+        quantidadeTendencia: { mes: 12, ano: 5 },
+
+        // Filtros da lista de movimentações: texto da busca e cartão ('' = todos, 'nenhum' = sem cartão)
+        buscaTransacoes: '',
+        cartaoFiltrado: '',
+
+        editingTransactionId: null,
+        fatura: null,
+
         cards: [],
         contas: [],
         transactions: [],
@@ -243,8 +256,8 @@ function Dashboard() {
         $('.page').removeClass('active');
         $('#page' + self.capitalize(page)).addClass('active');
 
-        $('.nav-item, .bottom-nav-item').removeAttr('aria-current');
-        $('.nav-item[data-page="' + page + '"], .bottom-nav-item[data-page="' + page + '"]').attr('aria-current', 'page');
+        $('.nav-item, .bottom-nav-item, .topbar-icon-btn[data-page]').removeAttr('aria-current');
+        $('.nav-item[data-page="' + page + '"], .bottom-nav-item[data-page="' + page + '"], .topbar-icon-btn[data-page="' + page + '"]').attr('aria-current', 'page');
 
         self.toggleFabMobile(page === 'dashboard');
     };
@@ -426,9 +439,10 @@ function Dashboard() {
      * Parcela de recorrência ganha o badge "3/10" entre o texto e o valor.
      *
      * @param {object} tx transação retornada pela API
+     * @param {boolean} [somenteLeitura] true monta a linha sem os botões de editar e excluir
      * @returns {jQuery} elemento &lt;li&gt; pronto pra inserir na lista
      */
-    self.buildTransactionItem = function (tx) {
+    self.buildTransactionItem = function (tx, somenteLeitura) {
         var card = self.getCardById(tx.cartaoId);
         var amountClass = tx.tipo === 'ENTRADA' ? 'tx-amount--in' : 'tx-amount--out';
         var prefix = tx.tipo === 'ENTRADA' ? '+' : '−';
@@ -447,12 +461,29 @@ function Dashboard() {
             $icon = self.criarTileCategoria(tx.categoriaId);
         }
 
+        var $editar = self.criarBotaoIcone('pencil', 'Editar', false)
+            .addClass('tx-edit-btn')
+            .on('click', function () {
+                self.abrirEdicaoTransacao(tx);
+            });
+
         var $delete = self.criarBotaoIcone('trash-2', 'Excluir', true)
             .on('click', function () {
                 self.excluirTransacao(tx);
             });
 
-        return $('<li>', { class: 'ef-list-row' }).append(
+        var $linha = $('<li>', { class: 'ef-list-row' + (somenteLeitura ? '' : ' tx-row') });
+
+        // No celular o CSS esconde o lápis (não cabe na linha): tocar nela, fora dos botões, abre a edição
+        if (!somenteLeitura) {
+            $linha.on('click', function (evento) {
+                if ($editar.is(':hidden') && !$(evento.target).closest('button').length) {
+                    self.abrirEdicaoTransacao(tx);
+                }
+            });
+        }
+
+        return $linha.append(
             $('<span>', { class: 'ef-list-row__leading' }).append($icon),
             $('<span>', { class: 'ef-list-row__text' }).append(
                 $('<span>', { class: 'ef-list-row__title', text: tx.descricao }),
@@ -462,7 +493,7 @@ function Dashboard() {
             $('<span>', { class: 'ef-list-row__end' }).append(
                 $('<span>', { class: 'ef-list-row__value ' + amountClass, text: prefix + self.formatCurrency(tx.valor) })
             ),
-            $delete
+            somenteLeitura ? null : $('<span>', { class: 'card-item-actions' }).append($editar, $delete)
         );
     };
 
@@ -509,21 +540,36 @@ function Dashboard() {
     };
 
     /**
-     * Aplica os filtros de período e categoria sobre as transações carregadas.
+     * Deixa o texto sem acento e minúsculo, pra busca não depender de como foi digitado.
+     *
+     * @param {string} texto texto original
+     * @returns {string} texto normalizado
+     */
+    self.normalizarTexto = function (texto) {
+        return (texto || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    };
+
+    /**
+     * Aplica os filtros de período, categoria, cartão e busca sobre as transações carregadas.
      * Quando a API passar a aceitar ?de=&ate=&categorias=, esse filtro migra
      * pro servidor.
      *
-     * @returns {Array} transações do mês/ano e categorias selecionados
+     * @returns {Array} transações do mês/ano que passam nos filtros
      */
     self.obterTransacoesFiltradas = function () {
+        var busca = self.normalizarTexto($.trim(self.state.buscaTransacoes));
+        var cartao = self.state.cartaoFiltrado;
+
         return self.state.transactions.filter(function (tx) {
             var partes = tx.dataTransacao.split('-');
             var noPeriodo = parseInt(partes[0], 10) === self.state.periodo.ano &&
                 parseInt(partes[1], 10) - 1 === self.state.periodo.mes;
             var naCategoria = self.state.categoriasFiltradas.length === 0 ||
                 self.state.categoriasFiltradas.indexOf(tx.categoriaId) !== -1;
+            var noCartao = cartao === '' || (cartao === 'nenhum' ? !tx.cartaoId : tx.cartaoId === parseInt(cartao, 10));
+            var naBusca = busca === '' || self.normalizarTexto(tx.descricao).indexOf(busca) !== -1;
 
-            return noPeriodo && naCategoria;
+            return noPeriodo && naCategoria && noCartao && naBusca;
         });
     };
 
@@ -560,6 +606,7 @@ function Dashboard() {
         feedback.componentes
             .then(function (componentes) {
                 self.ds = componentes;
+                self.montarBuscaTransacoes();
                 self.montarSeletorTendencia();
                 self.atualizarGraficos();
             })
@@ -660,33 +707,71 @@ function Dashboard() {
     };
 
     /**
-     * Monta entradas, saídas e resultado (entradas − saídas) dos últimos 6
-     * meses, incluindo o mês selecionado no seletor de período.
+     * Monta entradas, saídas e resultado (entradas − saídas) por ponto do eixo, conforme a
+     * granularidade escolhida: cada dia do mês selecionado, ou os últimos N meses ou N anos
+     * (N de 2 a 12, escolhido pelo usuário), sempre terminando no período selecionado.
      *
-     * @returns {object} { labels, entradas, saidas, resultado }
+     * @returns {object} { labels, descricoes, entradas, saidas, resultado } — labels são os rótulos
+     *     curtos do eixo; descricoes, o texto completo de cada ponto pra dica do gráfico
      */
     self.montarDadosTendencia = function () {
         var mesesAbrev = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
-        var dados = { labels: [], entradas: [], saidas: [], resultado: [] };
+        var periodo = self.state.periodo;
+        var granularidade = self.state.granularidadeTendencia;
+        var doisDigitos = function (numero) { return (numero < 10 ? '0' : '') + numero; };
+        var pontos = [];
+        var i;
 
-        for (var i = 5; i >= 0; i--) {
-            var data = new Date(self.state.periodo.ano, self.state.periodo.mes - i, 1);
-            var totalEntradas = 0;
-            var totalSaidas = 0;
+        if (granularidade === 'dia') {
+            var diasNoMes = new Date(periodo.ano, periodo.mes + 1, 0).getDate();
 
-            self.obterTransacoesDoMes(data.getMonth(), data.getFullYear()).forEach(function (tx) {
-                if (tx.tipo === 'ENTRADA') {
-                    totalEntradas += tx.valor;
+            for (i = 1; i <= diasNoMes; i++) {
+                var dia = periodo.ano + '-' + doisDigitos(periodo.mes + 1) + '-' + doisDigitos(i);
+                pontos.push({ chave: dia, rotulo: String(i), descricao: self.formatarDataComAno(dia) });
+            }
+        } else {
+            var quantidade = self.state.quantidadeTendencia[granularidade];
+
+            for (i = quantidade - 1; i >= 0; i--) {
+                if (granularidade === 'ano') {
+                    pontos.push({ chave: String(periodo.ano - i), rotulo: String(periodo.ano - i), descricao: String(periodo.ano - i) });
                 } else {
-                    totalSaidas += tx.valor;
+                    var data = new Date(periodo.ano, periodo.mes - i, 1);
+                    pontos.push({
+                        chave: data.getFullYear() + '-' + doisDigitos(data.getMonth() + 1),
+                        rotulo: mesesAbrev[data.getMonth()],
+                        descricao: self.mesesNome[data.getMonth()] + ' ' + data.getFullYear()
+                    });
                 }
-            });
-
-            dados.labels.push(mesesAbrev[data.getMonth()]);
-            dados.entradas.push(totalEntradas);
-            dados.saidas.push(totalSaidas);
-            dados.resultado.push(totalEntradas - totalSaidas);
+            }
         }
+
+        // A data vem como AAAA-MM-DD: o começo dela já é a chave do dia, do mês ou do ano
+        var tamanhoChave = pontos[0].chave.length;
+        var totais = {};
+
+        self.state.transactions.forEach(function (tx) {
+            var chave = tx.dataTransacao.slice(0, tamanhoChave);
+            var total = totais[chave] || (totais[chave] = { entradas: 0, saidas: 0 });
+
+            if (tx.tipo === 'ENTRADA') {
+                total.entradas += tx.valor;
+            } else {
+                total.saidas += tx.valor;
+            }
+        });
+
+        var dados = { labels: [], descricoes: [], entradas: [], saidas: [], resultado: [] };
+
+        pontos.forEach(function (ponto) {
+            var total = totais[ponto.chave] || { entradas: 0, saidas: 0 };
+
+            dados.labels.push(ponto.rotulo);
+            dados.descricoes.push(ponto.descricao);
+            dados.entradas.push(total.entradas);
+            dados.saidas.push(total.saidas);
+            dados.resultado.push(total.entradas - total.saidas);
+        });
 
         return dados;
     };
@@ -735,12 +820,67 @@ function Dashboard() {
                 self.renderizarGraficoTendencia();
             }
         }));
+
+        $('#chartTendenciaGranularidade').empty().append(self.ds.SegmentedControl({
+            size: 'sm',
+            value: self.state.granularidadeTendencia,
+            options: [
+                { value: 'dia', label: 'Dia' },
+                { value: 'mes', label: 'Mês' },
+                { value: 'ano', label: 'Ano' }
+            ],
+            onChange: function (granularidade) {
+                self.state.granularidadeTendencia = granularidade;
+                self.montarQuantidadeTendencia();
+                self.renderizarGraficoTendencia();
+            }
+        }));
+
+        self.montarQuantidadeTendencia();
+    };
+
+    /**
+     * Seletor de quantos meses ou anos o gráfico de tendência mostra (2 a 12). Dia a dia não
+     * tem quantidade: são os dias do mês selecionado.
+     *
+     * @returns
+     */
+    self.montarQuantidadeTendencia = function () {
+        var granularidade = self.state.granularidadeTendencia;
+        var $quantidade = $('#chartTendenciaQuantidade').empty();
+
+        $('#chartTendenciaQuantidadeCampo').prop('hidden', granularidade === 'dia');
+
+        if (granularidade !== 'dia') {
+            for (var quantidade = 2; quantidade <= 12; quantidade++) {
+                $quantidade.append($('<option>', { value: quantidade, text: quantidade + (granularidade === 'ano' ? ' anos' : ' meses') }));
+            }
+
+            $quantidade.val(self.state.quantidadeTendencia[granularidade]);
+        }
+    };
+
+    /**
+     * Busca por descrição acima da lista de movimentações (SearchField do design system).
+     *
+     * @returns
+     */
+    self.montarBuscaTransacoes = function () {
+        $('#transactionsSearch').empty().append(self.ds.SearchField({
+            placeholder: 'Buscar movimentação',
+            shortcut: null,
+            width: '100%',
+            onChange: function (evento) {
+                self.state.buscaTransacoes = /** @type {HTMLInputElement} */ (evento.target).value;
+                self.aplicarFiltros();
+            }
+        }));
     };
 
     /**
      * Gráfico de tendência (AreaChart, uma série por vez — regra do design
-     * system) com o valor do mês selecionado e a variação sobre o mês anterior
-     * em destaque. Em Saídas, subir é ruim: o delta fica negativo.
+     * system) com o valor do período selecionado em destaque: em mês e ano, com a variação sobre o
+     * período anterior; dia a dia, o total do mês. Em Saídas, subir é ruim: o delta fica negativo.
      *
      * @returns
      */
@@ -749,11 +889,19 @@ function Dashboard() {
         var serie = self.state.serieTendencia;
         var valores = dados[serie];
         var tons = { resultado: 'brand', entradas: 'positive', saidas: 'negative' };
-        var atual = valores[valores.length - 1];
-        var anterior = valores[valores.length - 2];
-        var mesAnterior = new Date(self.state.periodo.ano, self.state.periodo.mes - 1, 1).getMonth();
+        var granularidade = self.state.granularidadeTendencia;
+        var periodo = self.state.periodo;
+        var mesAnterior = new Date(periodo.ano, periodo.mes - 1, 1).getMonth();
+        var porDia = granularidade === 'dia';
+
+        // Dia a dia, o destaque é o total do mês; em mês e ano, o último ponto contra o anterior
+        var atual = porDia ? valores.reduce(function (soma, valor) { return soma + valor; }, 0) : valores[valores.length - 1];
+        var anterior = porDia ? 0 : valores[valores.length - 2];
         var $resumo = $('#chartTendenciaResumo').empty();
         var $grafico = $('#chartTendencia').empty();
+
+        $('#chartTendenciaTitulo').text(porDia ? 'Dia a dia · ' + self.mesesNome[periodo.mes]
+            : 'Últimos ' + self.state.quantidadeTendencia[granularidade] + (granularidade === 'ano' ? ' anos' : ' meses'));
 
         $resumo.append($('<span>', { class: 'ef-figure__value', text: (atual < 0 ? '−' : '') + self.formatCurrency(Math.abs(atual)) }));
 
@@ -766,10 +914,10 @@ function Dashboard() {
                     class: 'ef-figure__delta' + (melhorou ? '' : ' ef-figure__delta--negative'),
                     text: (variacao >= 0 ? '↑ ' : '↓ ') + Math.abs(variacao).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'
                 }),
-                $('<span>', { class: 'ef-figure__caption', text: 'vs ' + self.mesesNome[mesAnterior] })
+                $('<span>', { class: 'ef-figure__caption', text: 'vs ' + (granularidade === 'ano' ? periodo.ano - 1 : self.mesesNome[mesAnterior]) })
             );
         } else {
-            $resumo.append($('<span>', { class: 'ef-figure__caption', text: 'em ' + self.mesesNome[self.state.periodo.mes] }));
+            $resumo.append($('<span>', { class: 'ef-figure__caption', text: 'em ' + (granularidade === 'ano' ? periodo.ano : self.mesesNome[periodo.mes]) }));
         }
 
         var semMovimento = valores.every(function (valor) { return valor === 0; });
@@ -785,6 +933,13 @@ function Dashboard() {
                 xLabels: dados.labels,
                 formatY: function (valor) {
                     return self.formatarValorCompacto(valor, false);
+                },
+
+                // Todo ponto tem rótulo no eixo: se não couberem, o gráfico rola pro lado
+                minPointWidth: { dia: 26, mes: 40, ano: 48 }[granularidade],
+                tooltipLabels: dados.descricoes,
+                formatTooltip: function (valor) {
+                    return (valor < 0 ? '−' : '') + self.formatCurrency(Math.abs(valor));
                 }
             }));
         }
@@ -825,7 +980,8 @@ function Dashboard() {
         var $list = $('#transactionsList').empty();
 
         if (transacoes.length === 0) {
-            $list.append(self.criarEstadoVazio('li', 'Nenhuma movimentação nesse período.', 'receipt'));
+            var filtrando = self.state.buscaTransacoes || self.state.cartaoFiltrado || self.state.categoriasFiltradas.length > 0;
+            $list.append(self.criarEstadoVazio('li', filtrando ? 'Nenhuma movimentação com esses filtros.' : 'Nenhuma movimentação nesse período.', 'receipt'));
         } else {
             transacoes.forEach(function (tx) {
                 $list.append(self.buildTransactionItem(tx));
@@ -931,36 +1087,202 @@ function Dashboard() {
     };
 
     /**
-     * Monta o elemento de um cartão na grade com aparência de cartão físico:
-     * a cor escolhida vira o fundo, com chip decorativo e a fatura atual
-     * (já calculada pela API) na base, junto do ciclo do cartão.
+     * Luminância aproximada (0 a 1) de uma cor #RRGGBB, pra decidir qual das duas cores do cartão
+     * é a mais escura.
+     *
+     * @param {string} hex cor no formato #RRGGBB
+     * @returns {number} luminância
+     */
+    self.luminancia = function (hex) {
+        var valor = parseInt(hex.replace('#', ''), 16);
+
+        return (0.299 * ((valor >> 16) & 255) + 0.587 * ((valor >> 8) & 255) + 0.114 * (valor & 255)) / 255;
+    };
+
+    /**
+     * Monta o elemento de um cartão na grade com aparência de cartão físico: a mais escura das
+     * duas cores escolhidas vira a face (em gradiente, feito no CSS) e a mais clara, a tinta. Tem
+     * chip, símbolo de aproximação, número mascarado, titular e a fatura atual (já calculada pela
+     * API) com o ciclo do cartão.
      *
      * @param {object} card cartão retornado pela API
      * @returns {jQuery} elemento pronto pra inserir na grade de cartões
      */
     self.buildCardItem = function (card) {
-        var $editar = self.criarBotaoIcone('pencil', 'Editar', false).on('click', function () {
+        var $editar = self.criarBotaoIcone('pencil', 'Editar', false).on('click', function (evento) {
+                evento.stopPropagation();
                 self.abrirModalCartao(card);
             });
 
-        var $delete = self.criarBotaoIcone('trash-2', 'Excluir', true).on('click', function () {
+        var $delete = self.criarBotaoIcone('trash-2', 'Excluir', true).on('click', function (evento) {
+                evento.stopPropagation();
                 self.excluirCartao(card);
             });
 
-        var ciclo = 'Fecha dia ' + card.diaFechamento + ' · vence ' + self.formatarData(card.vencimentoFaturaAtual);
+        var fundoMaisEscuro = self.luminancia(card.corFundo) < self.luminancia(card.corTexto);
+        var ciclo = 'Fecha ' + card.diaFechamento + ' · vence ' + self.formatarData(card.vencimentoFaturaAtual);
 
-        return $('<div>', { class: 'card-item' }).css({ background: card.corFundo, color: card.corTexto }).append(
+        // O cartão inteiro abre a fatura (clique ou Enter/espaço com o foco nele)
+        var $card = $('<div>', { class: 'card-item', role: 'button', tabindex: 0, 'aria-label': 'Ver fatura do cartão ' + card.nome })
+            .on('click', function () {
+                self.abrirFatura(card);
+            })
+            .on('keydown', function (evento) {
+                if (evento.target === this && (evento.key === 'Enter' || evento.key === ' ')) {
+                    evento.preventDefault();
+                    self.abrirFatura(card);
+                }
+            });
+
+        $card[0].style.setProperty('--card-face', fundoMaisEscuro ? card.corFundo : card.corTexto);
+        $card[0].style.setProperty('--card-ink', fundoMaisEscuro ? card.corTexto : card.corFundo);
+
+        return $card.append(
             $('<div>', { class: 'card-item-top' }).append(
-                $('<div>', { class: 'card-chip' }),
+                $('<p>', { class: 'card-item-name', text: card.nome }),
                 $('<span>', { class: 'card-item-actions' }).append($editar, $delete)
             ),
-            $('<div>').append(
-                $('<p>', { class: 'card-item-name', text: card.nome }),
-                $('<p>', { class: 'card-item-total', text: 'Fatura atual' }),
-                $('<p>', { class: 'card-item-amount', text: self.formatCurrency(card.faturaAtual) }),
-                $('<p>', { class: 'card-item-cycle', text: ciclo })
+            $('<div>', { class: 'card-item-chip-row', 'aria-hidden': 'true' }).append(
+                $('<span>', { class: 'card-chip' }),
+                icones.criar('nfc', 'md')
+            ),
+            $('<p>', { class: 'card-item-number', 'aria-hidden': 'true', text: '•••• •••• •••• ••••' }),
+            $('<div>', { class: 'card-item-bottom' }).append(
+                $('<div>', { class: 'card-item-holder' }).append(
+                    $('<p>', { class: 'card-item-holder-name', text: self.obterNome() || '' }),
+                    $('<p>', { class: 'card-item-cycle', text: ciclo })
+                ),
+                $('<div>', { class: 'card-item-invoice' }).append(
+                    $('<p>', { class: 'card-item-total', text: 'Fatura atual' }),
+                    $('<p>', { class: 'card-item-amount', text: self.formatCurrency(card.faturaAtual) })
+                )
             )
         );
+    };
+
+    /**
+     * Data por extenso com o ano ("10 out 2026"), pras faturas — elas atravessam anos.
+     *
+     * @param {string} dataIso data no formato AAAA-MM-DD
+     * @returns {string} data formatada
+     */
+    self.formatarDataComAno = function (dataIso) {
+        return self.formatarData(dataIso) + ' ' + dataIso.split('-')[0];
+    };
+
+    /**
+     * Abre as faturas de um cartão, começando pela atual. Busca as movimentações de todas as
+     * contas (a lista do dashboard pode estar filtrada por conta) e agrupa pelo vencimento.
+     *
+     * @param {object} card cartão retornado pela API
+     * @returns
+     */
+    self.abrirFatura = function (card) {
+        $.ajax({
+            url: self.apiBaseUrl + '/api/transacoes',
+            headers: self.cabecalhoAuth(),
+            beforeSend: function () {
+                self.mostrarCarregando();
+            },
+            success: function (resposta) {
+                var transacoes = resposta.filter(function (tx) { return tx.cartaoId === card.id; });
+                var vencimentos = [card.vencimentoFaturaAtual];
+
+                transacoes.forEach(function (tx) {
+                    if (vencimentos.indexOf(tx.dataTransacao) === -1) {
+                        vencimentos.push(tx.dataTransacao);
+                    }
+                });
+
+                vencimentos.sort();
+
+                self.state.fatura = {
+                    card: card,
+                    transacoes: transacoes,
+                    vencimentos: vencimentos,
+                    indice: vencimentos.indexOf(card.vencimentoFaturaAtual)
+                };
+
+                $('#modalFaturaTitle').text(card.nome);
+                $('#faturaCiclo').text('Fecha dia ' + card.diaFechamento + ' · vence dia ' + card.diaVencimento);
+                self.renderFatura();
+                self.openModal('#modalFatura');
+            },
+            error: function (jqXHR) {
+                self.tratarErroRequisicao(jqXHR);
+            },
+            complete: function () {
+                self.esconderCarregando();
+            }
+        });
+    };
+
+    /**
+     * Mostra a fatura selecionada no modal: situação, total (saídas menos estornos) e as compras.
+     *
+     * @returns
+     */
+    self.renderFatura = function () {
+        var fatura = self.state.fatura;
+        var vencimento = fatura.vencimentos[fatura.indice];
+        var atual = fatura.card.vencimentoFaturaAtual;
+        var itens = fatura.transacoes.filter(function (tx) { return tx.dataTransacao === vencimento; });
+        var total = itens.reduce(function (soma, tx) { return soma + (tx.tipo === 'SAIDA' ? tx.valor : -tx.valor); }, 0);
+        var situacao;
+
+        // Datas AAAA-MM-DD comparam como texto
+        if (vencimento < self.hojeIso()) {
+            situacao = 'Venceu em ';
+        } else if (vencimento === atual) {
+            situacao = 'Fatura atual · vence ';
+        } else if (vencimento < atual) {
+            situacao = 'Fechada · vence ';
+        } else {
+            situacao = 'Próxima · vence ';
+        }
+
+        $('#faturaSituacao').text(situacao + self.formatarDataComAno(vencimento));
+        $('#faturaTotal').text((total < 0 ? '−' : '') + self.formatCurrency(Math.abs(total)));
+        $('#btnFaturaAnterior').prop('disabled', fatura.indice === 0);
+        $('#btnFaturaProxima').prop('disabled', fatura.indice === fatura.vencimentos.length - 1);
+
+        var $lista = $('#faturaLista').empty();
+
+        if (itens.length === 0) {
+            $lista.append(self.criarEstadoVazio('li', 'Nenhuma compra nessa fatura.', 'credit-card'));
+        } else {
+            itens.forEach(function (tx) {
+                var entrada = tx.tipo === 'ENTRADA';
+
+                $lista.append($('<li>', { class: 'ef-list-row' }).append(
+                    $('<span>', { class: 'ef-list-row__leading' }).append(self.criarTileCategoria(tx.categoriaId)),
+                    $('<span>', { class: 'ef-list-row__text' }).append(
+                        $('<span>', { class: 'ef-list-row__title', text: tx.descricao }),
+                        $('<span>', { class: 'ef-list-row__subtitle', text: (tx.dataCompra ? 'compra em ' + self.formatarData(tx.dataCompra) + ' · ' : '') + tx.nomeConta })
+                    ),
+                    self.criarBadgeParcela(tx),
+                    $('<span>', { class: 'ef-list-row__end' }).append(
+                        $('<span>', { class: 'ef-list-row__value ' + (entrada ? 'tx-amount--in' : 'tx-amount--out'), text: (entrada ? '+' : '−') + self.formatCurrency(tx.valor) })
+                    )
+                ));
+            });
+        }
+    };
+
+    /**
+     * Passa pra fatura anterior ou pra próxima no modal de fatura.
+     *
+     * @param {number} delta -1 (anterior) ou 1 (próxima)
+     * @returns
+     */
+    self.mudarFatura = function (delta) {
+        var fatura = self.state.fatura;
+        var indice = fatura.indice + delta;
+
+        if (indice >= 0 && indice < fatura.vencimentos.length) {
+            fatura.indice = indice;
+            self.renderFatura();
+        }
     };
 
     self.renderCards = function () {
@@ -982,6 +1304,32 @@ function Dashboard() {
         self.state.cards.forEach(function (card) {
             $select.append($('<option>', { value: card.id, text: card.nome }));
         });
+    };
+
+    /**
+     * Monta o filtro por cartão da lista de movimentações, mantendo a escolha atual (se o
+     * cartão escolhido não existe mais, volta pra "todos").
+     *
+     * @returns
+     */
+    self.populateCardFilter = function () {
+        var $filtro = $('#filterCard').empty();
+        var existe = self.state.cartaoFiltrado === '' || self.state.cartaoFiltrado === 'nenhum' ||
+            !!self.getCardById(parseInt(self.state.cartaoFiltrado, 10));
+
+        $filtro.append($('<option>', { value: '', text: 'Todos os cartões' }));
+
+        self.state.cards.forEach(function (card) {
+            $filtro.append($('<option>', { value: card.id, text: card.nome }));
+        });
+
+        $filtro.append($('<option>', { value: 'nenhum', text: 'Sem cartão' }));
+
+        if (!existe) {
+            self.state.cartaoFiltrado = '';
+        }
+
+        $filtro.val(self.state.cartaoFiltrado);
     };
 
     /**
@@ -1138,8 +1486,15 @@ function Dashboard() {
         positive: 'Verde',
         negative: 'Vermelho',
         warning: 'Âmbar',
-        ai: 'Roxo',
-        neutral: 'Cinza'
+        ai: 'Violeta',
+        neutral: 'Cinza',
+        blue: 'Azul',
+        indigo: 'Anil',
+        purple: 'Roxo',
+        magenta: 'Magenta',
+        wine: 'Vinho',
+        pink: 'Rosa',
+        brown: 'Marrom'
     };
 
     self.montarSeletoresCategoria = function () {
@@ -2166,6 +2521,7 @@ function Dashboard() {
                 self.state.cards = resposta;
                 self.renderCards();
                 self.populateCardSelect();
+                self.populateCardFilter();
 
                 if (self.state.transactions.length > 0) {
                     self.aplicarFiltros();
@@ -2325,11 +2681,27 @@ function Dashboard() {
         });
     };
 
+    /**
+     * Data de hoje no fuso do aparelho, no formato dos campos de data (AAAA-MM-DD).
+     *
+     * @returns {string} data de hoje
+     */
+    self.hojeIso = function () {
+        var hoje = new Date();
+        var doisDigitos = function (numero) { return (numero < 10 ? '0' : '') + numero; };
+
+        return hoje.getFullYear() + '-' + doisDigitos(hoje.getMonth() + 1) + '-' + doisDigitos(hoje.getDate());
+    };
+
     self.resetTransactionModal = function () {
+        self.state.editingTransactionId = null;
+        $('#modalTransactionTitle').text('Nova movimentação');
+        $('#btnConfirmTransaction').text('Adicionar movimentação');
         self.state.currentType = 'in';
         $('#inputDescription').val('');
         $('#inputValue').val('');
         $('#inputCard').val('');
+        $('#inputDate').val(self.hojeIso());
         self.populateCardSelect();
         self.populateAccountSelect();
 
@@ -2337,6 +2709,46 @@ function Dashboard() {
         $('#inputAccount').val(contaPadrao);
 
         self.applyTypeStyle('in');
+    };
+
+    /**
+     * Abre o modal de movimentação preenchido com uma movimentação existente. No cartão, a data
+     * do campo é a da compra (a da lista é o vencimento da fatura).
+     *
+     * @param {object} tx transação retornada pela API
+     * @returns
+     */
+    self.abrirEdicaoTransacao = function (tx) {
+        self.openModal('#modalTransaction');
+        self.resetTransactionModal();
+
+        self.state.editingTransactionId = tx.id;
+        $('#modalTransactionTitle').text('Editar movimentação');
+        $('#btnConfirmTransaction').text('Salvar movimentação');
+
+        self.state.currentType = tx.tipo === 'ENTRADA' ? 'in' : 'out';
+        $('#inputCard').val(tx.cartaoId ? String(tx.cartaoId) : '');
+        self.applyTypeStyle(self.state.currentType);
+
+        self.state.currentCategoria = tx.categoriaId;
+        self.montarChipsCategoria('#categoriaRow', tx.tipo, tx.categoriaId);
+
+        $('#inputDescription').val(tx.descricao);
+        $('#inputValue').val(self.valorParaCampo(tx.valor));
+        $('#inputAccount').val(String(tx.contaId));
+        $('#inputDate').val(tx.cartaoId && tx.dataCompra ? tx.dataCompra : tx.dataTransacao);
+    };
+
+    /**
+     * Com cartão (só na saída), a data informada é a da compra.
+     *
+     * @returns
+     */
+    self.atualizarCampoDataTransacao = function () {
+        var comCartao = self.state.currentType === 'out' && !!$('#inputCard').val();
+
+        $('#rotuloInputDate').text(comCartao ? 'Data da compra' : 'Data');
+        $('#dicaDataCartao').prop('hidden', !comCartao);
     };
 
     /**
@@ -2389,6 +2801,7 @@ function Dashboard() {
         self.state.currentCategoria = self.categoriaPadraoDoTipo(tipo);
         feedback.limparErro('#categoriaRow');
         self.montarChipsCategoria('#categoriaRow', tipo, self.state.currentCategoria);
+        self.atualizarCampoDataTransacao();
     };
 
     /**
@@ -2431,29 +2844,37 @@ function Dashboard() {
     };
 
     /**
-     * Cria uma nova transação via API e atualiza transações e cartões (o cartão
-     * vinculado pode ter a fatura atual alterada).
+     * Cria (ou, no modo de edição, atualiza) uma transação via API e atualiza transações e
+     * cartões (o cartão vinculado pode ter a fatura atual alterada).
      *
      * @param {string} description descrição da transação
      * @param {number} value valor (já convertido pra número)
      * @param {number} contaId id da conta
      * @param {number} cardId id do cartão vinculado, ou null
+     * @param {string} data data no formato AAAA-MM-DD, ou string vazia (omite, backend usa hoje)
      * @returns
      */
-    self.criarTransacao = function (description, value, contaId, cardId) {
+    self.criarTransacao = function (description, value, contaId, cardId, data) {
+        var editando = self.state.editingTransactionId !== null;
+        var corpo = {
+            descricao: description,
+            valor: value,
+            tipo: self.state.currentType === 'in' ? 'ENTRADA' : 'SAIDA',
+            contaId: contaId,
+            categoriaId: self.state.currentCategoria,
+            cartaoId: cardId
+        };
+
+        if (data) {
+            corpo.dataTransacao = data;
+        }
+
         $.ajax({
-            url: self.apiBaseUrl + '/api/transacoes',
-            method: 'POST',
+            url: self.apiBaseUrl + '/api/transacoes' + (editando ? '/' + self.state.editingTransactionId : ''),
+            method: editando ? 'PUT' : 'POST',
             contentType: 'application/json',
             headers: self.cabecalhoAuth(),
-            data: JSON.stringify({
-                descricao: description,
-                valor: value,
-                tipo: self.state.currentType === 'in' ? 'ENTRADA' : 'SAIDA',
-                contaId: contaId,
-                categoriaId: self.state.currentCategoria,
-                cartaoId: cardId
-            }),
+            data: JSON.stringify(corpo),
             beforeSend: function () {
                 self.mostrarCarregando();
             },
@@ -2461,7 +2882,8 @@ function Dashboard() {
                 self.closeModal('#modalTransaction');
                 self.carregarTransacoes();
                 self.carregarCartoes();
-                feedback.exibirSucesso('Movimentação adicionada', description + ' · ' + self.formatCurrency(value));
+                self.carregarRecorrencias();
+                feedback.exibirSucesso(editando ? 'Movimentação atualizada' : 'Movimentação adicionada', description + ' · ' + self.formatCurrency(value));
             },
             error: function (jqXHR) {
                 self.tratarErroRequisicao(jqXHR);
@@ -3382,8 +3804,34 @@ function Dashboard() {
                 var cardId = self.state.currentType === 'out' ? parseInt($('#inputCard').val()) || null : null;
 
                 if (self.validateTransaction(description, value, contaId)) {
-                    self.criarTransacao(description, value, contaId, cardId);
+                    self.criarTransacao(description, value, contaId, cardId, $('#inputDate').val());
                 }
+            });
+
+            $('#inputCard').on('change', self.atualizarCampoDataTransacao);
+
+            $('#modalFatura').on('click', function (e) {
+                if ($(e.target).is('#modalFatura')) {
+                    self.closeModal('#modalFatura');
+                }
+            });
+
+            $('#btnFaturaAnterior').on('click', function () {
+                self.mudarFatura(-1);
+            });
+
+            $('#btnFaturaProxima').on('click', function () {
+                self.mudarFatura(1);
+            });
+
+            $('#chartTendenciaQuantidade').on('change', function () {
+                self.state.quantidadeTendencia[self.state.granularidadeTendencia] = parseInt($(this).val(), 10);
+                self.renderizarGraficoTendencia();
+            });
+
+            $('#filterCard').on('change', function () {
+                self.state.cartaoFiltrado = $(this).val();
+                self.aplicarFiltros();
             });
 
             $('#btnNewCard').on('click', function () {

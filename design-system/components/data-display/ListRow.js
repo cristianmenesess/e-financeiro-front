@@ -16,7 +16,7 @@ import { criarElemento, aplicarPropsBase, classes } from '../_internal/dom.js';
  *   disabled?: boolean
  * }} ListRowProps
  *
- * @typedef {'neutral' | 'brand' | 'positive' | 'negative' | 'warning' | 'ai'} IconTileTone
+ * @typedef {'neutral' | 'brand' | 'positive' | 'negative' | 'warning' | 'ai' | 'blue' | 'indigo' | 'purple' | 'magenta' | 'wine' | 'pink' | 'brown'} IconTileTone
  *
  * @typedef {import('../_internal/dom.js').PropsBase & {
  *   children?: import('../_internal/dom.js').Conteudo,

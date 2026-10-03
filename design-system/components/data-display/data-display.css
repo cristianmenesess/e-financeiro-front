@@ -200,3 +200,11 @@ button.ef-list-row:focus-visible,.ef-list-row.is-focus{outline:none;box-shadow:i
 .ef-icon-tile--negative{background:var(--tone-negative-bg);color:var(--tone-negative-icon)}
 .ef-icon-tile--warning{background:var(--tone-warning-bg);color:var(--tone-warning-icon)}
 .ef-icon-tile--ai{background:var(--tone-ai-bg);color:var(--tone-ai-icon)}
+/* Paleta de categorias (tokens em colors.css) */
+.ef-icon-tile--blue{background:var(--tone-blue-bg);color:var(--tone-blue-icon)}
+.ef-icon-tile--indigo{background:var(--tone-indigo-bg);color:var(--tone-indigo-icon)}
+.ef-icon-tile--purple{background:var(--tone-purple-bg);color:var(--tone-purple-icon)}
+.ef-icon-tile--magenta{background:var(--tone-magenta-bg);color:var(--tone-magenta-icon)}
+.ef-icon-tile--wine{background:var(--tone-wine-bg);color:var(--tone-wine-icon)}
+.ef-icon-tile--pink{background:var(--tone-pink-bg);color:var(--tone-pink-icon)}
+.ef-icon-tile--brown{background:var(--tone-brown-bg);color:var(--tone-brown-icon)}

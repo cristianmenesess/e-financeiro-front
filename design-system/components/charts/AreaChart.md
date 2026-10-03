@@ -12,6 +12,22 @@ AreaChart({ data: serie, height: 240, xLabels: ['1 SET', '15 SET', '29 SET'], fo
 Fábrica DOM: recebe um objeto de props e devolve o elemento pronto. Além das props
 abaixo, todo componente aceita `className`, `style` (só posicionamento) e `attrs`.
 
+## Rolagem e dica do ponto (extensão desta stack)
+
+Duas props que não vieram do dump:
+
+- `minPointWidth` (número, em px): largura mínima por ponto. Se a série não couber no
+  contêiner, a área do gráfico rola na horizontal, já posicionada no ponto mais
+  recente, e o eixo Y fica fixo à direita. Use quando todo ponto precisa do seu
+  rótulo no eixo X (31 dias, 12 meses); sem a prop, o gráfico só se ajusta à largura.
+- `tooltipLabels` (um texto por ponto) liga a dica: com o cursor ou o toque sobre a
+  área, o ponto mais próximo ganha destaque e mostra o rótulo e o valor, formatado
+  por `formatTooltip` (ou `formatY`, se ela não vier).
+
+```js
+AreaChart({ data: dias, xLabels: numeros, minPointWidth: 26, tooltipLabels: datas, formatTooltip: formatarMoeda })
+```
+
 ## Diretriz de uso (original do dump)
 
 The hero chart inside a portfolio/balance card. Scales fluidly to its container.

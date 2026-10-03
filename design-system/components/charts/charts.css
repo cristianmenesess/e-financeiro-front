@@ -17,6 +17,32 @@
 .ef-chart__axis{fill:var(--chart-axis);font-family:var(--font-mono);font-size:var(--text-2xs)}
 .ef-chart__axis--x{letter-spacing:.06em}
 
+/* AreaChart: a área rola na horizontal quando os pontos não cabem (minPointWidth);
+   o eixo Y fica fixo à direita. Barra de rolagem fina, só o polegar. */
+.ef-area-chart{position:relative;display:flex}
+.ef-area-chart__scroll{
+  flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:thin;scrollbar-color:var(--border-default) transparent;
+}
+.ef-area-chart__scroll::-webkit-scrollbar{height:var(--space-1-5)}
+.ef-area-chart__scroll::-webkit-scrollbar-track{background:transparent}
+.ef-area-chart__scroll::-webkit-scrollbar-thumb{background:var(--border-default);border-radius:var(--radius-pill)}
+.ef-area-chart__scroll::-webkit-scrollbar-thumb:hover{background:var(--border-strong)}
+.ef-area-chart__axis{flex:0 0 auto}
+
+/* Ponto sob o cursor/toque: guia vertical, ponto em destaque e dica com rótulo e valor */
+.ef-chart__guide{stroke:var(--chart-axis);stroke-width:1;stroke-dasharray:3 3}
+.ef-chart__dot--active{stroke:var(--surface-card);stroke-width:2}
+.ef-chart-tooltip{
+  position:absolute;z-index:1;transform:translateX(-50%);pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:var(--space-0-5);
+  padding:var(--space-1-5) var(--space-2-5);border-radius:var(--radius-sm);
+  background:var(--surface-inverse);color:var(--text-inverse);box-shadow:var(--shadow-md);white-space:nowrap;
+}
+.ef-chart-tooltip[hidden]{display:none}
+.ef-chart-tooltip__label{font:var(--type-mono-label);font-size:var(--text-micro);letter-spacing:var(--tracking-mono-label);text-transform:uppercase;color:var(--text-inverse-muted)}
+.ef-chart-tooltip__value{font:var(--type-caption);font-family:var(--font-mono);font-weight:var(--weight-semibold)}
+
 /* Estado vazio: série com menos de 2 pontos */
 .ef-chart-empty{
   display:flex;align-items:center;justify-content:center;
