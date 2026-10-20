@@ -4,22 +4,19 @@
     --bottom-nav-h: var(--tabbar-height);
 }
 
-/* RESET & BASE */
+/* RESET & BASE — box-sizing, fundo, cor do texto e suavização da fonte
+   já vêm de design-system/tokens/base.css; aqui fica só o que é do app */
 *,
 *::before,
 *::after {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
 body {
     font-family: var(--font-sans);
-    background: var(--bg-canvas);
-    color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
     transition: background-color var(--duration-normal) var(--ease-standard), color var(--duration-normal) var(--ease-standard);
 }
 
